@@ -77,7 +77,7 @@ func (h exampleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	bs.Save(context.Background(), h.bucketFolderName+"/"+parentJob.Filename, b.Bytes())
 
-	err = h.CreatePDFSplitJob(parentJob.ID, parentJob.Filename)
+	job, err := h.CreatePDFSplitJob(parentJob.ID, parentJob.Filename)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to save pdf split job. Error: %v", err)
 		h.logger.Error(errMsg)
@@ -86,7 +86,7 @@ func (h exampleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	values := map[string]string{"id": parentJob.ID, "pdfFileName": parentJob.Filename}
+	values := map[string]string{"id": job.ID, "pdfFileName": job.Filename}
 	jsonValue, _ := json.Marshal(values)
 	pubsub := Pubsub{h.logger, h.pubsubClient, h.topicName}
 	err = pubsub.publish(context.Background(), jsonValue)
@@ -121,7 +121,7 @@ func (h exampleHandler) CreateParentJob(filename, script string) (ParentJob, err
 	return parentJob, nil
 }
 
-func (h exampleHandler) CreatePDFSplitJob(parentJobID, filename string) error {
+func (h exampleHandler) CreatePDFSplitJob(parentJobID, filename string) (PDFToImageJob, error) {
 	store := NewStore(h.datastoreClient, h.tableName)
 	rawID, _ := uuid.NewV4()
 	jobID := rawID.String()
@@ -133,9 +133,9 @@ func (h exampleHandler) CreatePDFSplitJob(parentJobID, filename string) error {
 	}
 	err := store.StorePDFToImageJob(context.Background(), pdfToImageJob)
 	if err != nil {
-		return err
+		return PDFToImageJob{}, err
 	}
-	return nil
+	return pdfToImageJob, nil
 }
 
 type mainPage struct {
