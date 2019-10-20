@@ -35,9 +35,9 @@ var ImageToVideoJobTableName = "test-ImageToVideoJob"
 var VideoConcatJobTableName = "test-VideoConcatJob"
 
 // Topics
-var PDFToImageJobTopic = "test-pdf-to-image-job"
-var ImageToVideoJobTopic = "test-image-to-video-job"
-var VideoConcatJobTopic = "test-video-conct-job"
+var PDFToImageJobTopic = "pdf-splitter"
+var ImageToVideoJobTopic = "image-to-video"
+var VideoConcatJobTopic = "concatenate-video"
 
 func main() {
 	logger := logrus.New()
