@@ -86,6 +86,11 @@ func (h exampleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	values := map[string]string{"id": parentJob.ID, "pdfFileName": parentJob.Filename}
+	jsonValue, _ := json.Marshal(values)
+	pubsub := Pubsub{h.logger, h.pubsubClient, h.topicName}
+	pubsub.publish(context.Background(), jsonValue)
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("%v successfully uploaded", handler.Filename)))
 	return
