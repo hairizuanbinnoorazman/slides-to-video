@@ -1,0 +1,14 @@
+<head></head>
+
+<body>
+    <div>
+        <h1>Test HTML</h1>
+        <textarea rows="4" cols="50" name="script"
+            form="pdfForm">Enter script here - but it has to be json format</textarea>
+        <form id="pdfForm" action="/upload_complete" method="post" enctype="multipart/form-data">
+            Select a file: <input type="file" name="myfile"><br><br>
+            <input type="submit" value="Upload PDF">
+        </form>
+
+    </div>
+</body>

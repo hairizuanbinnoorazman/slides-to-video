@@ -1,0 +1,34 @@
+steps:
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - kms
+      - decrypt
+      - --ciphertext-file=slides-to-video-manager.json.enc
+      - --plaintext-file=slides-to-video-manager.json
+      - --location=global
+      - --keyring=test
+      - --key=test1
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/$PROJECT_ID/slides-to-video-manager:$SHORT_SHA",
+        ".",
+      ]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/slides-to-video-manager:$SHORT_SHA"]
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      [
+        "beta",
+        "run",
+        "deploy",
+        "slides-to-video-manager",
+        "--concurrency=5",
+        "--memory=1Gi",
+        "--platform=managed",
+        "--allow-unauthenticated",
+        "--region=asia-northeast1",
+        "--image=gcr.io/$PROJECT_ID/slides-to-video-manager:$SHORT_SHA",
+      ]
