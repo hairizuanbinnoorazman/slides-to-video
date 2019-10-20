@@ -89,7 +89,14 @@ func (h exampleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	values := map[string]string{"id": parentJob.ID, "pdfFileName": parentJob.Filename}
 	jsonValue, _ := json.Marshal(values)
 	pubsub := Pubsub{h.logger, h.pubsubClient, h.topicName}
-	pubsub.publish(context.Background(), jsonValue)
+	err = pubsub.publish(context.Background(), jsonValue)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to send pdf split job. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errMsg))
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("%v successfully uploaded", handler.Filename)))
