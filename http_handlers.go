@@ -396,3 +396,80 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Implemented"))
 }
+
+type viewAllParentJobs struct {
+	logger          Logger
+	datastoreClient *datastore.Client
+	tableName       string
+}
+
+func (h viewAllParentJobs) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Start View All Parent Jobs Handler")
+	defer h.logger.Info("End View All Parent Jobs Handler")
+
+	store := NewStore(h.datastoreClient, h.tableName)
+	parentJobs, err := store.GetAllParentJobs(context.Background())
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	t, err := template.ParseFiles("parentJobs.html")
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to parse templete. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	varmap := map[string]interface{}{
+		"parentJobs": parentJobs,
+	}
+
+	err = t.Execute(w, varmap)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to parse templete. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+	return
+}
+
+type downloadJob struct {
+	logger        Logger
+	storageClient *storage.Client
+	bucketName    string
+}
+
+func (h downloadJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Start Download Handler")
+	defer h.logger.Info("End Download Handler")
+
+	filename, ok := r.URL.Query()["filename"]
+	if !ok {
+		errMsg := fmt.Sprintf("Error - Missing filename from url param.")
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	bs := BlobStorage{h.logger, h.storageClient, h.bucketName}
+	content, err := bs.Load(context.Background(), "videos/"+filename[0])
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to download file from blob storage. Err: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write(content)
+}

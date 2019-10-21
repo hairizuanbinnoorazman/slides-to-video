@@ -108,6 +108,16 @@ func main() {
 		tableName:       VideoConcatJobTableName,
 		parentTableName: ParentJobTableName,
 	})
+	r.Handle("/jobs", viewAllParentJobs{
+		logger:          logger,
+		datastoreClient: datastoreClient,
+		tableName:       ParentJobTableName,
+	})
+	r.Handle("/download", downloadJob{
+		logger:        logger,
+		storageClient: xClient,
+		bucketName:    BucketName,
+	})
 
 	srv := http.Server{
 		Handler:      r,
