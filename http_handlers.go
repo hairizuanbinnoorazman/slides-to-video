@@ -224,6 +224,9 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var scripts scriptParse
 	json.Unmarshal([]byte(parentJob.Script), &scripts)
 
+	parentJob.Status = "running"
+	parentStore.StoreParentJob(context.Background(), parentJob)
+
 	for i, slideDetail := range req.SlideDetails {
 		store := NewStore(h.datastoreClient, h.nextTableName)
 		rawID, _ := uuid.NewV4()
