@@ -236,6 +236,15 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Status:      "created",
 		}
 		store.StoreImageToVideoJob(context.Background(), image2videoJob)
+
+		values := map[string]string{"id": image2videoJob.ID, "image_id": image2videoJob.ImageID, "text": image2videoJob.Text}
+		jsonValue, _ := json.Marshal(values)
+		pubsub := Pubsub{h.logger, h.pubsubClient, h.nextTopicName}
+		err = pubsub.publish(context.Background(), jsonValue)
+		if err != nil {
+			errMsg := fmt.Sprintf("Error - unable to send pdf split job. Error: %v", err)
+			h.logger.Error(errMsg)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -319,6 +328,15 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Status:      "created",
 	}
 	nextStore.StoreVideoConcatJob(context.Background(), concatJob)
+
+	values := map[string]interface{}{"id": concatJob.ID, "video_ids": concatJob.Videos}
+	jsonValue, _ := json.Marshal(values)
+	pubsub := Pubsub{h.logger, h.pubsubClient, h.nextTopicName}
+	err = pubsub.publish(context.Background(), jsonValue)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to send pdf split job. Error: %v", err)
+		h.logger.Error(errMsg)
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Stored New value"))
