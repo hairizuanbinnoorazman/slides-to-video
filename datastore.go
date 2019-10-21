@@ -118,6 +118,7 @@ func (g *GoogleDatastore) GetAllParentJobs(ctx context.Context) ([]ParentJob, er
 			Filename:         emailDetails[i].Filename,
 			Script:           emailDetails[i].Script,
 			Status:           emailDetails[i].Status,
+			VideoFile:        emailDetails[i].VideoFile,
 		})
 	}
 	return emailItems, nil
