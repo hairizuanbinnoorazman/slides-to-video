@@ -209,6 +209,13 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if job.Status == "completed" {
+		h.logger.Infof("Detected completed PDF job but another request wants to reset it to running")
+		w.WriteHeader(200)
+		w.Write([]byte("Completed"))
+		return
+	}
+
 	job.Status = req.Status
 	err = store.StorePDFToImageJob(context.Background(), job)
 	if err != nil {
