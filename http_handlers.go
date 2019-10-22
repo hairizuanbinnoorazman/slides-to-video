@@ -10,6 +10,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gofrs/uuid"
 
@@ -238,10 +240,15 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		store := NewStore(h.datastoreClient, h.nextTableName)
 		rawID, _ := uuid.NewV4()
 		jobID := rawID.String()
+		splitFileName := strings.Split(slideDetail.ImageID, "-")
+		slideNoAndFileFormat := strings.Split(splitFileName[len(splitFileName)-1], ".")
+		num, _ := strconv.Atoi(slideNoAndFileFormat[0])
+
 		image2videoJob := ImageToVideoJob{
 			ID:          jobID,
 			ParentJobID: job.ParentJobID,
 			ImageID:     slideDetail.ImageID,
+			SlideID:     num,
 			Text:        scripts.Script[i],
 			Status:      "created",
 		}
@@ -320,13 +327,21 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if item.Status == "completed" {
 			completedJobs = completedJobs + 1
 			videoList = append(videoList, item.OutputFile)
-			h.logger.Errorf("OUTPUT FILE: %v", item.OutputFile)
 		}
 	}
 	if len(items) != completedJobs {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Not all jobs completed, will not issue new one"))
 		return
+	}
+
+	videoList = []string{}
+	for i, _ := range items {
+		for _, item := range items {
+			if item.SlideID == i {
+				videoList = append(videoList, item.OutputFile)
+			}
+		}
 	}
 
 	nextStore := NewStore(h.datastoreClient, h.nextTableName)

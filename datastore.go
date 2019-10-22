@@ -41,6 +41,7 @@ type ImageToVideoJob struct {
 	ID          string
 	ParentJobID string
 	ImageID     string
+	SlideID     int
 	Text        string
 	Status      string
 	OutputFile  string
@@ -49,6 +50,7 @@ type ImageToVideoJob struct {
 type ImageToVideoJobDetails struct {
 	ParentJobID string
 	ImageID     string
+	SlideID     int
 	Text        string
 	Status      string
 	OutputFile  string
@@ -170,6 +172,7 @@ func (g *GoogleDatastore) StoreImageToVideoJob(ctx context.Context, e ImageToVid
 	_, err := g.Client.Put(ctx, newKey, &ImageToVideoJobDetails{
 		ParentJobID: e.ParentJobID,
 		ImageID:     e.ImageID,
+		SlideID:     e.SlideID,
 		Text:        e.Text,
 		Status:      e.Status,
 		OutputFile:  e.OutputFile,
@@ -206,6 +209,7 @@ func (g *GoogleDatastore) GetAllImageToVideoJobs(ctx context.Context, filterByPa
 			ID:          key.Name,
 			ParentJobID: emailDetails[i].ParentJobID,
 			ImageID:     emailDetails[i].ImageID,
+			SlideID:     emailDetails[i].SlideID,
 			Text:        emailDetails[i].Text,
 			Status:      emailDetails[i].Status,
 			OutputFile:  emailDetails[i].OutputFile,
