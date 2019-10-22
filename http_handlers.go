@@ -415,6 +415,13 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	parentStore := NewStore(h.datastoreClient, h.parentTableName)
 	parentJob, _ := parentStore.GetParentJob(context.Background(), job.ParentJobID)
 
+	if parentJob.Status == "completed" {
+		h.logger.Infof("Detected parent job status is already completed but another request comes in to reset it. Reject it")
+		w.WriteHeader(200)
+		w.Write([]byte("Completed"))
+		return
+	}
+
 	job.Status = req.Status
 	job.OutputFile = req.OutputVideo
 
