@@ -308,6 +308,13 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if job.Status == "completed" {
+		h.logger.Infof("Detected completed Image to Video job but another request wants to reset it to running")
+		w.WriteHeader(200)
+		w.Write([]byte("Completed"))
+		return
+	}
+
 	job.Status = req.Status
 	job.OutputFile = req.OutputFile
 	store.StoreImageToVideoJob(context.Background(), job)
