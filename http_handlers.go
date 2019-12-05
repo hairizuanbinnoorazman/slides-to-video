@@ -500,7 +500,11 @@ func (h viewAllParentJobsAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	rawParentJobs, err := json.Marshal(parentJobs)
+	type jobsResponse struct {
+		Jobs []ParentJob `json:"jobs"`
+	}
+
+	rawParentJobs, err := json.Marshal(jobsResponse{Jobs: parentJobs})
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.logger.Error(errMsg)

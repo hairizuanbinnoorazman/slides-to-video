@@ -8,12 +8,12 @@ import (
 )
 
 type ParentJob struct {
-	ID               string
-	OriginalFilename string
-	Filename         string
-	Script           string
-	Status           string
-	VideoFile        string
+	ID               string `json:"id"`
+	OriginalFilename string `json:"original_filename"`
+	Filename         string `json:"filename"`
+	Script           string `json:"script"`
+	Status           string `json:"status"`
+	VideoFile        string `json:"video_file"`
 }
 
 type ParentJobDetails struct {
