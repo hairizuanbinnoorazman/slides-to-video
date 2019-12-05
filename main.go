@@ -11,6 +11,7 @@ import (
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
 	stackdriver "github.com/TV4/logrus-stackdriver-formatter"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
@@ -126,8 +127,14 @@ func main() {
 		tableName:       ParentJobTableName,
 	})
 
+	cors := handlers.CORS(
+		handlers.AllowedHeaders([]string{"content-type"}),
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"GET"}),
+	)
+
 	srv := http.Server{
-		Handler:      r,
+		Handler:      cors(r),
 		Addr:         "0.0.0.0:8080",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
