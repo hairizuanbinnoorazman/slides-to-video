@@ -480,6 +480,40 @@ func (h viewAllParentJobs) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+type viewAllParentJobsAPI struct {
+	logger          Logger
+	datastoreClient *datastore.Client
+	tableName       string
+}
+
+func (h viewAllParentJobsAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Start View All Parent Jobs API Handler")
+	defer h.logger.Info("End View All Parent Jobs API Handler")
+
+	store := NewStore(h.datastoreClient, h.tableName)
+	parentJobs, err := store.GetAllParentJobs(context.Background())
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	rawParentJobs, err := json.Marshal(parentJobs)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(rawParentJobs)
+	return
+}
+
 type downloadJob struct {
 	logger        Logger
 	storageClient *storage.Client

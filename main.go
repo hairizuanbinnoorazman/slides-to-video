@@ -119,6 +119,13 @@ func main() {
 		bucketName:    BucketName,
 	})
 
+	s := r.PathPrefix("/api/v1").Subrouter()
+	s.Handle("/jobs", viewAllParentJobsAPI{
+		logger:          logger,
+		datastoreClient: datastoreClient,
+		tableName:       ParentJobTableName,
+	})
+
 	srv := http.Server{
 		Handler:      r,
 		Addr:         "0.0.0.0:8080",
