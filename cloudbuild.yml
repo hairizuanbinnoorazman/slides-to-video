@@ -12,7 +12,7 @@ steps:
     args:
       - kms
       - decrypt
-      - --ciphertext-file=configjson.enc
+      - --ciphertext-file=config.json.enc
       - --plaintext-file=config.json
       - --location=global
       - --keyring=test
