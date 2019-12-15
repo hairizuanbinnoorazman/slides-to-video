@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -40,6 +41,14 @@ var PDFToImageJobTopic = "pdf-splitter"
 var ImageToVideoJobTopic = "image-to-video"
 var VideoConcatJobTopic = "concatenate-video"
 
+// Configuration
+type Config struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	Scope        string `json:"scope"`
+	RedirectURI  string `json:"redirect_uri"`
+}
+
 func main() {
 	logger := logrus.New()
 	logger.Formatter = stackdriver.NewFormatter(
@@ -72,6 +81,13 @@ func main() {
 	if err != nil {
 		logger.Error("Unable to create pubsub client")
 	}
+
+	rawWebCredJSON, err := ioutil.ReadFile("config.json")
+	if err != nil {
+		logger.Error("Unable to load web application config")
+	}
+	var webCredJSON Config
+	json.Unmarshal(rawWebCredJSON, &webCredJSON)
 
 	r := mux.NewRouter()
 	r.Handle("/upload", mainPage{logger: logger})
@@ -126,6 +142,22 @@ func main() {
 		datastoreClient: datastoreClient,
 		tableName:       ParentJobTableName,
 	})
+	s.Handle("/signup", signup{
+		logger:          logger,
+		datastoreClient: datastoreClient,
+		tableName:       "test",
+		clientID:        webCredJSON.ClientID,
+		redirectURI:     webCredJSON.RedirectURI,
+		scope:           webCredJSON.Scope,
+	})
+	s.Handle("/callback", authenticate{
+		logger:          logger,
+		datastoreClient: datastoreClient,
+		tableName:       "test",
+		clientID:        webCredJSON.ClientID,
+		clientSecret:    webCredJSON.ClientSecret,
+		redirectURI:     webCredJSON.RedirectURI,
+	})
 
 	cors := handlers.CORS(
 		handlers.AllowedHeaders([]string{"content-type"}),
@@ -135,7 +167,7 @@ func main() {
 
 	srv := http.Server{
 		Handler:      cors(r),
-		Addr:         "0.0.0.0:8080",
+		Addr:         "0.0.0.0:8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}

@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -549,4 +550,107 @@ func (h downloadJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(200)
 	w.Write(content)
+}
+
+type signup struct {
+	logger          Logger
+	datastoreClient *datastore.Client
+	tableName       string
+	clientID        string
+	redirectURI     string
+	scope           string
+}
+
+func (h signup) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Start Signup Handler")
+	defer h.logger.Info("End Signup Handler")
+
+	authURL, err := url.Parse("https://accounts.google.com/o/oauth2/v2/auth")
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to create auth url. Err: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	q := authURL.Query()
+	q.Add("scope", h.scope)
+	q.Add("include_granted_scopes", "true")
+	q.Add("access_type", "offline")
+	q.Add("redirect_uri", h.redirectURI)
+	q.Add("response_type", "code")
+	q.Add("client_id", h.clientID)
+
+	authURL.RawQuery = q.Encode()
+
+	h.logger.Info(authURL.String())
+
+	http.Redirect(w, r, authURL.String(), http.StatusTemporaryRedirect)
+}
+
+type authenticate struct {
+	logger          Logger
+	datastoreClient *datastore.Client
+	tableName       string
+	clientID        string
+	clientSecret    string
+	redirectURI     string
+}
+
+func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Start Callback Handler")
+	defer h.logger.Info("End Callback Handler")
+
+	code, ok := r.URL.Query()["code"]
+	if !ok {
+		errMsg := fmt.Sprintf("Error - Missing code from url param.")
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type authRequestBody struct {
+		Code         string `json:"code"`
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		RedirectURI  string `json:"redirect_uri"`
+		GrantType    string `json:"grant_type"`
+	}
+
+	reqBody := authRequestBody{
+		Code:         code[0],
+		ClientID:     h.clientID,
+		ClientSecret: h.clientSecret,
+		RedirectURI:  h.redirectURI,
+		GrantType:    "authorization_code",
+	}
+
+	rawReqBody, _ := json.Marshal(reqBody)
+	h.logger.Info(string(rawReqBody))
+
+	resp, err := http.Post("https://oauth2.googleapis.com/token", "application/json", bytes.NewBuffer(rawReqBody))
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to receive the input for this request and parse it to json. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type authResponseBody struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		TokenType    string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
+	}
+
+	rawRespBody, _ := ioutil.ReadAll(resp.Body)
+	h.logger.Info(string(rawRespBody))
+	var authResp authResponseBody
+	json.Unmarshal(rawRespBody, &authResp)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(fmt.Sprintf("Access Token: %v\nRefresh Token: %v\n", authResp.AccessToken, authResp.RefreshToken)))
 }
