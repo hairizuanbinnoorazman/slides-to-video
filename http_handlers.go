@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofrs/uuid"
 
@@ -552,7 +553,7 @@ func (h downloadJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(content)
 }
 
-type signup struct {
+type login struct {
 	logger          Logger
 	datastoreClient *datastore.Client
 	tableName       string
@@ -561,9 +562,9 @@ type signup struct {
 	scope           string
 }
 
-func (h signup) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start Signup Handler")
-	defer h.logger.Info("End Signup Handler")
+func (h login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Start Login Handler")
+	defer h.logger.Info("End Login Handler")
 
 	authURL, err := url.Parse("https://accounts.google.com/o/oauth2/v2/auth")
 	if err != nil {
@@ -583,8 +584,6 @@ func (h signup) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	q.Add("client_id", h.clientID)
 
 	authURL.RawQuery = q.Encode()
-
-	h.logger.Info(authURL.String())
 
 	http.Redirect(w, r, authURL.String(), http.StatusTemporaryRedirect)
 }
@@ -628,7 +627,6 @@ func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rawReqBody, _ := json.Marshal(reqBody)
-	h.logger.Info(string(rawReqBody))
 
 	resp, err := http.Post("https://oauth2.googleapis.com/token", "application/json", bytes.NewBuffer(rawReqBody))
 	if err != nil {
@@ -647,10 +645,57 @@ func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rawRespBody, _ := ioutil.ReadAll(resp.Body)
-	h.logger.Info(string(rawRespBody))
 	var authResp authResponseBody
 	json.Unmarshal(rawRespBody, &authResp)
 
+	userAPI, _ := url.Parse("https://www.googleapis.com/oauth2/v3/userinfo")
+	q := userAPI.Query()
+	q.Add("access_token", authResp.AccessToken)
+	userAPI.RawQuery = q.Encode()
+
+	userResp, err := http.Get(userAPI.String())
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to receive user information from Google API. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type userResponseBody struct {
+		PictureURL    string `json:"picture"`
+		Email         string `json:"email"`
+		EmailVerified bool   `json:"email_verified"`
+	}
+
+	rawUserRespBody, _ := ioutil.ReadAll(userResp.Body)
+	var obtainedUser userResponseBody
+	json.Unmarshal(rawUserRespBody, &obtainedUser)
+
+	store := NewStore(h.datastoreClient, h.tableName)
+	user, err := store.GetUserByEmail(context.Background(), obtainedUser.Email)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to obtain user from datastore. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+	if user.ID == "" && user.Email == "" {
+		id, _ := uuid.NewV4()
+		currentTime := time.Now()
+		newUser := User{
+			ID:           id.String(),
+			Email:        obtainedUser.Email,
+			RefreshToken: authResp.RefreshToken,
+			AuthToken:    authResp.AccessToken,
+			Type:         "basic",
+			DateCreated:  currentTime,
+			DateModified: currentTime,
+		}
+		store.StoreUser(context.Background(), newUser)
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Access Token: %v\nRefresh Token: %v\n", authResp.AccessToken, authResp.RefreshToken)))
+	w.Write([]byte(fmt.Sprintf("User Email: %v\nAccess Token: %v\nRefresh Token: %v\n", obtainedUser.Email, authResp.AccessToken, authResp.RefreshToken)))
 }

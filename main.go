@@ -35,6 +35,7 @@ var ParentJobTableName = "test-ParentJob"
 var PDFToImageJobTableName = "test-PDFToImageJob"
 var ImageToVideoJobTableName = "test-ImageToVideoJob"
 var VideoConcatJobTableName = "test-VideoConcatJob"
+var UserTableName = "test-User"
 
 // Topics
 var PDFToImageJobTopic = "pdf-splitter"
@@ -142,7 +143,7 @@ func main() {
 		datastoreClient: datastoreClient,
 		tableName:       ParentJobTableName,
 	})
-	s.Handle("/signup", signup{
+	s.Handle("/login", login{
 		logger:          logger,
 		datastoreClient: datastoreClient,
 		tableName:       "test",
@@ -153,7 +154,7 @@ func main() {
 	s.Handle("/callback", authenticate{
 		logger:          logger,
 		datastoreClient: datastoreClient,
-		tableName:       "test",
+		tableName:       UserTableName,
 		clientID:        webCredJSON.ClientID,
 		clientSecret:    webCredJSON.ClientSecret,
 		redirectURI:     webCredJSON.RedirectURI,
