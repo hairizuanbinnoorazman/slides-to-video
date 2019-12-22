@@ -161,3 +161,51 @@ func TestGoogleDatastore_GetAllImageToVideoJobs(t *testing.T) {
 		})
 	}
 }
+
+func TestGoogleDatastore_GetUserByEmail(t *testing.T) {
+	type fields struct {
+		EntityName string
+		Client     *datastore.Client
+	}
+	type args struct {
+		ctx   context.Context
+		Email string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    User
+		wantErr bool
+	}{
+		{
+			name: "Successful test",
+			fields: fields{
+				EntityName: "Users",
+				Client:     datastoreClientHelper(),
+			},
+			args: args{
+				ctx:   context.Background(),
+				Email: "test@gmail.com",
+			},
+			want:    User{},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &GoogleDatastore{
+				EntityName: tt.fields.EntityName,
+				Client:     tt.fields.Client,
+			}
+			got, err := g.GetUserByEmail(tt.args.ctx, tt.args.Email)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GoogleDatastore.GetUserByEmail() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GoogleDatastore.GetUserByEmail() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
