@@ -597,6 +597,7 @@ type authenticate struct {
 	clientID        string
 	clientSecret    string
 	redirectURI     string
+	auth            Auth
 }
 
 func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -698,7 +699,7 @@ func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		store.StoreUser(context.Background(), newUser)
 	}
 
-	token, err := services.NewToken(user.ID, 3600, "secret", "zontext")
+	token, err := services.NewToken(user.ID, h.auth.ExpiryTime, h.auth.Secret, h.auth.Issuer)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to create token. Error: %v", err)
 		h.logger.Error(errMsg)

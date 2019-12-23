@@ -42,12 +42,19 @@ var PDFToImageJobTopic = "pdf-splitter"
 var ImageToVideoJobTopic = "image-to-video"
 var VideoConcatJobTopic = "concatenate-video"
 
-// Configuration
+// Config is a reflection of the configuration of the values that needs to be set of the application
 type Config struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	Scope        string `json:"scope"`
 	RedirectURI  string `json:"redirect_uri"`
+	Auth         Auth   `json:"auth"`
+}
+
+type Auth struct {
+	Secret     string `json:"secret"`
+	ExpiryTime int    `json:"expiry_time"`
+	Issuer     string `json:"issuer"`
 }
 
 func main() {
@@ -158,6 +165,7 @@ func main() {
 		clientID:        webCredJSON.ClientID,
 		clientSecret:    webCredJSON.ClientSecret,
 		redirectURI:     webCredJSON.RedirectURI,
+		auth:            webCredJSON.Auth,
 	})
 
 	cors := handlers.CORS(
