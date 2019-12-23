@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/services"
+
 	"github.com/gofrs/uuid"
 
 	"cloud.google.com/go/datastore"
@@ -696,6 +698,15 @@ func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		store.StoreUser(context.Background(), newUser)
 	}
 
+	token, err := services.NewToken(user.ID, 3600, "secret", "zontext")
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to create token. Error: %v", err)
+		h.logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("User Email: %v\nAccess Token: %v\nRefresh Token: %v\n", obtainedUser.Email, authResp.AccessToken, authResp.RefreshToken)))
+	w.Write([]byte(fmt.Sprintf("Token: %v\n", token)))
 }
