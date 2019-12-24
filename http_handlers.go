@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/services"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/user"
 
 	"github.com/gofrs/uuid"
 
@@ -591,13 +592,13 @@ func (h login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type authenticate struct {
-	logger          Logger
-	datastoreClient *datastore.Client
-	tableName       string
-	clientID        string
-	clientSecret    string
-	redirectURI     string
-	auth            Auth
+	logger       Logger
+	tableName    string
+	clientID     string
+	clientSecret string
+	redirectURI  string
+	auth         Auth
+	userStore    user.UserStore
 }
 
 func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -675,8 +676,7 @@ func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var obtainedUser userResponseBody
 	json.Unmarshal(rawUserRespBody, &obtainedUser)
 
-	store := NewStore(h.datastoreClient, h.tableName)
-	user, err := store.GetUserByEmail(context.Background(), obtainedUser.Email)
+	retrievedUser, err := h.userStore.GetUserByEmail(context.Background(), obtainedUser.Email)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to obtain user from datastore. Error: %v", err)
 		h.logger.Error(errMsg)
@@ -684,10 +684,10 @@ func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(errMsg))
 		return
 	}
-	if user.ID == "" && user.Email == "" {
+	if retrievedUser.ID == "" && retrievedUser.Email == "" {
 		id, _ := uuid.NewV4()
 		currentTime := time.Now()
-		newUser := User{
+		newUser := user.User{
 			ID:           id.String(),
 			Email:        obtainedUser.Email,
 			RefreshToken: authResp.RefreshToken,
@@ -696,10 +696,10 @@ func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			DateCreated:  currentTime,
 			DateModified: currentTime,
 		}
-		store.StoreUser(context.Background(), newUser)
+		h.userStore.StoreUser(context.Background(), newUser)
 	}
 
-	token, err := services.NewToken(user.ID, h.auth.ExpiryTime, h.auth.Secret, h.auth.Issuer)
+	token, err := services.NewToken(retrievedUser.ID, h.auth.ExpiryTime, h.auth.Secret, h.auth.Issuer)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to create token. Error: %v", err)
 		h.logger.Error(errMsg)

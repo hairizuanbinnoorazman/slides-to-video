@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/user"
+
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
@@ -159,13 +161,13 @@ func main() {
 		scope:           webCredJSON.Scope,
 	})
 	s.Handle("/callback", authenticate{
-		logger:          logger,
-		datastoreClient: datastoreClient,
-		tableName:       UserTableName,
-		clientID:        webCredJSON.ClientID,
-		clientSecret:    webCredJSON.ClientSecret,
-		redirectURI:     webCredJSON.RedirectURI,
-		auth:            webCredJSON.Auth,
+		logger:       logger,
+		tableName:    UserTableName,
+		clientID:     webCredJSON.ClientID,
+		clientSecret: webCredJSON.ClientSecret,
+		redirectURI:  webCredJSON.RedirectURI,
+		auth:         webCredJSON.Auth,
+		userStore:    user.NewGoogleDatastore(datastoreClient, UserTableName),
 	})
 
 	cors := handlers.CORS(
