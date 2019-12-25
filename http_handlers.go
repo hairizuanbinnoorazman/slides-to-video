@@ -706,6 +706,12 @@ func (h authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type tokenResponse struct {
+		Token string `json:"token"`
+	}
+
+	rawRespTokenResp, _ := json.Marshal(tokenResponse{Token: token})
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Token: %v\n", token)))
+	w.Write(rawRespTokenResp)
 }
