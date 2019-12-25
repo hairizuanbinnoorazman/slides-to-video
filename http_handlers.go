@@ -557,12 +557,10 @@ func (h downloadJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type login struct {
-	logger          Logger
-	datastoreClient *datastore.Client
-	tableName       string
-	clientID        string
-	redirectURI     string
-	scope           string
+	logger      Logger
+	clientID    string
+	redirectURI string
+	scope       string
 }
 
 func (h login) ServeHTTP(w http.ResponseWriter, r *http.Request) {

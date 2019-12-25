@@ -153,12 +153,10 @@ func main() {
 		tableName:       ParentJobTableName,
 	})
 	s.Handle("/login", login{
-		logger:          logger,
-		datastoreClient: datastoreClient,
-		tableName:       "test",
-		clientID:        webCredJSON.ClientID,
-		redirectURI:     webCredJSON.RedirectURI,
-		scope:           webCredJSON.Scope,
+		logger:      logger,
+		clientID:    webCredJSON.ClientID,
+		redirectURI: webCredJSON.RedirectURI,
+		scope:       webCredJSON.Scope,
 	})
 	s.Handle("/callback", authenticate{
 		logger:       logger,
