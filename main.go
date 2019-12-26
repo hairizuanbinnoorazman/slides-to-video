@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/handlers"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/user"
 
 	"cloud.google.com/go/datastore"
@@ -50,13 +51,7 @@ type Config struct {
 	ClientSecret string `json:"client_secret"`
 	Scope        string `json:"scope"`
 	RedirectURI  string `json:"redirect_uri"`
-	Auth         Auth   `json:"auth"`
-}
-
-type Auth struct {
-	Secret     string `json:"secret"`
-	ExpiryTime int    `json:"expiry_time"`
-	Issuer     string `json:"issuer"`
+	Auth         h.Auth `json:"auth"`
 }
 
 func main() {
@@ -152,20 +147,20 @@ func main() {
 		datastoreClient: datastoreClient,
 		tableName:       ParentJobTableName,
 	})
-	s.Handle("/login", login{
-		logger:      logger,
-		clientID:    webCredJSON.ClientID,
-		redirectURI: webCredJSON.RedirectURI,
-		scope:       webCredJSON.Scope,
+	s.Handle("/login", h.Login{
+		Logger:      logger,
+		ClientID:    webCredJSON.ClientID,
+		RedirectURI: webCredJSON.RedirectURI,
+		Scope:       webCredJSON.Scope,
 	})
-	s.Handle("/callback", authenticate{
-		logger:       logger,
-		tableName:    UserTableName,
-		clientID:     webCredJSON.ClientID,
-		clientSecret: webCredJSON.ClientSecret,
-		redirectURI:  webCredJSON.RedirectURI,
-		auth:         webCredJSON.Auth,
-		userStore:    user.NewGoogleDatastore(datastoreClient, UserTableName),
+	s.Handle("/callback", h.Authenticate{
+		Logger:       logger,
+		TableName:    UserTableName,
+		ClientID:     webCredJSON.ClientID,
+		ClientSecret: webCredJSON.ClientSecret,
+		RedirectURI:  webCredJSON.RedirectURI,
+		Auth:         webCredJSON.Auth,
+		UserStore:    user.NewGoogleDatastore(datastoreClient, UserTableName),
 	})
 
 	cors := handlers.CORS(
