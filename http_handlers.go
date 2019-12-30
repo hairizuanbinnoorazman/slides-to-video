@@ -268,12 +268,10 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type reportImageToVideo struct {
-	Logger          logger.Logger
-	datastoreClient *datastore.Client
-	pubsubClient    *pubsub.Client
-	tableName       string
-	nextTableName   string
-	nextTopicName   string
+	Logger            logger.Logger
+	ImageToVideoStore jobs.ImageToVideoStore
+	VideoConcatStore  jobs.VideoConcatStore
+	VideoConcatQueue  queue.Queue
 }
 
 func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -297,8 +295,7 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	store := NewStore(h.datastoreClient, h.tableName)
-	job, err := store.GetImageToVideoJob(context.Background(), req.ID)
+	job, err := h.ImageToVideoStore.GetImageToVideoJob(context.Background(), req.ID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to get pdf to image to video details. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -316,9 +313,9 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	job.Status = req.Status
 	job.OutputFile = req.OutputFile
-	store.StoreImageToVideoJob(context.Background(), job)
+	h.ImageToVideoStore.StoreImageToVideoJob(context.Background(), job)
 
-	items, err := store.GetAllImageToVideoJobs(context.Background(), job.ParentJobID)
+	items, err := h.ImageToVideoStore.GetAllImageToVideoJobs(context.Background(), job.ParentJobID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve list of job ids based on parent. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -350,20 +347,18 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	nextStore := NewStore(h.datastoreClient, h.nextTableName)
 	rawID, _ := uuid.NewV4()
-	concatJob := VideoConcatJob{
+	concatJob := jobs.VideoConcatJob{
 		ID:          rawID.String(),
 		ParentJobID: job.ParentJobID,
 		Videos:      videoList,
 		Status:      "created",
 	}
-	nextStore.StoreVideoConcatJob(context.Background(), concatJob)
+	h.VideoConcatStore.StoreVideoConcatJob(context.Background(), concatJob)
 
 	values := map[string]interface{}{"id": concatJob.ID, "video_ids": concatJob.Videos}
 	jsonValue, _ := json.Marshal(values)
-	pubsub := Pubsub{h.Logger, h.pubsubClient, h.nextTopicName}
-	err = pubsub.publish(context.Background(), jsonValue)
+	err = h.VideoConcatQueue.Add(context.Background(), jsonValue)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to send pdf split job. Error: %v", err)
 		h.Logger.Error(errMsg)

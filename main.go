@@ -104,6 +104,8 @@ func main() {
 	pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, PDFToImageJobTopic)
 	imageToVideoStore := jobs.NewGoogleDatastore(datastoreClient, ImageToVideoJobTableName)
 	imageToVideoQueue := queue.NewGooglePubsub(logger, pubsubClient, ImageToVideoJobTopic)
+	videoConcatStore := jobs.NewGoogleDatastore(datastoreClient, VideoConcatJobTableName)
+	videoConcatQueue := queue.NewGooglePubsub(logger, pubsubClient, VideoConcatJobTopic)
 
 	r := mux.NewRouter()
 	r.Handle("/upload", mainPage{logger: logger})
@@ -126,12 +128,10 @@ func main() {
 		ImageToVideoQueue: imageToVideoQueue,
 	})
 	r.Handle("/report_image_to_video", reportImageToVideo{
-		Logger:          logger,
-		datastoreClient: datastoreClient,
-		pubsubClient:    pubsubClient,
-		tableName:       ImageToVideoJobTableName,
-		nextTableName:   VideoConcatJobTableName,
-		nextTopicName:   VideoConcatJobTopic,
+		Logger:            logger,
+		ImageToVideoStore: imageToVideoStore,
+		VideoConcatStore:  videoConcatStore,
+		VideoConcatQueue:  videoConcatQueue,
 	})
 	r.Handle("/report_video_concat", reportVideoConcat{
 		Logger:          logger,
