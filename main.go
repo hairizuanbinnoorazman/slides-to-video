@@ -8,7 +8,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
 	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/handlers"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/jobs"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/user"
 
 	"cloud.google.com/go/datastore"
@@ -94,6 +97,14 @@ func main() {
 	var webCredJSON Config
 	json.Unmarshal(rawWebCredJSON, &webCredJSON)
 
+	userStore := user.NewGoogleDatastore(datastoreClient, UserTableName)
+	slideToVideoStorage := blobstorage.NewGCSStorage(logger, xClient, BucketName)
+	parentStore := jobs.NewGoogleDatastore(datastoreClient, ParentJobTableName)
+	pdfToImageStore := jobs.NewGoogleDatastore(datastoreClient, PDFToImageJobTableName)
+	pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, PDFToImageJobTopic)
+	imageToVideoStore := jobs.NewGoogleDatastore(datastoreClient, ImageToVideoJobTableName)
+	imageToVideoQueue := queue.NewGooglePubsub(logger, pubsubClient, ImageToVideoJobTopic)
+
 	r := mux.NewRouter()
 	r.Handle("/upload", mainPage{logger: logger})
 	r.Handle("/upload_complete", exampleHandler{
@@ -108,16 +119,14 @@ func main() {
 		topicName:        PDFToImageJobTopic,
 	})
 	r.Handle("/report_pdf_split", reportPDFSplit{
-		logger:          logger,
-		datastoreClient: datastoreClient,
-		pubsubClient:    pubsubClient,
-		parentTableName: ParentJobTableName,
-		tableName:       PDFToImageJobTableName,
-		nextTableName:   ImageToVideoJobTableName,
-		nextTopicName:   ImageToVideoJobTopic,
+		Logger:            logger,
+		ParentStore:       parentStore,
+		PdfToImageStore:   pdfToImageStore,
+		ImageToVideoStore: imageToVideoStore,
+		ImageToVideoQueue: imageToVideoQueue,
 	})
 	r.Handle("/report_image_to_video", reportImageToVideo{
-		logger:          logger,
+		Logger:          logger,
 		datastoreClient: datastoreClient,
 		pubsubClient:    pubsubClient,
 		tableName:       ImageToVideoJobTableName,
@@ -125,15 +134,10 @@ func main() {
 		nextTopicName:   VideoConcatJobTopic,
 	})
 	r.Handle("/report_video_concat", reportVideoConcat{
-		logger:          logger,
+		Logger:          logger,
 		datastoreClient: datastoreClient,
 		tableName:       VideoConcatJobTableName,
 		parentTableName: ParentJobTableName,
-	})
-	r.Handle("/jobs", viewAllParentJobs{
-		logger:          logger,
-		datastoreClient: datastoreClient,
-		tableName:       ParentJobTableName,
 	})
 	r.Handle("/download", downloadJob{
 		logger:        logger,
@@ -142,11 +146,18 @@ func main() {
 	})
 
 	s := r.PathPrefix("/api/v1").Subrouter()
-	s.Handle("/jobs", viewAllParentJobsAPI{
-		logger:          logger,
-		datastoreClient: datastoreClient,
-		tableName:       ParentJobTableName,
-	})
+	s.Handle("/jobs", h.ViewAllParentJobsAPI{
+		Logger:      logger,
+		ParentStore: parentStore,
+	}).Methods("GET")
+	s.Handle("job", h.CreateParentJob{
+		Logger:           logger,
+		Blobstorage:      slideToVideoStorage,
+		ParentStore:      parentStore,
+		PDFToImageStore:  pdfToImageStore,
+		PDFToImageQueue:  pdfToImageQueue,
+		BucketFolderName: BucketFolder,
+	}).Methods("POST")
 	s.Handle("/login", h.Login{
 		Logger:      logger,
 		ClientID:    webCredJSON.ClientID,
@@ -160,7 +171,7 @@ func main() {
 		ClientSecret: webCredJSON.ClientSecret,
 		RedirectURI:  webCredJSON.RedirectURI,
 		Auth:         webCredJSON.Auth,
-		UserStore:    user.NewGoogleDatastore(datastoreClient, UserTableName),
+		UserStore:    userStore,
 	})
 
 	cors := handlers.CORS(

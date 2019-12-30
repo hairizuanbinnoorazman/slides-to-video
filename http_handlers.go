@@ -13,6 +13,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
+
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/jobs"
+
 	"github.com/gofrs/uuid"
 
 	"cloud.google.com/go/datastore"
@@ -167,13 +172,11 @@ func (h mainPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type reportPDFSplit struct {
-	logger          Logger
-	datastoreClient *datastore.Client
-	pubsubClient    *pubsub.Client
-	parentTableName string
-	tableName       string
-	nextTableName   string
-	nextTopicName   string
+	Logger            logger.Logger
+	ParentStore       jobs.ParentJobStore
+	PdfToImageStore   jobs.PDFToImageStore
+	ImageToVideoStore jobs.ImageToVideoStore
+	ImageToVideoQueue queue.Queue
 }
 
 type SlideDetail struct {
@@ -182,8 +185,8 @@ type SlideDetail struct {
 }
 
 func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start Report PDF Split Handler")
-	defer h.logger.Info("End Report PDF Split Handler")
+	h.Logger.Info("Start Report PDF Split Handler")
+	defer h.Logger.Info("End Report PDF Split Handler")
 
 	type request struct {
 		ID           string        `json:"id"`
@@ -196,55 +199,52 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal(rawData, &req)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to receive the input for this request and parse it to json. Error: %v", err)
-		h.logger.Error(errMsg)
+		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 	}
 
-	store := NewStore(h.datastoreClient, h.tableName)
-	job, err := store.GetPDFToImageJob(context.Background(), req.ID)
+	job, err := h.PdfToImageStore.GetPDFToImageJob(context.Background(), req.ID)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to get pdf to image job details. Error: %v %v", err, h.tableName)
-		h.logger.Error(errMsg)
+		errMsg := fmt.Sprintf("Error - unable to get pdf to image job details. Error: %v", err)
+		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 		return
 	}
 
 	if job.Status == "completed" {
-		h.logger.Infof("Detected completed PDF job but another request wants to reset it to running")
+		h.Logger.Infof("Detected completed PDF job but another request wants to reset it to running")
 		w.WriteHeader(200)
 		w.Write([]byte("Completed"))
 		return
 	}
 
 	job.Status = req.Status
-	err = store.StorePDFToImageJob(context.Background(), job)
+	err = h.PdfToImageStore.StorePDFToImageJob(context.Background(), job)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to save and store pdf status. Error: %v", err)
-		h.logger.Error(errMsg)
+		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 		return
 	}
 
-	parentStore := NewStore(h.datastoreClient, h.parentTableName)
-	parentJob, _ := parentStore.GetParentJob(context.Background(), job.ParentJobID)
+	parentJob, _ := h.ParentStore.GetParentJob(context.Background(), job.ParentJobID)
 	var scripts scriptParse
 	json.Unmarshal([]byte(parentJob.Script), &scripts)
 
 	parentJob.Status = "running"
-	parentStore.StoreParentJob(context.Background(), parentJob)
+	h.ParentStore.StoreParentJob(context.Background(), parentJob)
 
 	for i, slideDetail := range req.SlideDetails {
-		store := NewStore(h.datastoreClient, h.nextTableName)
 		rawID, _ := uuid.NewV4()
 		jobID := rawID.String()
 		splitFileName := strings.Split(slideDetail.ImageID, "-")
 		slideNoAndFileFormat := strings.Split(splitFileName[len(splitFileName)-1], ".")
 		num, _ := strconv.Atoi(slideNoAndFileFormat[0])
 
-		image2videoJob := ImageToVideoJob{
+		image2videoJob := jobs.ImageToVideoJob{
 			ID:          jobID,
 			ParentJobID: job.ParentJobID,
 			ImageID:     slideDetail.ImageID,
@@ -252,15 +252,14 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Text:        scripts.Script[i],
 			Status:      "created",
 		}
-		store.StoreImageToVideoJob(context.Background(), image2videoJob)
+		h.ImageToVideoStore.StoreImageToVideoJob(context.Background(), image2videoJob)
 
 		values := map[string]string{"id": image2videoJob.ID, "image_id": image2videoJob.ImageID, "text": image2videoJob.Text}
 		jsonValue, _ := json.Marshal(values)
-		pubsub := Pubsub{h.logger, h.pubsubClient, h.nextTopicName}
-		err = pubsub.publish(context.Background(), jsonValue)
+		err = h.ImageToVideoQueue.Add(context.Background(), jsonValue)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error - unable to send pdf split job. Error: %v", err)
-			h.logger.Error(errMsg)
+			h.Logger.Error(errMsg)
 		}
 	}
 
@@ -269,7 +268,7 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type reportImageToVideo struct {
-	logger          Logger
+	Logger          logger.Logger
 	datastoreClient *datastore.Client
 	pubsubClient    *pubsub.Client
 	tableName       string
@@ -278,8 +277,8 @@ type reportImageToVideo struct {
 }
 
 func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start Report Image To Video Handler")
-	defer h.logger.Info("End Report Image to Video Handler")
+	h.Logger.Info("Start Report Image To Video Handler")
+	defer h.Logger.Info("End Report Image to Video Handler")
 
 	type request struct {
 		ID         string `json:"id"`
@@ -292,7 +291,7 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal(rawData, &req)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to receive the input for this request and parse it to json. Error: %v", err)
-		h.logger.Error(errMsg)
+		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 		return
@@ -302,14 +301,14 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	job, err := store.GetImageToVideoJob(context.Background(), req.ID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to get pdf to image to video details. Error: %v", err)
-		h.logger.Error(errMsg)
+		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 		return
 	}
 
 	if job.Status == "completed" {
-		h.logger.Infof("Detected completed Image to Video job but another request wants to reset it to running")
+		h.Logger.Infof("Detected completed Image to Video job but another request wants to reset it to running")
 		w.WriteHeader(200)
 		w.Write([]byte("Completed"))
 		return
@@ -322,7 +321,7 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	items, err := store.GetAllImageToVideoJobs(context.Background(), job.ParentJobID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve list of job ids based on parent. Error: %v", err)
-		h.logger.Error(errMsg)
+		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 		return
@@ -363,11 +362,11 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	values := map[string]interface{}{"id": concatJob.ID, "video_ids": concatJob.Videos}
 	jsonValue, _ := json.Marshal(values)
-	pubsub := Pubsub{h.logger, h.pubsubClient, h.nextTopicName}
+	pubsub := Pubsub{h.Logger, h.pubsubClient, h.nextTopicName}
 	err = pubsub.publish(context.Background(), jsonValue)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to send pdf split job. Error: %v", err)
-		h.logger.Error(errMsg)
+		h.Logger.Error(errMsg)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -375,15 +374,15 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type reportVideoConcat struct {
-	logger          Logger
+	Logger          logger.Logger
 	datastoreClient *datastore.Client
 	tableName       string
 	parentTableName string
 }
 
 func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start Report Video Concat Handler")
-	defer h.logger.Info("End Report Video Concat Handler")
+	h.Logger.Info("Start Report Video Concat Handler")
+	defer h.Logger.Info("End Report Video Concat Handler")
 
 	type request struct {
 		ID          string `json:"id"`
@@ -396,7 +395,7 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal(rawData, &req)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to receive the input for this request and parse it to json. Error: %v", err)
-		h.logger.Error(errMsg)
+		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 		return
@@ -406,7 +405,7 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	job, err := store.GetVideoConcatJob(context.Background(), req.ID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to get pdf to image job details. Error: %v", err)
-		h.logger.Error(errMsg)
+		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 		return
@@ -416,7 +415,7 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	parentJob, _ := parentStore.GetParentJob(context.Background(), job.ParentJobID)
 
 	if parentJob.Status == "completed" {
-		h.logger.Infof("Detected parent job status is already completed but another request comes in to reset it. Reject it")
+		h.Logger.Infof("Detected parent job status is already completed but another request comes in to reset it. Reject it")
 		w.WriteHeader(200)
 		w.Write([]byte("Completed"))
 		return
@@ -434,88 +433,6 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Implemented"))
-}
-
-type viewAllParentJobs struct {
-	logger          Logger
-	datastoreClient *datastore.Client
-	tableName       string
-}
-
-func (h viewAllParentJobs) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start View All Parent Jobs Handler")
-	defer h.logger.Info("End View All Parent Jobs Handler")
-
-	store := NewStore(h.datastoreClient, h.tableName)
-	parentJobs, err := store.GetAllParentJobs(context.Background())
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	t, err := template.ParseFiles("parentJobs.html")
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to parse templete. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	varmap := map[string]interface{}{
-		"parentJobs": parentJobs,
-	}
-
-	err = t.Execute(w, varmap)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to parse templete. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-	return
-}
-
-type viewAllParentJobsAPI struct {
-	logger          Logger
-	datastoreClient *datastore.Client
-	tableName       string
-}
-
-func (h viewAllParentJobsAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start View All Parent Jobs API Handler")
-	defer h.logger.Info("End View All Parent Jobs API Handler")
-
-	store := NewStore(h.datastoreClient, h.tableName)
-	parentJobs, err := store.GetAllParentJobs(context.Background())
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	type jobsResponse struct {
-		Jobs []ParentJob `json:"jobs"`
-	}
-
-	rawParentJobs, err := json.Marshal(jobsResponse{Jobs: parentJobs})
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(rawParentJobs)
-	return
 }
 
 type downloadJob struct {
