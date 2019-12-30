@@ -134,10 +134,9 @@ func main() {
 		VideoConcatQueue:  videoConcatQueue,
 	})
 	r.Handle("/report_video_concat", reportVideoConcat{
-		Logger:          logger,
-		datastoreClient: datastoreClient,
-		tableName:       VideoConcatJobTableName,
-		parentTableName: ParentJobTableName,
+		Logger:           logger,
+		ParentStore:      parentStore,
+		VideoConcatStore: videoConcatStore,
 	})
 	r.Handle("/download", downloadJob{
 		logger:        logger,

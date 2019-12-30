@@ -369,10 +369,9 @@ func (h reportImageToVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type reportVideoConcat struct {
-	Logger          logger.Logger
-	datastoreClient *datastore.Client
-	tableName       string
-	parentTableName string
+	Logger           logger.Logger
+	ParentStore      jobs.ParentJobStore
+	VideoConcatStore jobs.VideoConcatStore
 }
 
 func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -396,8 +395,7 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	store := NewStore(h.datastoreClient, h.tableName)
-	job, err := store.GetVideoConcatJob(context.Background(), req.ID)
+	job, err := h.VideoConcatStore.GetVideoConcatJob(context.Background(), req.ID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to get pdf to image job details. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -406,8 +404,7 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parentStore := NewStore(h.datastoreClient, h.parentTableName)
-	parentJob, _ := parentStore.GetParentJob(context.Background(), job.ParentJobID)
+	parentJob, _ := h.ParentStore.GetParentJob(context.Background(), job.ParentJobID)
 
 	if parentJob.Status == "completed" {
 		h.Logger.Infof("Detected parent job status is already completed but another request comes in to reset it. Reject it")
@@ -419,12 +416,12 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	job.Status = req.Status
 	job.OutputFile = req.OutputVideo
 
-	store.StoreVideoConcatJob(context.Background(), job)
+	h.VideoConcatStore.StoreVideoConcatJob(context.Background(), job)
 
 	parentJob.Status = req.Status
 	parentJob.VideoFile = req.OutputVideo
 
-	parentStore.StoreParentJob(context.Background(), parentJob)
+	h.ParentStore.StoreParentJob(context.Background(), parentJob)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Implemented"))
