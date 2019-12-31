@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/jobs"
 
@@ -98,6 +99,8 @@ func (h CreateParentJob) createParentJob(store jobs.ParentJobStore, filename, sc
 		Filename:         jobID + ".pdf",
 		Script:           script,
 		Status:           "created",
+		DateCreated:      time.Now(),
+		DateModified:     time.Now(),
 	}
 	err := store.StoreParentJob(context.Background(), parentJob)
 	if err != nil {
@@ -110,10 +113,12 @@ func (h CreateParentJob) createPDFSplitJob(store jobs.PDFToImageStore, parentJob
 	rawID, _ := uuid.NewV4()
 	jobID := rawID.String()
 	pdfToImageJob := jobs.PDFToImageJob{
-		ID:          jobID,
-		ParentJobID: parentJobID,
-		Filename:    filename,
-		Status:      "created",
+		ID:           jobID,
+		ParentJobID:  parentJobID,
+		Filename:     filename,
+		Status:       "created",
+		DateCreated:  time.Now(),
+		DateModified: time.Now(),
 	}
 	err := store.StorePDFToImageJob(context.Background(), pdfToImageJob)
 	if err != nil {
