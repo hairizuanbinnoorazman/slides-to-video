@@ -149,7 +149,7 @@ func main() {
 		Logger:      logger,
 		ParentStore: parentStore,
 	}).Methods("GET")
-	s.Handle("job", h.CreateParentJob{
+	s.Handle("/job", h.CreateParentJob{
 		Logger:           logger,
 		Blobstorage:      slideToVideoStorage,
 		ParentStore:      parentStore,
