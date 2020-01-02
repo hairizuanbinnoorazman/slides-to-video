@@ -176,7 +176,7 @@ func main() {
 	cors := handlers.CORS(
 		handlers.AllowedHeaders([]string{"content-type"}),
 		handlers.AllowedOrigins([]string{"*"}),
-		handlers.AllowedMethods([]string{"GET"}),
+		handlers.AllowedMethods([]string{"GET", "POST"}),
 	)
 
 	srv := http.Server{
