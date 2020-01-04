@@ -103,17 +103,16 @@ func (g *GoogleDatastore) GetAllImageToVideoJobs(ctx context.Context, filterByPa
 	emailDetails := []ImageToVideoJob{}
 	q := datastore.NewQuery(g.EntityName)
 	if filterByParentID != "" {
-		q = q.Filter("ParentJobID = ", filterByParentID)
+		q = q.Filter("ParentJobID=", filterByParentID)
 	}
 	keys, err := g.Client.GetAll(ctx, q, &emailDetails)
 	if err != nil {
 		return []ImageToVideoJob{}, fmt.Errorf("unable to retrieve all results. err: %v", err)
 	}
-	emailItems := []ImageToVideoJob{}
 	for i, key := range keys {
 		emailDetails[i].ID = key.Name
 	}
-	return emailItems, nil
+	return emailDetails, nil
 }
 
 func (g *GoogleDatastore) StoreVideoConcatJob(ctx context.Context, e VideoConcatJob) error {
@@ -141,9 +140,8 @@ func (g *GoogleDatastore) GetAllVideoConcatJobs(ctx context.Context) ([]VideoCon
 	if err != nil {
 		return []VideoConcatJob{}, fmt.Errorf("unable to retrieve all results. err: %v", err)
 	}
-	emailItems := []VideoConcatJob{}
 	for i, key := range keys {
 		emailDetails[i].ID = key.Name
 	}
-	return emailItems, nil
+	return emailDetails, nil
 }
