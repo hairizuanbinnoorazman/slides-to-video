@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -143,32 +142,6 @@ func (h exampleHandler) CreatePDFSplitJob(parentJobID, filename string) (PDFToIm
 		return PDFToImageJob{}, err
 	}
 	return pdfToImageJob, nil
-}
-
-type mainPage struct {
-	logger Logger
-}
-
-func (h mainPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start Main Page Handler")
-	defer h.logger.Info("End Main Page Handler")
-
-	t, err := template.ParseFiles("main.html")
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to parse templete. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-	}
-
-	err = t.Execute(w, nil)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to parse templete. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-	}
-	return
 }
 
 type reportPDFSplit struct {

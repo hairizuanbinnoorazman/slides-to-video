@@ -108,18 +108,6 @@ func main() {
 	videoConcatQueue := queue.NewGooglePubsub(logger, pubsubClient, VideoConcatJobTopic)
 
 	r := mux.NewRouter()
-	r.Handle("/upload", mainPage{logger: logger})
-	r.Handle("/upload_complete", exampleHandler{
-		logger:           logger,
-		client:           xClient,
-		datastoreClient:  datastoreClient,
-		pubsubClient:     pubsubClient,
-		bucketName:       BucketName,
-		bucketFolderName: BucketFolder,
-		parentTableName:  ParentJobTableName,
-		tableName:        PDFToImageJobTableName,
-		topicName:        PDFToImageJobTopic,
-	})
 	r.Handle("/report_pdf_split", reportPDFSplit{
 		Logger:            logger,
 		ParentStore:       parentStore,
