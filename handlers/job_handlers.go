@@ -157,7 +157,7 @@ func (h GetParentJobAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	type job struct {
 		jobs.ParentJob
-		Slides []slide
+		Slides []slide `json:"slides"`
 	}
 
 	imageToVideoJobs, _ := h.ImageToVideoStore.GetAllImageToVideoJobs(context.Background(), parentJobID)
