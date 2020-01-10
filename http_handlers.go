@@ -11,6 +11,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
@@ -149,7 +152,6 @@ type reportPDFSplit struct {
 	ParentStore       jobs.ParentJobStore
 	PdfToImageStore   jobs.PDFToImageStore
 	ImageToVideoStore jobs.ImageToVideoStore
-	ImageToVideoQueue queue.Queue
 }
 
 type SlideDetail struct {
@@ -203,14 +205,7 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parentJob, _ := h.ParentStore.GetParentJob(context.Background(), job.ParentJobID)
-	var scripts scriptParse
-	json.Unmarshal([]byte(parentJob.Script), &scripts)
-
-	parentJob.Status = "running"
-	h.ParentStore.StoreParentJob(context.Background(), parentJob)
-
-	for i, slideDetail := range req.SlideDetails {
+	for _, slideDetail := range req.SlideDetails {
 		rawID, _ := uuid.NewV4()
 		jobID := rawID.String()
 		splitFileName := strings.Split(slideDetail.ImageID, "-")
@@ -218,20 +213,54 @@ func (h reportPDFSplit) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		num, _ := strconv.Atoi(slideNoAndFileFormat[0])
 
 		image2videoJob := jobs.ImageToVideoJob{
-			ID:          jobID,
-			ParentJobID: job.ParentJobID,
-			ImageID:     slideDetail.ImageID,
-			SlideID:     num,
-			Text:        scripts.Script[i],
-			Status:      "created",
+			ID:           jobID,
+			ParentJobID:  job.ParentJobID,
+			ImageID:      slideDetail.ImageID,
+			SlideID:      num,
+			Text:         "",
+			Status:       "created",
+			DateCreated:  time.Now(),
+			DateModified: time.Now(),
 		}
 		h.ImageToVideoStore.StoreImageToVideoJob(context.Background(), image2videoJob)
 
-		values := map[string]string{"id": image2videoJob.ID, "image_id": image2videoJob.ImageID, "text": image2videoJob.Text}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Implemented"))
+}
+
+type startVideoGeneration struct {
+	Logger            logger.Logger
+	ParentStore       jobs.ParentJobStore
+	PdfToImageStore   jobs.PDFToImageStore
+	ImageToVideoStore jobs.ImageToVideoStore
+	ImageToVideoQueue queue.Queue
+}
+
+func (h startVideoGeneration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	parentJobID := mux.Vars(r)["parent_job_id"]
+
+	parentJob, _ := h.ParentStore.GetParentJob(context.Background(), parentJobID)
+	parentJob.Status = "running"
+	h.ParentStore.StoreParentJob(context.Background(), parentJob)
+
+	var scripts scriptParse
+	rawData, _ := ioutil.ReadAll(r.Body)
+	json.Unmarshal(rawData, &scripts)
+
+	imageToVideoJobs, _ := h.ImageToVideoStore.GetAllImageToVideoJobs(context.Background(), parentJobID)
+
+	for i, imageToVideoJob := range imageToVideoJobs {
+		imageToVideoJob.Text = scripts.Script[i]
+		imageToVideoJob.DateModified = time.Now()
+		h.ImageToVideoStore.StoreImageToVideoJob(context.Background(), imageToVideoJob)
+
+		values := map[string]string{"id": imageToVideoJob.ID, "image_id": imageToVideoJob.ImageID, "text": imageToVideoJob.Text}
 		jsonValue, _ := json.Marshal(values)
-		err = h.ImageToVideoQueue.Add(context.Background(), jsonValue)
+		err := h.ImageToVideoQueue.Add(context.Background(), jsonValue)
 		if err != nil {
-			errMsg := fmt.Sprintf("Error - unable to send pdf split job. Error: %v", err)
+			errMsg := fmt.Sprintf("Error - unable to send image to video job. Error: %v", err)
 			h.Logger.Error(errMsg)
 		}
 	}

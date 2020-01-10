@@ -113,7 +113,6 @@ func main() {
 		ParentStore:       parentStore,
 		PdfToImageStore:   pdfToImageStore,
 		ImageToVideoStore: imageToVideoStore,
-		ImageToVideoQueue: imageToVideoQueue,
 	})
 	r.Handle("/report_image_to_video", reportImageToVideo{
 		Logger:            logger,
@@ -144,6 +143,18 @@ func main() {
 		PDFToImageStore:  pdfToImageStore,
 		PDFToImageQueue:  pdfToImageQueue,
 		BucketFolderName: BucketFolder,
+	}).Methods("POST")
+	s.Handle("/job/{parent_job_id}", h.GetParentJobAPI{
+		Logger:            logger,
+		ParentStore:       parentStore,
+		ImageToVideoStore: imageToVideoStore,
+	}).Methods("GET")
+	s.Handle("/job/{parent_job_id}:generate", startVideoGeneration{
+		Logger:            logger,
+		ParentStore:       parentStore,
+		PdfToImageStore:   pdfToImageStore,
+		ImageToVideoStore: imageToVideoStore,
+		ImageToVideoQueue: imageToVideoQueue,
 	}).Methods("POST")
 	s.Handle("/login", h.Login{
 		Logger:      logger,

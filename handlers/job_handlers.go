@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/jobs"
 
 	"github.com/gofrs/uuid"
@@ -125,6 +127,52 @@ func (h CreateParentJob) createPDFSplitJob(store jobs.PDFToImageStore, parentJob
 		return jobs.PDFToImageJob{}, err
 	}
 	return pdfToImageJob, nil
+}
+
+type GetParentJobAPI struct {
+	Logger            logger.Logger
+	ParentStore       jobs.ParentJobStore
+	ImageToVideoStore jobs.ImageToVideoStore
+}
+
+func (h GetParentJobAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start Get Parent Job API Handler")
+	defer h.Logger.Info("End Get Parent Job API Handler")
+
+	parentJobID := mux.Vars(r)["parent_job_id"]
+	parentJob, err := h.ParentStore.GetParentJob(context.Background(), parentJobID)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type slide struct {
+		ImageID string `json:"image_id"`
+		SlideID int    `json:"slide_id"`
+		Text    string `json:"text"`
+	}
+
+	type job struct {
+		jobs.ParentJob
+		Slides []slide
+	}
+
+	imageToVideoJobs, _ := h.ImageToVideoStore.GetAllImageToVideoJobs(context.Background(), parentJobID)
+	var obtainedSlides []slide
+	for _, imageToVideoJob := range imageToVideoJobs {
+		singleObtainedSlide := slide{ImageID: imageToVideoJob.ImageID, SlideID: imageToVideoJob.SlideID, Text: imageToVideoJob.Text}
+		obtainedSlides = append(obtainedSlides, singleObtainedSlide)
+	}
+
+	obtainedJob := job{parentJob, obtainedSlides}
+
+	rawParentJob, _ := json.Marshal(obtainedJob)
+	w.WriteHeader(http.StatusOK)
+	w.Write(rawParentJob)
+	return
 }
 
 type ViewAllParentJobsAPI struct {
