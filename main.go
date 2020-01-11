@@ -125,11 +125,6 @@ func main() {
 		ParentStore:      parentStore,
 		VideoConcatStore: videoConcatStore,
 	})
-	r.Handle("/download", downloadJob{
-		logger:        logger,
-		storageClient: xClient,
-		bucketName:    BucketName,
-	})
 
 	s := r.PathPrefix("/api/v1").Subrouter()
 	s.Handle("/jobs", h.ViewAllParentJobsAPI{
@@ -156,6 +151,16 @@ func main() {
 		ImageToVideoStore: imageToVideoStore,
 		ImageToVideoQueue: imageToVideoQueue,
 	}).Methods("POST")
+	s.Handle("/video/{video_id}", downloadVideo{
+		logger:        logger,
+		storageClient: xClient,
+		bucketName:    BucketName,
+	}).Methods("GET")
+	s.Handle("/image/{image_id}", downloadImage{
+		logger:        logger,
+		storageClient: xClient,
+		bucketName:    BucketName,
+	}).Methods("GET")
 	s.Handle("/login", h.Login{
 		Logger:      logger,
 		ClientID:    webCredJSON.ClientID,
