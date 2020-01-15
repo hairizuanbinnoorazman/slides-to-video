@@ -30,8 +30,8 @@ type CreateParentJob struct {
 }
 
 func (h CreateParentJob) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.Logger.Info("Start Example Handler")
-	defer h.Logger.Info("End Example Handler")
+	h.Logger.Info("Start Create Parent Job Handler")
+	defer h.Logger.Info("End Create Parent Job Handler")
 
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
