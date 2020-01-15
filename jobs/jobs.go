@@ -52,7 +52,11 @@ type VideoConcatJob struct {
 }
 
 type Job struct {
-	ID           string    `json:"id" datastore:"-"`
+	ID string `json:"id" datastore:"-"`
+	// Reference to task entity that would be linked up to this job
+	// e.g. If linked to ParentJob - this would reflect on the various jobs that would need to be
+	// run for that video project
+	RefID        string    `json:"ref_id"`
 	Type         string    `json:"type"`
 	Message      string    `json:"message"`
 	Status       string    `json:"status"`
