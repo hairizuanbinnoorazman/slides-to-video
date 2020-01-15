@@ -145,3 +145,50 @@ func (g *GoogleDatastore) GetAllVideoConcatJobs(ctx context.Context) ([]VideoCon
 	}
 	return emailDetails, nil
 }
+
+func (g *GoogleDatastore) CreateJob(ctx context.Context, e Job) error {
+	newKey := datastore.NameKey(g.EntityName, e.ID, nil)
+	_, err := g.Client.Put(ctx, newKey, &e)
+	if err != nil {
+		return fmt.Errorf("unable to send record to datastore: err: %v", err)
+	}
+	return nil
+}
+
+func (g *GoogleDatastore) GetJob(ctx context.Context, ID string) (Job, error) {
+	key := datastore.NameKey(g.EntityName, ID, nil)
+	job := Job{}
+	if err := g.Client.Get(ctx, key, &job); err != nil {
+		return Job{}, fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
+	}
+	job.ID = ID
+	return job, nil
+}
+
+func (g *GoogleDatastore) UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) error {
+	key := datastore.NameKey(g.EntityName, ID, nil)
+	job := Job{}
+	if err := g.Client.Get(ctx, key, &job); err != nil {
+		return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
+	}
+	for _, setFunc := range setters {
+		setFunc(&job)
+	}
+	_, err := g.Client.Put(ctx, key, &job)
+	if err != nil {
+		return fmt.Errorf("unable to send record to datastore: err: %v", err)
+	}
+	return nil
+}
+
+func (g *GoogleDatastore) GetAllJobs(ctx context.Context) ([]Job, error) {
+	jobs := []Job{}
+	keys, err := g.Client.GetAll(ctx, datastore.NewQuery(g.EntityName), &jobs)
+	if err != nil {
+		return []Job{}, fmt.Errorf("unable to retrieve all results. err: %v", err)
+	}
+	for i, key := range keys {
+		jobs[i].ID = key.Name
+	}
+	return jobs, nil
+}

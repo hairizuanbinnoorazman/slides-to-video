@@ -51,6 +51,15 @@ type VideoConcatJob struct {
 	UserID       string    `json:"user_id"`
 }
 
+type Job struct {
+	ID           string    `json:"id" datastore:"-"`
+	Type         string    `json:"type"`
+	Message      string    `json:"message"`
+	Status       string    `json:"status"`
+	DateCreated  time.Time `json:"date_created"`
+	DateModified time.Time `json:"date_modified"`
+}
+
 type ParentJobStore interface {
 	StoreParentJob(ctx context.Context, e ParentJob) error
 	GetParentJob(ctx context.Context, ID string) (ParentJob, error)
@@ -73,4 +82,17 @@ type VideoConcatStore interface {
 	StoreVideoConcatJob(ctx context.Context, e VideoConcatJob) error
 	GetVideoConcatJob(ctx context.Context, ID string) (VideoConcatJob, error)
 	GetAllVideoConcatJobs(ctx context.Context) ([]VideoConcatJob, error)
+}
+
+type JobStore interface {
+	StoreJob(ctx context.Context, e Job) error
+	GetJob(ctx context.Context, ID string) (Job, error)
+	GetAllJobs(ctx context.Context) ([]Job, error)
+	UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) error
+}
+
+func SetStatus(status string) func(*Job) {
+	return func(a *Job) {
+		a.Status = status
+	}
 }
