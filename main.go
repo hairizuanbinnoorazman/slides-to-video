@@ -141,14 +141,13 @@ func main() {
 		ProjectStore:     projectStore,
 		JobStore:         jobStore,
 	}).Methods("POST")
-	s.Handle("/jobs", h.ViewAllParentJobsAPI{
-		Logger:      logger,
-		ParentStore: parentStore,
+	s.Handle("/projects", h.GetAllProjects{
+		Logger:       logger,
+		ProjectStore: projectStore,
 	}).Methods("GET")
-	s.Handle("/job/{parent_job_id}", h.GetParentJobAPI{
-		Logger:            logger,
-		ParentStore:       parentStore,
-		ImageToVideoStore: imageToVideoStore,
+	s.Handle("/job/{parent_job_id}", h.GetProject{
+		Logger:       logger,
+		ProjectStore: projectStore,
 	}).Methods("GET")
 	s.Handle("/job/{parent_job_id}:generate", startVideoGeneration{
 		Logger:            logger,

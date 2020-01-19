@@ -108,12 +108,12 @@ func (h CreateProject) createPDFSplitJob(parentJobID, filename string) error {
 	return nil
 }
 
-type GetParentJobAPI struct {
+type GetProject struct {
 	Logger       logger.Logger
 	ProjectStore project.ProjectStore
 }
 
-func (h GetParentJobAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start Get Parent Job API Handler")
 	defer h.Logger.Info("End Get Parent Job API Handler")
 
@@ -134,13 +134,13 @@ func (h GetParentJobAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-type ViewAllParentJobsAPI struct {
+type GetAllProjects struct {
 	Logger       logger.Logger
 	ProjectStore project.ProjectStore
 	ParentStore  jobs.ParentJobStore
 }
 
-func (h ViewAllParentJobsAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start View All Parent Jobs API Handler")
 	defer h.Logger.Info("End View All Parent Jobs API Handler")
 
