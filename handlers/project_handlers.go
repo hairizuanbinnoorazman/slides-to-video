@@ -91,7 +91,7 @@ func (h CreateProject) createProjectRecord() (project.Project, error) {
 }
 
 func (h CreateProject) createPDFSplitJob(parentJobID, filename string) error {
-	job := jobs.NewJob(parentJobID, "PDF_Split_Job", "")
+	job := jobs.NewJob(parentJobID, jobs.PDFToImage, "")
 	values := map[string]string{"id": job.ID, "pdfFileName": filename}
 	jsonValue, _ := json.Marshal(values)
 	job.Message = string(jsonValue)
