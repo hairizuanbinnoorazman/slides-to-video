@@ -133,7 +133,8 @@ func main() {
 	})
 
 	s := r.PathPrefix("/api/v1").Subrouter()
-	s.Handle("/parent", h.CreateProject{
+	// Project based routes
+	s.Handle("/project", h.CreateProject{
 		Logger:           logger,
 		Blobstorage:      slideToVideoStorage,
 		PDFToImageQueue:  pdfToImageQueue,
@@ -145,10 +146,12 @@ func main() {
 		Logger:       logger,
 		ProjectStore: projectStore,
 	}).Methods("GET")
-	s.Handle("/job/{parent_job_id}", h.GetProject{
+	s.Handle("/project/{project_id}", h.GetProject{
 		Logger:       logger,
 		ProjectStore: projectStore,
 	}).Methods("GET")
+	// Job based routes
+
 	s.Handle("/job/{parent_job_id}:generate", startVideoGeneration{
 		Logger:            logger,
 		ParentStore:       parentStore,
