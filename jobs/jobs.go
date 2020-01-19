@@ -7,6 +7,10 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+var PDFToImage string = "pdf-split"
+var ImageToVideo string = "image-to-video"
+var VideoConcat string = "video-concat"
+
 type ParentJob struct {
 	ID               string    `json:"id" datastore:"-"`
 	OriginalFilename string    `json:"original_filename"`
@@ -110,7 +114,7 @@ type JobStore interface {
 	UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) error
 }
 
-func SetStatus(status string) func(*Job) {
+func SetJobStatus(status string) func(*Job) {
 	return func(a *Job) {
 		a.Status = status
 	}
