@@ -11,6 +11,10 @@ var PDFToImage string = "pdf-split"
 var ImageToVideo string = "image-to-video"
 var VideoConcat string = "video-concat"
 
+var SuccessStatus string = "success"
+var RunningStatus string = "running"
+var FailureStatus string = "failed"
+
 type ParentJob struct {
 	ID               string    `json:"id" datastore:"-"`
 	OriginalFilename string    `json:"original_filename"`
