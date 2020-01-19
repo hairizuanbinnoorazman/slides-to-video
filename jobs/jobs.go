@@ -3,6 +3,8 @@ package jobs
 import (
 	"context"
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 type ParentJob struct {
@@ -64,6 +66,19 @@ type Job struct {
 	DateModified time.Time `json:"date_modified"`
 }
 
+func NewJob(refID, Type, Msg string) Job {
+	jobID, _ := uuid.NewV4()
+	return Job{
+		ID:           jobID.String(),
+		RefID:        refID,
+		Type:         Type,
+		Message:      Msg,
+		Status:       "created",
+		DateCreated:  time.Now(),
+		DateModified: time.Now(),
+	}
+}
+
 type ParentJobStore interface {
 	StoreParentJob(ctx context.Context, e ParentJob) error
 	GetParentJob(ctx context.Context, ID string) (ParentJob, error)
@@ -89,7 +104,7 @@ type VideoConcatStore interface {
 }
 
 type JobStore interface {
-	StoreJob(ctx context.Context, e Job) error
+	CreateJob(ctx context.Context, e Job) error
 	GetJob(ctx context.Context, ID string) (Job, error)
 	GetAllJobs(ctx context.Context) ([]Job, error)
 	UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) error
