@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 )
 
 type Pubsub struct {
-	logger Logger
+	logger logger.Logger
 	client *pubsub.Client
 	topic  string
 }

@@ -32,7 +32,7 @@ type scriptParse struct {
 }
 
 type exampleHandler struct {
-	logger           Logger
+	logger           logger.Logger
 	client           *storage.Client
 	datastoreClient  *datastore.Client
 	pubsubClient     *pubsub.Client
@@ -430,7 +430,7 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type downloadVideo struct {
-	logger        Logger
+	logger        logger.Logger
 	storageClient *storage.Client
 	bucketName    string
 }
@@ -463,7 +463,7 @@ func (h downloadVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type downloadImage struct {
-	logger        Logger
+	logger        logger.Logger
 	storageClient *storage.Client
 	bucketName    string
 }

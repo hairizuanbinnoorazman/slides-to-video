@@ -7,10 +7,11 @@ import (
 	"io/ioutil"
 
 	"cloud.google.com/go/storage"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 )
 
 type BlobStorage struct {
-	logger     Logger
+	logger     logger.Logger
 	client     *storage.Client
 	bucketName string
 }
