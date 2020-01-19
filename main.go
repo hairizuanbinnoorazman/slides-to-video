@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
+
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
 	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/handlers"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/jobs"
@@ -38,6 +40,8 @@ var BucketFolder = "pdf"
 
 // ParentJob denotes which table would be used to save details of the job on top level
 var ParentJobTableName = "test-ParentJob"
+var ProjectTableName = "test-Project"
+var JobTableName = "test-Job"
 var PDFToImageJobTableName = "test-PDFToImageJob"
 var ImageToVideoJobTableName = "test-ImageToVideoJob"
 var VideoConcatJobTableName = "test-VideoConcatJob"
@@ -97,6 +101,8 @@ func main() {
 	var webCredJSON Config
 	json.Unmarshal(rawWebCredJSON, &webCredJSON)
 
+	projectStore := project.NewGoogleDatastore(datastoreClient, ProjectTableName)
+	jobStore := jobs.NewGoogleDatastore(datastoreClient, JobTableName)
 	userStore := user.NewGoogleDatastore(datastoreClient, UserTableName)
 	slideToVideoStorage := blobstorage.NewGCSStorage(logger, xClient, BucketName)
 	parentStore := jobs.NewGoogleDatastore(datastoreClient, ParentJobTableName)
@@ -127,18 +133,18 @@ func main() {
 	})
 
 	s := r.PathPrefix("/api/v1").Subrouter()
+	s.Handle("/parent", h.CreateProject{
+		Logger:           logger,
+		Blobstorage:      slideToVideoStorage,
+		PDFToImageQueue:  pdfToImageQueue,
+		BucketFolderName: BucketFolder,
+		ProjectStore:     projectStore,
+		JobStore:         jobStore,
+	}).Methods("POST")
 	s.Handle("/jobs", h.ViewAllParentJobsAPI{
 		Logger:      logger,
 		ParentStore: parentStore,
 	}).Methods("GET")
-	s.Handle("/job", h.CreateParentJob{
-		Logger:           logger,
-		Blobstorage:      slideToVideoStorage,
-		ParentStore:      parentStore,
-		PDFToImageStore:  pdfToImageStore,
-		PDFToImageQueue:  pdfToImageQueue,
-		BucketFolderName: BucketFolder,
-	}).Methods("POST")
 	s.Handle("/job/{parent_job_id}", h.GetParentJobAPI{
 		Logger:            logger,
 		ParentStore:       parentStore,
