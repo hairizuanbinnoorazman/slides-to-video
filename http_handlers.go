@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -22,129 +19,11 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"cloud.google.com/go/datastore"
-	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
 )
 
 type scriptParse struct {
 	Script []string `json:"script"`
-}
-
-type exampleHandler struct {
-	logger           logger.Logger
-	client           *storage.Client
-	datastoreClient  *datastore.Client
-	pubsubClient     *pubsub.Client
-	bucketName       string
-	bucketFolderName string
-	parentTableName  string
-	tableName        string
-	topicName        string
-}
-
-func (h exampleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start Example Handler")
-	defer h.logger.Info("End Example Handler")
-
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to retrieve parse multipart form data. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
-		return
-	}
-	script := r.FormValue("script")
-	h.logger.Info(script)
-	file, handler, err := r.FormFile("myfile")
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to retrieve form data. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
-		return
-	}
-	defer file.Close()
-	var b bytes.Buffer
-	bw := bufio.NewWriter(&b)
-	io.Copy(bw, file)
-
-	bs := BlobStorage{
-		logger:     h.logger,
-		client:     h.client,
-		bucketName: h.bucketName,
-	}
-	parentJob, err := h.CreateParentJob(handler.Filename, script)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to save parent job to datastore. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	bs.Save(context.Background(), h.bucketFolderName+"/"+parentJob.Filename, b.Bytes())
-
-	job, err := h.CreatePDFSplitJob(parentJob.ID, parentJob.Filename)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to save pdf split job. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	values := map[string]string{"id": job.ID, "pdfFileName": job.Filename}
-	jsonValue, _ := json.Marshal(values)
-	pubsub := Pubsub{h.logger, h.pubsubClient, h.topicName}
-	err = pubsub.publish(context.Background(), jsonValue)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to send pdf split job. Error: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("%v successfully uploaded. Go to the /jobs page for viewing progress", handler.Filename)))
-	return
-}
-
-func (h exampleHandler) CreateParentJob(filename, script string) (ParentJob, error) {
-	store := NewStore(h.datastoreClient, h.parentTableName)
-	rawID, _ := uuid.NewV4()
-	jobID := rawID.String()
-	parentJob := ParentJob{
-		ID:               jobID,
-		OriginalFilename: filename,
-		Filename:         jobID + ".pdf",
-		Script:           script,
-		Status:           "created",
-	}
-	err := store.StoreParentJob(context.Background(), parentJob)
-	if err != nil {
-		return ParentJob{}, err
-	}
-	return parentJob, nil
-}
-
-func (h exampleHandler) CreatePDFSplitJob(parentJobID, filename string) (PDFToImageJob, error) {
-	store := NewStore(h.datastoreClient, h.tableName)
-	rawID, _ := uuid.NewV4()
-	jobID := rawID.String()
-	pdfToImageJob := PDFToImageJob{
-		ID:          jobID,
-		ParentJobID: parentJobID,
-		Filename:    filename,
-		Status:      "created",
-	}
-	err := store.StorePDFToImageJob(context.Background(), pdfToImageJob)
-	if err != nil {
-		return PDFToImageJob{}, err
-	}
-	return pdfToImageJob, nil
 }
 
 type reportPDFSplit struct {
