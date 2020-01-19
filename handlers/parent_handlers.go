@@ -109,17 +109,16 @@ func (h CreateProject) createPDFSplitJob(parentJobID, filename string) error {
 }
 
 type GetParentJobAPI struct {
-	Logger            logger.Logger
-	ParentStore       jobs.ParentJobStore
-	ImageToVideoStore jobs.ImageToVideoStore
+	Logger       logger.Logger
+	ProjectStore project.ProjectStore
 }
 
 func (h GetParentJobAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start Get Parent Job API Handler")
 	defer h.Logger.Info("End Get Parent Job API Handler")
 
-	parentJobID := mux.Vars(r)["parent_job_id"]
-	parentJob, err := h.ParentStore.GetParentJob(context.Background(), parentJobID)
+	projectID := mux.Vars(r)["project_id"]
+	project, err := h.ProjectStore.GetProject(context.Background(), projectID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -128,42 +127,24 @@ func (h GetParentJobAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type slide struct {
-		ImageID string `json:"image_id"`
-		SlideID int    `json:"slide_id"`
-		Text    string `json:"text"`
-	}
+	rawProject, _ := json.Marshal(project)
 
-	type job struct {
-		jobs.ParentJob
-		Slides []slide `json:"slides"`
-	}
-
-	imageToVideoJobs, _ := h.ImageToVideoStore.GetAllImageToVideoJobs(context.Background(), parentJobID)
-	var obtainedSlides []slide
-	for _, imageToVideoJob := range imageToVideoJobs {
-		singleObtainedSlide := slide{ImageID: imageToVideoJob.ImageID, SlideID: imageToVideoJob.SlideID, Text: imageToVideoJob.Text}
-		obtainedSlides = append(obtainedSlides, singleObtainedSlide)
-	}
-
-	obtainedJob := job{parentJob, obtainedSlides}
-
-	rawParentJob, _ := json.Marshal(obtainedJob)
 	w.WriteHeader(http.StatusOK)
-	w.Write(rawParentJob)
+	w.Write(rawProject)
 	return
 }
 
 type ViewAllParentJobsAPI struct {
-	Logger      logger.Logger
-	ParentStore jobs.ParentJobStore
+	Logger       logger.Logger
+	ProjectStore project.ProjectStore
+	ParentStore  jobs.ParentJobStore
 }
 
 func (h ViewAllParentJobsAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start View All Parent Jobs API Handler")
 	defer h.Logger.Info("End View All Parent Jobs API Handler")
 
-	parentJobs, err := h.ParentStore.GetAllParentJobs(context.Background())
+	projects, err := h.ProjectStore.GetAllProjects(context.Background())
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -172,11 +153,7 @@ func (h ViewAllParentJobsAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	type jobsResponse struct {
-		Jobs []jobs.ParentJob `json:"jobs"`
-	}
-
-	rawParentJobs, err := json.Marshal(jobsResponse{Jobs: parentJobs})
+	rawParentJobs, err := json.Marshal(projects)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
