@@ -1,3 +1,27 @@
+# Slide to Video Manager
+
+## Happy Path
+
+This defines expected userflow when using the tool:
+
+- User uploads PDF file to platform
+- Loads to Project page
+- Project page loads up all pictures after a while of processing
+- User adds in text in each of the slides
+- User clicks to generate the video at the end
+- Video link would be made available at the top of Single Project Page
+
+Api flow - based on above flow
+
+- Create project (accepts PDF file) -> should return a Project ID -> create project should create PDF Split Job
+- Frontend goes to project page -> calls GetProject (ID)
+- User refreshes manually (maybe future flow can adjust) -> call GetProject (ID) -> images should update soon
+- After user adds text -> can click save at the top -> call PatchProject (ID) -> only script text can be updated here
+- After user is done with adding text -> click on GenerateVideo -> calls to Project:Generate API -> this one would create the image to video jobs as well as video concat jobs accordingly
+
+
+## Legacy notes
+
 - Add pubsub to shoot job ids
 - Integrate microservices tgt -> its reports to this service
   - pdf splitter
