@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"cloud.google.com/go/datastore"
 )
@@ -70,16 +69,6 @@ type VideoConcatJobDetails struct {
 	Videos      []string
 	Status      string
 	OutputFile  string
-}
-
-type User struct {
-	ID           string
-	Email        string
-	RefreshToken string
-	AuthToken    string
-	Type         string
-	DateCreated  time.Time
-	DateModified time.Time
 }
 
 type GoogleDatastore struct {
