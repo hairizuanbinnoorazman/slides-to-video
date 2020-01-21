@@ -116,6 +116,7 @@ type JobStore interface {
 	GetJob(ctx context.Context, ID string) (Job, error)
 	GetAllJobs(ctx context.Context) ([]Job, error)
 	UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) error
+	DeleteJob(ctx context.Context, ID string) error
 }
 
 func SetJobStatus(status string) func(*Job) {

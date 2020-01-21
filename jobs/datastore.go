@@ -192,3 +192,12 @@ func (g *GoogleDatastore) GetAllJobs(ctx context.Context) ([]Job, error) {
 	}
 	return jobs, nil
 }
+
+func (g *GoogleDatastore) DeleteJob(ctx context.Context, ID string) error {
+	key := datastore.NameKey(g.EntityName, ID, nil)
+	err := g.Client.Delete(ctx, key)
+	if err != nil {
+		return fmt.Errorf("unable to retrieve all results. err: %v", err)
+	}
+	return nil
+}
