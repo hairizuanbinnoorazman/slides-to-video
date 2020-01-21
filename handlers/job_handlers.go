@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
+
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
 
 	"github.com/gorilla/mux"
@@ -15,9 +17,10 @@ import (
 )
 
 type UpdateJobStatus struct {
-	Logger       logger.Logger
-	JobStore     jobs.JobStore
-	ProjectStore project.ProjectStore
+	Logger           logger.Logger
+	JobStore         jobs.JobStore
+	ProjectStore     project.ProjectStore
+	VideoConcatQueue queue.Queue
 }
 
 func (h UpdateJobStatus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +133,22 @@ func (h UpdateJobStatus) handleImageToVideo(jobID, jobStatus string, rawJobDetai
 		json.Unmarshal(rawJobDetails, &jobDetails)
 
 		h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoID(jobDetails.ID, jobDetails.OutputFile))
+
+		successfulJobs, _ := h.JobStore.GetAllJobs(context.Background(), jobs.FilterRefID(job.RefID), jobs.FilterStatus(jobs.SuccessStatus))
+		project, _ := h.ProjectStore.GetProject(context.Background(), job.RefID)
+
+		if len(project.SlideAssets) == len(successfulJobs) {
+			videoConcatJob := jobs.NewJob(job.RefID, jobs.VideoConcat, "")
+			var videoList []string
+			for _, slideAsset := range project.SlideAssets {
+				videoList = append(videoList, slideAsset.VideoID)
+			}
+			videoConcatJobDetails := map[string]interface{}{"id": videoConcatJob.ID, "video_ids": videoList}
+			rawVideoConcatJobDetails, _ := json.Marshal(videoConcatJobDetails)
+			videoConcatJob.Message = string(rawVideoConcatJobDetails)
+			h.JobStore.CreateJob(context.Background(), videoConcatJob)
+			h.VideoConcatQueue.Add(context.Background(), rawVideoConcatJobDetails)
+		}
 
 	case jobs.FailureStatus:
 		h.Logger.Info("Failed Image to Video")
