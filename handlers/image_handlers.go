@@ -1,0 +1,42 @@
+package handlers
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
+)
+
+type DownloadImage struct {
+	Logger        logger.Logger
+	StorageClient blobstorage.BlobStorage
+}
+
+func (h DownloadImage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start Download Handler")
+	defer h.Logger.Info("End Download Handler")
+
+	filename := mux.Vars(r)["image_id"]
+	if filename == "" {
+		errMsg := fmt.Sprintf("Missing image id field")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	content, err := h.StorageClient.Load(context.Background(), "images/"+filename)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to download file from blob storage. Err: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write(content)
+}

@@ -18,8 +18,6 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/jobs"
 
 	"github.com/gofrs/uuid"
-
-	"cloud.google.com/go/storage"
 )
 
 type scriptParse struct {
@@ -306,70 +304,4 @@ func (h reportVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Implemented"))
-}
-
-type downloadVideo struct {
-	logger        logger.Logger
-	storageClient *storage.Client
-	bucketName    string
-}
-
-func (h downloadVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start Download Handler")
-	defer h.logger.Info("End Download Handler")
-
-	filename := mux.Vars(r)["video_id"]
-	if filename == "" {
-		errMsg := fmt.Sprintf("Missing video id field")
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	bs := BlobStorage{h.logger, h.storageClient, h.bucketName}
-	content, err := bs.Load(context.Background(), "videos/"+filename)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to download file from blob storage. Err: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	w.WriteHeader(200)
-	w.Write(content)
-}
-
-type downloadImage struct {
-	logger        logger.Logger
-	storageClient *storage.Client
-	bucketName    string
-}
-
-func (h downloadImage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Start Download Handler")
-	defer h.logger.Info("End Download Handler")
-
-	filename := mux.Vars(r)["image_id"]
-	if filename == "" {
-		errMsg := fmt.Sprintf("Missing image id field")
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	bs := BlobStorage{h.logger, h.storageClient, h.bucketName}
-	content, err := bs.Load(context.Background(), "images/"+filename)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to download file from blob storage. Err: %v", err)
-		h.logger.Error(errMsg)
-		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	w.WriteHeader(200)
-	w.Write(content)
 }

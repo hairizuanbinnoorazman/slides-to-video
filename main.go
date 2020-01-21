@@ -151,7 +151,11 @@ func main() {
 		ProjectStore: projectStore,
 	}).Methods("GET")
 	// Job based routes
-
+	s.Handle("/job/{job_id}:update-status", h.UpdateJobStatus{
+		Logger:       logger,
+		JobStore:     jobStore,
+		ProjectStore: projectStore,
+	})
 	s.Handle("/job/{parent_job_id}:generate", startVideoGeneration{
 		Logger:            logger,
 		ParentStore:       parentStore,
@@ -159,15 +163,14 @@ func main() {
 		ImageToVideoStore: imageToVideoStore,
 		ImageToVideoQueue: imageToVideoQueue,
 	}).Methods("POST")
-	s.Handle("/video/{video_id}", downloadVideo{
-		logger:        logger,
-		storageClient: xClient,
-		bucketName:    BucketName,
+	// Asset retriver routes
+	s.Handle("/video/{video_id}", h.DownloadVideo{
+		Logger:        logger,
+		StorageClient: slideToVideoStorage,
 	}).Methods("GET")
-	s.Handle("/image/{image_id}", downloadImage{
-		logger:        logger,
-		storageClient: xClient,
-		bucketName:    BucketName,
+	s.Handle("/image/{image_id}", h.DownloadImage{
+		Logger:        logger,
+		StorageClient: slideToVideoStorage,
 	}).Methods("GET")
 	s.Handle("/login", h.Login{
 		Logger:      logger,
