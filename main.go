@@ -155,7 +155,7 @@ func main() {
 		Logger:       logger,
 		JobStore:     jobStore,
 		ProjectStore: projectStore,
-	})
+	}).Methods("POST")
 	s.Handle("/job/{parent_job_id}:generate", startVideoGeneration{
 		Logger:            logger,
 		ParentStore:       parentStore,
