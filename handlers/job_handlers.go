@@ -115,6 +115,22 @@ func (h UpdateJobStatus) handleImageToVideo(jobID, jobStatus string, rawJobDetai
 	switch jobStatus {
 	case jobs.SuccessStatus:
 		h.Logger.Info("Successful Image to Video")
+
+		job, err := h.JobStore.GetJob(context.Background(), jobID)
+		if err != nil {
+			return fmt.Errorf("Unable to retrieve job information")
+		}
+
+		type succcessfulJobDetails struct {
+			ID         string `json:"id"`
+			OutputFile string `json:"output_file"`
+		}
+
+		var jobDetails succcessfulJobDetails
+		json.Unmarshal(rawJobDetails, &jobDetails)
+
+		h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoID(jobDetails.ID, jobDetails.OutputFile))
+
 	case jobs.FailureStatus:
 		h.Logger.Info("Failed Image to Video")
 	case jobs.RunningStatus:
