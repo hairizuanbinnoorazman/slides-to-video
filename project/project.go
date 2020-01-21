@@ -7,6 +7,10 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+var SuccessfulStatus = "success"
+var FailureStatus = "failed"
+var RunningStatus = "running"
+
 type Project struct {
 	ID            string       `json:"id" datastore:"-"`
 	PDFFile       string       `json:"pdf_file"`
@@ -14,6 +18,7 @@ type Project struct {
 	VideoOutputID string       `json:"video_output_id"`
 	DateCreated   time.Time    `json:"date_created"`
 	DateModified  time.Time    `json:"date_modified"`
+	Status        string       `json:"status"`
 }
 
 func NewProject() Project {
