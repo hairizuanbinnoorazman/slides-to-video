@@ -139,3 +139,11 @@ func FilterRefID(refID string) filter {
 		Value:    refID,
 	}
 }
+
+func FilterStatus(status string) filter {
+	return filter{
+		Key:      "Status",
+		Operator: "=",
+		Value:    status,
+	}
+}
