@@ -114,13 +114,28 @@ type VideoConcatStore interface {
 type JobStore interface {
 	CreateJob(ctx context.Context, e Job) error
 	GetJob(ctx context.Context, ID string) (Job, error)
-	GetAllJobs(ctx context.Context) ([]Job, error)
+	GetAllJobs(ctx context.Context, filters ...filter) ([]Job, error)
 	UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) error
 	DeleteJob(ctx context.Context, ID string) error
+	DeleteJobs(ctx context.Context, filters ...filter) error
+}
+
+type filter struct {
+	Key      string
+	Operator string
+	Value    string
 }
 
 func SetJobStatus(status string) func(*Job) {
 	return func(a *Job) {
 		a.Status = status
+	}
+}
+
+func FilterRefID(refID string) filter {
+	return filter{
+		Key:      "RefID",
+		Operator: "=",
+		Value:    refID,
 	}
 }

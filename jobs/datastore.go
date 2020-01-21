@@ -181,9 +181,13 @@ func (g *GoogleDatastore) UpdateJob(ctx context.Context, ID string, setters ...f
 	return nil
 }
 
-func (g *GoogleDatastore) GetAllJobs(ctx context.Context) ([]Job, error) {
+func (g *GoogleDatastore) GetAllJobs(ctx context.Context, filters ...filter) ([]Job, error) {
 	jobs := []Job{}
-	keys, err := g.Client.GetAll(ctx, datastore.NewQuery(g.EntityName), &jobs)
+	query := datastore.NewQuery(g.EntityName)
+	for _, singleFilter := range filters {
+		query.Filter(singleFilter.Key+" "+singleFilter.Operator, singleFilter.Value)
+	}
+	keys, err := g.Client.GetAll(ctx, query, &jobs)
 	if err != nil {
 		return []Job{}, fmt.Errorf("unable to retrieve all results. err: %v", err)
 	}
@@ -198,6 +202,23 @@ func (g *GoogleDatastore) DeleteJob(ctx context.Context, ID string) error {
 	err := g.Client.Delete(ctx, key)
 	if err != nil {
 		return fmt.Errorf("unable to retrieve all results. err: %v", err)
+	}
+	return nil
+}
+
+func (g *GoogleDatastore) DeleteJobs(ctx context.Context, filters ...filter) error {
+	jobs := []Job{}
+	query := datastore.NewQuery(g.EntityName)
+	for _, singleFilter := range filters {
+		query.Filter(singleFilter.Key+" "+singleFilter.Operator, singleFilter.Value)
+	}
+	keys, err := g.Client.GetAll(ctx, query, &jobs)
+	if err != nil {
+		return fmt.Errorf("unable to retrive keys for deletion. err: %v", err)
+	}
+	err = g.Client.DeleteMulti(ctx, keys)
+	if err != nil {
+		return fmt.Errorf("unable to delete data. err: %v", err)
 	}
 	return nil
 }
