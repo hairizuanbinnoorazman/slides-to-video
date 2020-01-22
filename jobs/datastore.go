@@ -168,15 +168,21 @@ func (g *GoogleDatastore) GetJob(ctx context.Context, ID string) (Job, error) {
 func (g *GoogleDatastore) UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) error {
 	key := datastore.NameKey(g.EntityName, ID, nil)
 	job := Job{}
-	if err := g.Client.Get(ctx, key, &job); err != nil {
-		return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
-	}
-	for _, setFunc := range setters {
-		setFunc(&job)
-	}
-	_, err := g.Client.Put(ctx, key, &job)
+	_, err := g.Client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
+		if err := g.Client.Get(ctx, key, &job); err != nil {
+			return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
+		}
+		for _, setFunc := range setters {
+			setFunc(&job)
+		}
+		_, err := g.Client.Put(ctx, key, &job)
+		if err != nil {
+			return fmt.Errorf("unable to send record to datastore: err: %v", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("unable to send record to datastore: err: %v", err)
+		return fmt.Errorf("unable to send complete update job transaction properly. err: %v", err)
 	}
 	return nil
 }
@@ -212,13 +218,19 @@ func (g *GoogleDatastore) DeleteJobs(ctx context.Context, filters ...filter) err
 	for _, singleFilter := range filters {
 		query.Filter(singleFilter.Key+" "+singleFilter.Operator, singleFilter.Value)
 	}
-	keys, err := g.Client.GetAll(ctx, query, &jobs)
+	_, err := g.Client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
+		keys, err := g.Client.GetAll(ctx, query, &jobs)
+		if err != nil {
+			return fmt.Errorf("unable to retrive keys for deletion. err: %v", err)
+		}
+		err = g.Client.DeleteMulti(ctx, keys)
+		if err != nil {
+			return fmt.Errorf("unable to delete data. err: %v", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("unable to retrive keys for deletion. err: %v", err)
-	}
-	err = g.Client.DeleteMulti(ctx, keys)
-	if err != nil {
-		return fmt.Errorf("unable to delete data. err: %v", err)
+		return fmt.Errorf("unable to complete delete jobs transaction. err: %v", err)
 	}
 	return nil
 }
