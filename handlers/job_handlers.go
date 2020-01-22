@@ -7,13 +7,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
-
-	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
-
 	"github.com/gorilla/mux"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/jobs"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
 )
 
 type UpdateJobStatus struct {
