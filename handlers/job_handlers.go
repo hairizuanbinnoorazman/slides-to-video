@@ -107,6 +107,12 @@ func (h UpdateJobStatus) handlePDFToImage(jobID, jobStatus string, rawJobDetails
 			return fmt.Errorf("Unable to update project successfully")
 		}
 
+	case jobs.FailureStatus:
+		h.Logger.Info("Failure PDF Split")
+
+	case jobs.RunningStatus:
+		h.Logger.Info("Running PDF Split")
+
 	default:
 		h.Logger.Info("Unknown status set for the job")
 		return fmt.Errorf("Unknown status set for job")
