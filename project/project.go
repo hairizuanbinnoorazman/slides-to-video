@@ -42,6 +42,7 @@ type ProjectStore interface {
 	GetProject(ctx context.Context, ID string) (Project, error)
 	GetAllProjects(ctx context.Context) ([]Project, error)
 	UpdateProject(ctx context.Context, ID string, setters ...func(*Project)) error
+	DeleteProject(ctx context.Context, ID string) error
 }
 
 func SetPDFFile(file string) func(*Project) {

@@ -63,3 +63,12 @@ func (g *GoogleDatastore) GetAllProjects(ctx context.Context) ([]Project, error)
 	}
 	return emailDetails, nil
 }
+
+func (g *GoogleDatastore) DeleteProject(ctx context.Context, ID string) error {
+	key := datastore.NameKey(g.EntityName, ID, nil)
+	err := g.Client.Delete(ctx, key)
+	if err != nil {
+		return fmt.Errorf("unable to delete project. err: %v", err)
+	}
+	return nil
+}
