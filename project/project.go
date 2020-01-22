@@ -85,6 +85,12 @@ func SetSlideText(imageID, slideText string) func(*Project) {
 	}
 }
 
+func SetStatus(status string) func(*Project) {
+	return func(a *Project) {
+		a.Status = status
+	}
+}
+
 func SetVideoID(imageID, videoID string) func(*Project) {
 	return func(a *Project) {
 		for _, item := range a.SlideAssets {
