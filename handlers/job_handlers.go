@@ -162,6 +162,29 @@ func (h UpdateJobStatus) handleVideoConcat(jobID, jobStatus string, rawJobDetail
 	switch jobStatus {
 	case jobs.SuccessStatus:
 		h.Logger.Info("Successful Video Concat")
+
+		job, err := h.JobStore.GetJob(context.Background(), jobID)
+		if err != nil {
+			return fmt.Errorf("Unable to retrieve job information")
+		}
+
+		type succcessfulJobDetails struct {
+			OutputVideo string `json:"output_video"`
+		}
+
+		var jobDetails succcessfulJobDetails
+		json.Unmarshal(rawJobDetails, &jobDetails)
+
+		err = h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoOutputID(jobDetails.OutputVideo), project.SetStatus(project.SuccessfulStatus))
+		if err != nil {
+			return fmt.Errorf("Unable to update project")
+		}
+
+		err = h.JobStore.DeleteJobs(context.Background(), jobs.FilterRefID(job.RefID))
+		if err != nil {
+			return fmt.Errorf("Issue with removing data")
+		}
+
 	case jobs.FailureStatus:
 		h.Logger.Info("Failed Video Concat")
 	case jobs.RunningStatus:
