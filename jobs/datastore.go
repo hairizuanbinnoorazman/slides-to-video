@@ -165,7 +165,7 @@ func (g *GoogleDatastore) GetJob(ctx context.Context, ID string) (Job, error) {
 	return job, nil
 }
 
-func (g *GoogleDatastore) UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) error {
+func (g *GoogleDatastore) UpdateJob(ctx context.Context, ID string, setters ...func(*Job)) (Job, error) {
 	key := datastore.NameKey(g.EntityName, ID, nil)
 	job := Job{}
 	_, err := g.Client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
@@ -182,9 +182,9 @@ func (g *GoogleDatastore) UpdateJob(ctx context.Context, ID string, setters ...f
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("unable to send complete update job transaction properly. err: %v", err)
+		return Job{}, fmt.Errorf("unable to send complete update job transaction properly. err: %v", err)
 	}
-	return nil
+	return job, nil
 }
 
 func (g *GoogleDatastore) GetAllJobs(ctx context.Context, filters ...filter) ([]Job, error) {
