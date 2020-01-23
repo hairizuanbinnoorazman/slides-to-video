@@ -36,20 +36,20 @@ func (g *GoogleDatastore) GetProject(ctx context.Context, ID string) (Project, e
 	return parentJob, nil
 }
 
-func (g *GoogleDatastore) UpdateProject(ctx context.Context, ID string, setters ...func(*Project)) error {
+func (g *GoogleDatastore) UpdateProject(ctx context.Context, ID string, setters ...func(*Project)) (Project, error) {
 	key := datastore.NameKey(g.EntityName, ID, nil)
-	parentJob := Project{}
-	if err := g.Client.Get(ctx, key, &parentJob); err != nil {
-		return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
+	project := Project{}
+	if err := g.Client.Get(ctx, key, &project); err != nil {
+		return Project{}, fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
 	}
 	for _, setFunc := range setters {
-		setFunc(&parentJob)
+		setFunc(&project)
 	}
-	_, err := g.Client.Put(ctx, key, &parentJob)
+	_, err := g.Client.Put(ctx, key, &project)
 	if err != nil {
-		return fmt.Errorf("unable to send record to datastore: err: %v", err)
+		return Project{}, fmt.Errorf("unable to send record to datastore: err: %v", err)
 	}
-	return nil
+	return project, nil
 }
 
 func (g *GoogleDatastore) GetAllProjects(ctx context.Context) ([]Project, error) {
