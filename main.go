@@ -110,27 +110,9 @@ func main() {
 	pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, PDFToImageJobTopic)
 	imageToVideoStore := jobs.NewGoogleDatastore(datastoreClient, ImageToVideoJobTableName)
 	imageToVideoQueue := queue.NewGooglePubsub(logger, pubsubClient, ImageToVideoJobTopic)
-	videoConcatStore := jobs.NewGoogleDatastore(datastoreClient, VideoConcatJobTableName)
 	videoConcatQueue := queue.NewGooglePubsub(logger, pubsubClient, VideoConcatJobTopic)
 
 	r := mux.NewRouter()
-	r.Handle("/report_pdf_split", reportPDFSplit{
-		Logger:            logger,
-		ParentStore:       parentStore,
-		PdfToImageStore:   pdfToImageStore,
-		ImageToVideoStore: imageToVideoStore,
-	})
-	r.Handle("/report_image_to_video", reportImageToVideo{
-		Logger:            logger,
-		ImageToVideoStore: imageToVideoStore,
-		VideoConcatStore:  videoConcatStore,
-		VideoConcatQueue:  videoConcatQueue,
-	})
-	r.Handle("/report_video_concat", reportVideoConcat{
-		Logger:           logger,
-		ParentStore:      parentStore,
-		VideoConcatStore: videoConcatStore,
-	})
 
 	s := r.PathPrefix("/api/v1").Subrouter()
 	// Project based routes
@@ -152,9 +134,10 @@ func main() {
 	}).Methods("GET")
 	// Job based routes
 	s.Handle("/job/{job_id}:update-status", h.UpdateJobStatus{
-		Logger:       logger,
-		JobStore:     jobStore,
-		ProjectStore: projectStore,
+		Logger:           logger,
+		JobStore:         jobStore,
+		ProjectStore:     projectStore,
+		VideoConcatQueue: videoConcatQueue,
 	}).Methods("POST")
 	s.Handle("/job/{parent_job_id}:generate", startVideoGeneration{
 		Logger:            logger,
