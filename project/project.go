@@ -41,7 +41,7 @@ type ProjectStore interface {
 	CreateProject(ctx context.Context, e Project) error
 	GetProject(ctx context.Context, ID string) (Project, error)
 	GetAllProjects(ctx context.Context) ([]Project, error)
-	UpdateProject(ctx context.Context, ID string, setters ...func(*Project)) error
+	UpdateProject(ctx context.Context, ID string, setters ...func(*Project)) (Project, error)
 	DeleteProject(ctx context.Context, ID string) error
 }
 
