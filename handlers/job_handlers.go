@@ -151,16 +151,16 @@ func (h UpdateJobStatus) handleImageToVideo(job jobs.Job, rawJobDetails []byte) 
 		var jobDetails succcessfulJobDetails
 		json.Unmarshal(rawJobDetails, &jobDetails)
 
-		project, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoID(jobDetails.ID, jobDetails.OutputFile))
+		updatedProject, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoID(jobDetails.ID, jobDetails.OutputFile))
 		if err != nil {
 			return fmt.Errorf("Unable to update project entity. err: %v", err)
 		}
 		successfulJobs, _ := h.JobStore.GetAllJobs(context.Background(), jobs.FilterRefID(job.RefID), jobs.FilterStatus(jobs.SuccessStatus))
 
-		if len(project.SlideAssets) == len(successfulJobs) {
+		if len(updatedProject.SlideAssets) == len(successfulJobs) {
 			videoConcatJob := jobs.NewJob(job.RefID, jobs.VideoConcat, "")
 			var videoList []string
-			for _, slideAsset := range project.SlideAssets {
+			for _, slideAsset := range updatedProject.SlideAssets {
 				videoList = append(videoList, slideAsset.VideoID)
 			}
 			videoConcatJobDetails := map[string]interface{}{"id": videoConcatJob.ID, "video_ids": videoList}
@@ -168,12 +168,30 @@ func (h UpdateJobStatus) handleImageToVideo(job jobs.Job, rawJobDetails []byte) 
 			videoConcatJob.Message = string(rawVideoConcatJobDetails)
 			h.JobStore.CreateJob(context.Background(), videoConcatJob)
 			h.VideoConcatQueue.Add(context.Background(), rawVideoConcatJobDetails)
+			_, err = h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
+			if err != nil {
+				return fmt.Errorf("Error with trying to update project status of project on project store")
+			}
 		}
 
 	case jobs.FailureStatus:
 		h.Logger.Info("Failed Image to Video")
+		// Even if one of the image to video creation fails, the whole project is on a failed state as all of the videos needs to be rendered regardless
+		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
+		if err != nil {
+			return fmt.Errorf("Error with trying to update project status of project on project store")
+		}
+		err = h.JobStore.DeleteJobs(context.Background(), jobs.FilterRefID(job.RefID))
+		if err != nil {
+			return fmt.Errorf("Issue with removing data")
+		}
+
 	case jobs.RunningStatus:
 		h.Logger.Info("Running Image to Video")
+		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
+		if err != nil {
+			return fmt.Errorf("Error with trying to update project status of project on project store")
+		}
 	default:
 		h.Logger.Info("Unknown status set for the job")
 		return fmt.Errorf("Unknown status set for job")
@@ -204,8 +222,20 @@ func (h UpdateJobStatus) handleVideoConcat(job jobs.Job, rawJobDetails []byte) e
 
 	case jobs.FailureStatus:
 		h.Logger.Info("Failed Video Concat")
+		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
+		if err != nil {
+			return fmt.Errorf("Error with trying to update project status of project on project store")
+		}
+		err = h.JobStore.DeleteJob(context.Background(), job.ID)
+		if err != nil {
+			return fmt.Errorf("Error with trying to delete job")
+		}
 	case jobs.RunningStatus:
 		h.Logger.Info("Running Video Concat")
+		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
+		if err != nil {
+			return fmt.Errorf("Error with trying to update project status of project on project store")
+		}
 	default:
 		h.Logger.Info("Unknown status set for the job")
 		return fmt.Errorf("Unknown status set for job")
