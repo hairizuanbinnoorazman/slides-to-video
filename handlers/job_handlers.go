@@ -116,7 +116,7 @@ func (h UpdateJobStatus) handlePDFToImage(job jobs.Job, rawJobDetails []byte) er
 
 	case jobs.FailureStatus:
 		h.Logger.Info("Failure PDF Split")
-		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.FailureStatus))
+		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
 		if err != nil {
 			return fmt.Errorf("Unable to update project successfully")
 		}
@@ -127,7 +127,7 @@ func (h UpdateJobStatus) handlePDFToImage(job jobs.Job, rawJobDetails []byte) er
 
 	case jobs.RunningStatus:
 		h.Logger.Info("Running PDF Split")
-		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.RunningStatus))
+		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
 		if err != nil {
 			return fmt.Errorf("Unable to update project successfully")
 		}
@@ -192,7 +192,7 @@ func (h UpdateJobStatus) handleVideoConcat(job jobs.Job, rawJobDetails []byte) e
 		var jobDetails succcessfulJobDetails
 		json.Unmarshal(rawJobDetails, &jobDetails)
 
-		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoOutputID(jobDetails.OutputVideo), project.SetStatus(project.SuccessfulStatus))
+		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoOutputID(jobDetails.OutputVideo), project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
 		if err != nil {
 			return fmt.Errorf("Unable to update project")
 		}

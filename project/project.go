@@ -7,9 +7,10 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-var SuccessfulStatus = "success"
-var FailureStatus = "failed"
-var RunningStatus = "running"
+// Utility function - depends on job status and job type
+func ProjectStatus(status, jobType string) string {
+	return status + " - " + jobType
+}
 
 type Project struct {
 	ID            string       `json:"id" datastore:"-"`
