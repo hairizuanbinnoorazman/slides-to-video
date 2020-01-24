@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -20,6 +21,40 @@ type Project struct {
 	DateCreated   time.Time    `json:"date_created"`
 	DateModified  time.Time    `json:"date_modified"`
 	Status        string       `json:"status"`
+}
+
+// ValidateForGeneration function for project struct is only meant for checking to see if the following item is
+// capable of creating videos
+func (p *Project) ValidateForGeneration() error {
+	if p.PDFFile == "" {
+		return fmt.Errorf("Unable to generate video as no pdf file is uploaded yet")
+	}
+	if len(p.SlideAssets) == 0 {
+		return fmt.Errorf("Unable to generate video as there are no slide assets generated yet")
+	}
+	for _, item := range p.SlideAssets {
+		if item.ImageID == "" && item.Text == "" {
+			return fmt.Errorf("Unable to generate video as there are empty slide assets that does not contain imageId or text")
+		}
+	}
+	return nil
+}
+
+// ValidateForConcat is for checking if project item contains the necessary information to
+// do concatenation
+func (p *Project) ValidateForConcat() error {
+	if p.PDFFile == "" {
+		return fmt.Errorf("Unable to generate video as no pdf file is uploaded yet")
+	}
+	if len(p.SlideAssets) == 0 {
+		return fmt.Errorf("Unable to generate video as there are no slide assets generated yet")
+	}
+	for _, item := range p.SlideAssets {
+		if item.ImageID == "" && item.Text == "" && item.VideoID == "" {
+			return fmt.Errorf("Unable to generate video as there are empty slide assets that does not contain imageId or text")
+		}
+	}
+	return nil
 }
 
 func NewProject() Project {
