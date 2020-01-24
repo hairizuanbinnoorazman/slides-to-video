@@ -16,6 +16,28 @@ GET {{v1baseurl}}/projects
 
 GET {{v1baseurl}}/project/{{createProject.response.body.id}}
 
+### Update single project
+PUT {{v1baseurl}}/projects/{{createProject.response.body.id}}
+Content-Type: application/json
+
+{
+    "id": "{{createProject.response.body.id}}",
+	"slide_assets": [
+        {
+            "image_id": "",
+	        "text": "",
+	        "video_id": "",
+	        "slide_no": ""
+        },
+        {
+            "image_id": "",
+	        "text": "",
+	        "video_id": "",
+	        "slide_no": ""
+        }
+    ]
+}
+
 ### Generate video generation
 
 POST {{v1baseurl}}/project/{{createProject.response.body.id}}:generate
