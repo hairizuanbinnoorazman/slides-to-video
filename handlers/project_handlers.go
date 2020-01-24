@@ -41,7 +41,7 @@ func (h CreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(errMsg))
 		return
 	}
-	file, handler, err := r.FormFile("myfile")
+	file, _, err := r.FormFile("myfile")
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve form data. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -75,7 +75,8 @@ func (h CreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("%v successfully uploaded. Go to the /jobs page for viewing progress", handler.Filename)))
+	rawItem, _ := json.Marshal(item)
+	w.Write(rawItem)
 	return
 }
 
@@ -165,4 +166,58 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(rawParentJobs)
 	return
+}
+
+type StartVideoGeneration struct {
+	Logger            logger.Logger
+	ImageToVideoQueue queue.Queue
+	ProjectStore      project.ProjectStore
+	JobsStore         jobs.JobStore
+}
+
+func (h StartVideoGeneration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	projectID := mux.Vars(r)["project_id"]
+
+	project, err := h.ProjectStore.GetProject(context.Background(), projectID)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	err = project.ValidateForGeneration()
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - validation issues when attempting to do generation validation. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	for _, slideAsset := range project.SlideAssets {
+		job := jobs.NewJob(project.ID, jobs.ImageToVideo, "")
+		jobDetails := map[string]string{
+			"id":       job.ID,
+			"image_id": slideAsset.ImageID,
+			"text":     slideAsset.Text,
+		}
+		rawJobDetails, err := json.Marshal(jobDetails)
+		job.Message = string(rawJobDetails)
+		err = h.JobsStore.CreateJob(context.Background(), job)
+		if err != nil {
+			errMsg := fmt.Sprintf("Error - validation issues when attempting to do generation validation. Error: %v", err)
+			h.Logger.Error(errMsg)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(errMsg))
+			return
+		}
+
+		h.ImageToVideoQueue.Add(context.Background(), rawJobDetails)
+
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Implemented"))
 }

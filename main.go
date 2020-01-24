@@ -39,12 +39,8 @@ var BucketName = "zontext-pdf-2-videos"
 var BucketFolder = "pdf"
 
 // ParentJob denotes which table would be used to save details of the job on top level
-var ParentJobTableName = "test-ParentJob"
 var ProjectTableName = "test-Project"
 var JobTableName = "test-Job"
-var PDFToImageJobTableName = "test-PDFToImageJob"
-var ImageToVideoJobTableName = "test-ImageToVideoJob"
-var VideoConcatJobTableName = "test-VideoConcatJob"
 var UserTableName = "test-User"
 
 // Topics
@@ -105,10 +101,7 @@ func main() {
 	jobStore := jobs.NewGoogleDatastore(datastoreClient, JobTableName)
 	userStore := user.NewGoogleDatastore(datastoreClient, UserTableName)
 	slideToVideoStorage := blobstorage.NewGCSStorage(logger, xClient, BucketName)
-	parentStore := jobs.NewGoogleDatastore(datastoreClient, ParentJobTableName)
-	pdfToImageStore := jobs.NewGoogleDatastore(datastoreClient, PDFToImageJobTableName)
 	pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, PDFToImageJobTopic)
-	imageToVideoStore := jobs.NewGoogleDatastore(datastoreClient, ImageToVideoJobTableName)
 	imageToVideoQueue := queue.NewGooglePubsub(logger, pubsubClient, ImageToVideoJobTopic)
 	videoConcatQueue := queue.NewGooglePubsub(logger, pubsubClient, VideoConcatJobTopic)
 
@@ -139,12 +132,11 @@ func main() {
 		ProjectStore:     projectStore,
 		VideoConcatQueue: videoConcatQueue,
 	}).Methods("POST")
-	s.Handle("/job/{parent_job_id}:generate", startVideoGeneration{
+	s.Handle("/project/{project_id}:generate", h.StartVideoGeneration{
 		Logger:            logger,
-		ParentStore:       parentStore,
-		PdfToImageStore:   pdfToImageStore,
-		ImageToVideoStore: imageToVideoStore,
 		ImageToVideoQueue: imageToVideoQueue,
+		ProjectStore:      projectStore,
+		JobsStore:         jobStore,
 	}).Methods("POST")
 	// Asset retriver routes
 	s.Handle("/video/{video_id}", h.DownloadVideo{
