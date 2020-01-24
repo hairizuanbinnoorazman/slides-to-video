@@ -124,6 +124,10 @@ func main() {
 		Logger:       logger,
 		ProjectStore: projectStore,
 	}).Methods("GET")
+	s.Handle("/project/{project_id}", h.UpdateProject{
+		Logger:       logger,
+		ProjectStore: projectStore,
+	}).Methods("PUT")
 	// Job based routes
 	s.Handle("/job/{job_id}:update-status", h.UpdateJobStatus{
 		Logger:           logger,

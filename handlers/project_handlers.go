@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -109,14 +110,58 @@ func (h CreateProject) createPDFSplitJob(parentJobID, filename string) error {
 	return nil
 }
 
+type UpdateProject struct {
+	Logger       logger.Logger
+	ProjectStore project.ProjectStore
+}
+
+func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start Update Project API Handler")
+	defer h.Logger.Info("End Update Project API Handler")
+
+	projectID := mux.Vars(r)["project_id"]
+	rawReq, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	updatedProject := project.Project{}
+	err = json.Unmarshal(rawReq, &updatedProject)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to marshal value out to project item. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	var textSetters []func(*project.Project)
+	for _, item := range updatedProject.SlideAssets {
+		textSetters = append(textSetters, project.SetSlideText(item.ImageID, item.Text))
+	}
+
+	_, err = h.ProjectStore.UpdateProject(context.Background(), projectID, textSetters...)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to update project item. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+}
+
 type GetProject struct {
 	Logger       logger.Logger
 	ProjectStore project.ProjectStore
 }
 
 func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.Logger.Info("Start Get Parent Job API Handler")
-	defer h.Logger.Info("End Get Parent Job API Handler")
+	h.Logger.Info("Start Get Project API Handler")
+	defer h.Logger.Info("End Get Project API Handler")
 
 	projectID := mux.Vars(r)["project_id"]
 	project, err := h.ProjectStore.GetProject(context.Background(), projectID)
