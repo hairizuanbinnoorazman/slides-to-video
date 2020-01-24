@@ -144,14 +144,14 @@ func (h UpdateJobStatus) handleImageToVideo(job jobs.Job, rawJobDetails []byte) 
 	case jobs.SuccessStatus:
 		h.Logger.Info("Successful Image to Video")
 		type succcessfulJobDetails struct {
-			ID         string `json:"id"`
+			ImageID    string `json:"image_id"`
 			OutputFile string `json:"output_file"`
 		}
 
 		var jobDetails succcessfulJobDetails
 		json.Unmarshal(rawJobDetails, &jobDetails)
 
-		updatedProject, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoID(jobDetails.ID, jobDetails.OutputFile))
+		updatedProject, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoID(jobDetails.ImageID, jobDetails.OutputFile))
 		if err != nil {
 			return fmt.Errorf("Unable to update project entity. err: %v", err)
 		}
