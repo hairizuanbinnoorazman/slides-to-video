@@ -38,7 +38,6 @@ var ProjectID = "expanded-league-162223"
 var BucketName = "zontext-pdf-2-videos"
 var BucketFolder = "pdf"
 
-// ParentJob denotes which table would be used to save details of the job on top level
 var ProjectTableName = "test-Project"
 var JobTableName = "test-Job"
 var UserTableName = "test-User"
