@@ -21,6 +21,60 @@ GET {{v1baseurl}}/project/{{createProject.response.body.id}}
 POST {{v1baseurl}}/project/{{createProject.response.body.id}}:generate
 
 
-### Update job status
+### Set job status
 @job_id = 'abc'
+
+### Update pdf split job
 POST {{v1baseurl}}/{{job_id}}/abc:update-status
+Content-Type: application/json
+
+{
+    "job_type": "pdf-split",
+    "status": "success",
+    "dedup_id": "{{$guid}}",
+    "job_details": {
+        "slide_details": [
+            {
+                "image": "image1.jpg",
+                "slide_no": 0
+            },
+            {
+                "image": "image2.jpg",
+                "slide_no": 1
+            },
+            {
+                "image": "image3.jpg",
+                "slide_no": 2
+            }
+        ]
+    }
+}
+
+### Update image to video job
+
+POST {{v1baseurl}}/{{job_id}}/abc:update-status
+Content-Type: application/json
+
+{
+    "job_type": "image-to-video",
+    "status": "success",
+    "dedup_id": "{{$guid}}",
+    "job_details": {
+        "image_id": "image1.jpg",
+        "output_file": "image1.mp4"
+    }
+}
+
+### Update video concat job
+
+POST {{v1baseurl}}/{{job_id}}/abc:update-status
+Content-Type: application/json
+
+{
+    "job_type": "video-concat",
+    "status": "success",
+    "dedup_id": "{{$guid}}",
+    "job_details": {
+        "output_video": "final_output.mp4"
+    }
+}
