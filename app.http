@@ -1,0 +1,26 @@
+# Switch rest client as necessary
+@hostname = "https://slides-to-video-manager-sj5kqt5fxq-an.a.run.app"
+@v1baseurl = {{hostname}}/api/v1
+
+### Create project
+# @name createProject
+
+POST {{v1baseurl}}/project
+
+< ./test.pdf
+
+### Retrive projects
+GET {{v1baseurl}}/projects
+
+### Get single project
+
+GET {{v1baseurl}}/project/{{createProject.response.body.id}}
+
+### Generate video generation
+
+POST {{v1baseurl}}/project/{{createProject.response.body.id}}:generate
+
+
+### Update job status
+@job_id = 'abc'
+POST {{v1baseurl}}/{{job_id}}/abc:update-status
