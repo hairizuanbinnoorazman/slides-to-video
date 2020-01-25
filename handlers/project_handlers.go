@@ -144,7 +144,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		textSetters = append(textSetters, project.SetSlideText(item.ImageID, item.Text))
 	}
 
-	_, err = h.ProjectStore.UpdateProject(context.Background(), projectID, textSetters...)
+	textUpdatedProject, err := h.ProjectStore.UpdateProject(context.Background(), projectID, textSetters...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to update project item. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -152,6 +152,10 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(errMsg))
 		return
 	}
+
+	rawUpdateProject, _ := json.Marshal(textUpdatedProject)
+	w.WriteHeader(200)
+	w.Write(rawUpdateProject)
 }
 
 type GetProject struct {
