@@ -7,7 +7,7 @@
 
 POST {{v1baseurl}}/project
 
-< ./test.pdf
+< ./tester.pdf
 
 ### Retrive projects
 GET {{v1baseurl}}/projects
