@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/datastore"
 )
@@ -175,6 +176,7 @@ func (g *GoogleDatastore) UpdateJob(ctx context.Context, ID string, setters ...f
 		for _, setFunc := range setters {
 			setFunc(&job)
 		}
+		job.DateModified = time.Now()
 		_, err := g.Client.Put(ctx, key, &job)
 		if err != nil {
 			return fmt.Errorf("unable to send record to datastore: err: %v", err)

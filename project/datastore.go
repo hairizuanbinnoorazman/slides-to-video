@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/datastore"
 )
@@ -45,6 +46,7 @@ func (g *GoogleDatastore) UpdateProject(ctx context.Context, ID string, setters 
 	for _, setFunc := range setters {
 		setFunc(&project)
 	}
+	project.DateModified = time.Now()
 	_, err := g.Client.Put(ctx, key, &project)
 	if err != nil {
 		return Project{}, fmt.Errorf("unable to send record to datastore: err: %v", err)
