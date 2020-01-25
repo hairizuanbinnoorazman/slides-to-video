@@ -183,7 +183,6 @@ func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type GetAllProjects struct {
 	Logger       logger.Logger
 	ProjectStore project.ProjectStore
-	ParentStore  jobs.ParentJobStore
 }
 
 func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
