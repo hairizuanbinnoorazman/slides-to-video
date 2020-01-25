@@ -13,27 +13,27 @@ POST {{v1baseurl}}/project
 GET {{v1baseurl}}/projects
 
 ### Get single project
-
+# @name getProject
 GET {{v1baseurl}}/project/{{createProject.response.body.id}}
 
 ### Update single project
-PUT {{v1baseurl}}/projects/{{createProject.response.body.id}}
+PUT {{v1baseurl}}/projects/{{getProject.response.body.id}}
 Content-Type: application/json
 
 {
     "id": "{{createProject.response.body.id}}",
 	"slide_assets": [
         {
-            "image_id": "",
-	        "text": "",
+            "image_id": "{{getProject.response.body.slide_assets[0].image_id}}",
+	        "text": "this is a test",
 	        "video_id": "",
-	        "slide_no": ""
+	        "slide_no": "{{getProject.response.body.slide_assets[0].slide_no}}"
         },
         {
-            "image_id": "",
-	        "text": "",
+            "image_id": "{{getProject.response.body.slide_assets[1].image_id}}",
+	        "text": "this is another test",
 	        "video_id": "",
-	        "slide_no": ""
+	        "slide_no": "{{getProject.response.body.slide_assets[1].slide_no}}"
         }
     ]
 }
