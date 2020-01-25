@@ -75,7 +75,7 @@ func (h CreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	rawItem, _ := json.Marshal(item)
 	w.Write(rawItem)
 	return
