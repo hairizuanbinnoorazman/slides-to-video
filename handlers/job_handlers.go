@@ -109,6 +109,7 @@ func (h UpdateJobStatus) handlePDFToImage(job jobs.Job, rawJobDetails []byte) er
 		for _, slideDetail := range jobDetails.SlideDetails {
 			setters = append(setters, project.SetImage(slideDetail.ImageID, slideDetail.SlideNo))
 		}
+		setters = append(setters, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
 		_, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, setters...)
 		if err != nil {
 			return fmt.Errorf("Unable to update project successfully")
