@@ -152,11 +152,17 @@ func (h UpdateJobStatus) handleImageToVideo(job jobs.Job, rawJobDetails []byte) 
 		var jobDetails succcessfulJobDetails
 		json.Unmarshal(rawJobDetails, &jobDetails)
 
-		updatedProject, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetVideoID(jobDetails.ImageID, jobDetails.OutputFile))
+		updatedProject, err := h.ProjectStore.UpdateProject(context.Background(), job.RefID,
+			project.SetVideoID(jobDetails.ImageID, jobDetails.OutputFile),
+			project.SetStatus(project.ProjectStatus(job.Status, job.Type)),
+		)
 		if err != nil {
 			return fmt.Errorf("Unable to update project entity. err: %v", err)
 		}
-		successfulJobs, _ := h.JobStore.GetAllJobs(context.Background(), jobs.FilterRefID(job.RefID), jobs.FilterStatus(jobs.SuccessStatus))
+		successfulJobs, _ := h.JobStore.GetAllJobs(context.Background(), jobs.FilterRefID(job.RefID), jobs.FilterStatus(jobs.SuccessStatus), jobs.FilterJobType(jobs.ImageToVideo))
+
+		h.Logger.Infof("No of slide assets: %v - Slide Assets: %v", len(updatedProject.SlideAssets), updatedProject.SlideAssets)
+		h.Logger.Infof("No of successful jobs: %v - Successful Jobs: %v", len(successfulJobs), successfulJobs)
 
 		if len(updatedProject.SlideAssets) == len(successfulJobs) {
 			videoConcatJob := jobs.NewJob(job.RefID, jobs.VideoConcat, "")
