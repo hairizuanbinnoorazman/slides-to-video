@@ -159,26 +159,24 @@ func (h UpdateJobStatus) handleImageToVideo(job jobs.Job, rawJobDetails []byte) 
 		if err != nil {
 			return fmt.Errorf("Unable to update project entity. err: %v", err)
 		}
-		successfulJobs, _ := h.JobStore.GetAllJobs(context.Background(), jobs.FilterRefID(job.RefID), jobs.FilterStatus(jobs.SuccessStatus), jobs.FilterJobType(jobs.ImageToVideo))
+		genErr := updatedProject.ValidateForGeneration()
+		if genErr != nil {
+			return fmt.Errorf("Unable to generate video - error in validation for video generation. err: %v", err)
+		}
 
-		h.Logger.Infof("No of slide assets: %v - Slide Assets: %v", len(updatedProject.SlideAssets), updatedProject.SlideAssets)
-		h.Logger.Infof("No of successful jobs: %v - Successful Jobs: %v", len(successfulJobs), successfulJobs)
-
-		if len(updatedProject.SlideAssets) == len(successfulJobs) {
-			videoConcatJob := jobs.NewJob(job.RefID, jobs.VideoConcat, "")
-			var videoList []string
-			for _, slideAsset := range updatedProject.SlideAssets {
-				videoList = append(videoList, slideAsset.VideoID)
-			}
-			videoConcatJobDetails := map[string]interface{}{"id": videoConcatJob.ID, "video_ids": videoList}
-			rawVideoConcatJobDetails, _ := json.Marshal(videoConcatJobDetails)
-			videoConcatJob.Message = string(rawVideoConcatJobDetails)
-			h.JobStore.CreateJob(context.Background(), videoConcatJob)
-			h.VideoConcatQueue.Add(context.Background(), rawVideoConcatJobDetails)
-			_, err = h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
-			if err != nil {
-				return fmt.Errorf("Error with trying to update project status of project on project store")
-			}
+		videoConcatJob := jobs.NewJob(job.RefID, jobs.VideoConcat, "")
+		var videoList []string
+		for _, slideAsset := range updatedProject.SlideAssets {
+			videoList = append(videoList, slideAsset.VideoID)
+		}
+		videoConcatJobDetails := map[string]interface{}{"id": videoConcatJob.ID, "video_ids": videoList}
+		rawVideoConcatJobDetails, _ := json.Marshal(videoConcatJobDetails)
+		videoConcatJob.Message = string(rawVideoConcatJobDetails)
+		h.JobStore.CreateJob(context.Background(), videoConcatJob)
+		h.VideoConcatQueue.Add(context.Background(), rawVideoConcatJobDetails)
+		_, err = h.ProjectStore.UpdateProject(context.Background(), job.RefID, project.SetStatus(project.ProjectStatus(job.Status, job.Type)))
+		if err != nil {
+			return fmt.Errorf("Error with trying to update project status of project on project store")
 		}
 
 	case jobs.FailureStatus:
