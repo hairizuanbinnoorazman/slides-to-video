@@ -87,3 +87,11 @@ func FilterStatus(status string) filter {
 		Value:    status,
 	}
 }
+
+func FilterJobType(jobType string) filter {
+	return filter{
+		Key:      "Type",
+		Operator: "=",
+		Value:    jobType,
+	}
+}
