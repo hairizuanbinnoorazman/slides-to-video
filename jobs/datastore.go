@@ -57,6 +57,7 @@ func (g *GoogleDatastore) UpdateJob(ctx context.Context, ID string, setters ...f
 	if err != nil {
 		return Job{}, fmt.Errorf("unable to send complete update job transaction properly. err: %v", err)
 	}
+	job.ID = ID
 	return job, nil
 }
 
