@@ -40,14 +40,20 @@ func (g *GoogleDatastore) GetProject(ctx context.Context, ID string) (Project, e
 func (g *GoogleDatastore) UpdateProject(ctx context.Context, ID string, setters ...func(*Project)) (Project, error) {
 	key := datastore.NameKey(g.EntityName, ID, nil)
 	project := Project{}
-	if err := g.Client.Get(ctx, key, &project); err != nil {
-		return Project{}, fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
-	}
-	for _, setFunc := range setters {
-		setFunc(&project)
-	}
-	project.DateModified = time.Now()
-	_, err := g.Client.Put(ctx, key, &project)
+	_, err := g.Client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
+		if err := g.Client.Get(ctx, key, &project); err != nil {
+			return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
+		}
+		for _, setFunc := range setters {
+			setFunc(&project)
+		}
+		project.DateModified = time.Now()
+		_, err := g.Client.Put(ctx, key, &project)
+		if err != nil {
+			return fmt.Errorf("unable to send record to datastore: err: %v", err)
+		}
+		return nil
+	})
 	if err != nil {
 		return Project{}, fmt.Errorf("unable to send record to datastore: err: %v", err)
 	}
