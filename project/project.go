@@ -112,9 +112,9 @@ func SetImage(imageID string, slideNo int) func(*Project) {
 
 func SetSlideText(imageID, slideText string) func(*Project) {
 	return func(a *Project) {
-		for _, item := range a.SlideAssets {
+		for idx, item := range a.SlideAssets {
 			if item.ImageID == imageID {
-				item.Text = slideText
+				a.SlideAssets[idx].Text = slideText
 			}
 		}
 		return
@@ -129,9 +129,9 @@ func SetStatus(status string) func(*Project) {
 
 func SetVideoID(imageID, videoID string) func(*Project) {
 	return func(a *Project) {
-		for _, item := range a.SlideAssets {
+		for idx, item := range a.SlideAssets {
 			if item.ImageID == imageID {
-				item.VideoID = videoID
+				a.SlideAssets[idx].VideoID = videoID
 			}
 		}
 		return
