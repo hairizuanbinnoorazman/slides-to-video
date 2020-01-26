@@ -57,6 +57,7 @@ func (g *GoogleDatastore) UpdateProject(ctx context.Context, ID string, setters 
 	if err != nil {
 		return Project{}, fmt.Errorf("unable to send record to datastore: err: %v", err)
 	}
+	project.ID = ID
 	return project, nil
 }
 
