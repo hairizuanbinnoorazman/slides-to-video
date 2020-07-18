@@ -18,7 +18,12 @@ type BasicPDFImporter struct {
 }
 
 func (p BasicPDFImporter) Start(s pdfslideimages.PDFSlideImages) error {
-	values := map[string]string{"id": s.ID, "pdfFileName": s.PDFFile}
+	values := map[string]string{
+		"id":                    s.ID,
+		"pdf_filename":          s.PDFFile,
+		"running_idem_key":      s.SetRunningIdemKey,
+		"complete_rec_idem_key": s.CompleteRecIdemKey,
+	}
 	jsonValue, _ := json.Marshal(values)
 
 	err := p.Queue.Add(context.Background(), jsonValue)
