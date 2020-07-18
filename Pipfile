@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 pytest = "*"
 requests = "*"
+google-cloud-datastore = "*"
 
 [requires]
 python_version = "3.7"

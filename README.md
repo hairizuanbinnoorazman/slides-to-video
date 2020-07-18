@@ -19,59 +19,87 @@ Api flow - based on above flow
 - After user adds text -> can click save at the top -> call PatchProject (ID) -> only script text can be updated here
 - After user is done with adding text -> click on GenerateVideo -> calls to Project:Generate API -> this one would create the image to video jobs as well as video concat jobs accordingly
 
+## Planning - Future features
 
-## Legacy notes
+Main interaction
 
-- Add pubsub to shoot job ids
-- Integrate microservices tgt -> its reports to this service
-  - pdf splitter
-  - image to video
-  - video concatenate
-- Allow to view list of jobs available
-- Allow to download from a list of videos that are ready
+User
+- ID - uuid
+- Name
+- DateCreated
+- DateModified
+- GoogleRefreshToken
+- GoogleAccessToken
+- GoogleAccessExpiry
 
+Group
+- ID - uuid
+- Name
+- DateCreated
+- DateModified
+- UserIDs (List)
+- GroupIDs (List) - max - 5 nested
 
-
-{
-    ID: UUID
-    Filename: PDF name
-    Script: Text
-    Status: Not started, Running, Completed
-    VideoFile: XXX
-}
-
-PDF to Image Job
-{
-    ID: UUID
-    ParentJob: ID
-    Status: Not started,Running, Completed
-}
-
-Image to video job
-{
-    ID: UUID
-    ParentJob: ID
-    Status: Not started, Running, Completed
-    Output File: video file name
-}
-
-Video Concat Job
-{
-    ID: UUID
-    ParentJob: ID
-    Status: Not started, Running, Completed
-    Output File: ID
-}
-
-
-
-curl -X POST http://localhost:8080/report_pdf_split -H "Content-Type: application/json" -d '{"id": "a443a907-091d-4767-b70b-c2be09824cc0", "status": "running"}'
-curl -X POST http://localhost:8080/report_pdf_split -H "Content-Type: application/json" -d '{"id": "a443a907-091d-4767-b70b-c2be09824cc0", "status": "completed", "slide_details": [{"image": "1234.png", "slide_no": 0}, {"image": "2345.png", "slide_no": 1}]}'
-
-curl -X POST http://localhost:8080/report_image_to_video -H "Content-Type: application/json" -d '{"id": "791ba4a4-b6b9-47ba-a23d-5994ab93ad42", "status":"running"}'
-curl -X POST http://localhost:8080/report_image_to_video -H "Content-Type: application/json" -d '{"id": "d802c38a-735d-47b5-b7ad-871e3b4fa378", "status":"running"}'
-curl -X POST http://localhost:8080/report_image_to_video -H "Content-Type: application/json" -d '{"id": "791ba4a4-b6b9-47ba-a23d-5994ab93ad42", "status":"completed", "output_file": "791ba4a4-b6b9-47ba-a23d-5994ab93ad42.mp4"}'
-curl -X POST http://localhost:8080/report_image_to_video -H "Content-Type: application/json" -d '{"id": "d802c38a-735d-47b5-b7ad-871e3b4fa378", "status":"completed", "output_file": "d802c38a-735d-47b5-b7ad-871e3b4fa378.mp4"}'
-
-curl -X POST http://localhost:8080/report_video_concat -H "Content-Type: application/json" -d '{"id": "4e0100ff-7cf2-4edb-bc82-2cb583f64aa9", "status":"running"}'
-curl -X POST http://localhost:8080/report_video_concat -H "Content-Type: application/json" -d '{"id": "4e0100ff-7cf2-4edb-bc82-2cb583f64aa9", "status":"completed", "output_video": "db5ac55a-7913-49e5-bca4-d09c71ef0073.mp4"}'
+Project
+- ID
+- Name
+- Tags
+- DateCreated
+- DateModified
+- UserAccess (List)
+  - UserID
+  - GroupID
+- FinalVideo
+  - OutputFile
+  - Status
+  - DateTimeRequest
+- VideoSegments (List)
+  - VideoFile
+  - DateCreated
+  - Status
+  - DateTimeRequest
+  - Order
+  - ImageSource
+    - ImageID
+    - Type (Google Slides, Raw, PDF)
+  - AudioSource
+    - AudioID
+    - Type (Google Source, Raw)
+  - VideoSource (VideoSources takes priority)
+    - VideoID (VideoFile == VideoID)
+    - Type (Raw)
+- ImageImporters (List)
+  - PDF (No update operation allowed)
+    - PDFFile
+    - DateCreated
+    - Slides (List)
+      - SlideImage
+      - SlideOrder
+  - GoogleSlides (No update operation allowed)
+    - ID
+    - DateCreated
+    - SlideURL
+    - Slides (List)
+      - SlideImage
+      - SlideOrder
+  - GoogleSlidesVersioned
+    - ID
+    - DateCreated
+    - SlideURL
+    - UserID
+    - SlideVersion
+      - ID
+      - DateCreated
+      - SlideCount
+      - Slides (List)
+        - SlideImage
+        - SlideOrder
+  - PDFVersioned
+    - ID
+    - PDFVersion
+      - ID
+      - DateCreated
+      - SlideCount
+      - Slides (List)
+        - SlideImage
+        - SlideOrder 
