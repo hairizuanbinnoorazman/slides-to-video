@@ -1,74 +1,33 @@
 package handlers
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 
-	"github.com/hairizuanbinnoorazman/slides-to-video-manager/jobs"
-
-	"github.com/gofrs/uuid"
-	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
-	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
 )
 
 type CreateProject struct {
-	Logger           logger.Logger
-	Blobstorage      blobstorage.BlobStorage
-	PDFToImageQueue  queue.Queue
-	BucketFolderName string
-	ProjectStore     project.ProjectStore
-	JobStore         jobs.JobStore
+	Logger       logger.Logger
+	ProjectStore project.Store
 }
 
 func (h CreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start Create Parent Item Handler")
 	defer h.Logger.Info("End Create Parent Item Handler")
 
-	err := r.ParseMultipartForm(32 << 20)
+	item := project.New()
+	err := h.ProjectStore.Create(context.Background(), item)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to retrieve parse multipart form data. Error: %v", err)
-		h.Logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
-		return
-	}
-	file, _, err := r.FormFile("myfile")
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to retrieve form data. Error: %v", err)
-		h.Logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
-		return
-	}
-	defer file.Close()
-	var b bytes.Buffer
-	bw := bufio.NewWriter(&b)
-	io.Copy(bw, file)
-
-	item, err := h.createProjectRecord()
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to save parent job to datastore. Error: %v", err)
-		h.Logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
-		return
-	}
-
-	h.Blobstorage.Save(context.Background(), h.BucketFolderName+"/"+item.PDFFile, b.Bytes())
-
-	err = h.createPDFSplitJob(item.ID, item.PDFFile)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to create the pdf split job. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to create project in datastore. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(errMsg))
@@ -81,38 +40,9 @@ func (h CreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h CreateProject) createProjectRecord() (project.Project, error) {
-	item := project.NewProject()
-	fileID, _ := uuid.NewV4()
-	item.PDFFile = fileID.String()
-	err := h.ProjectStore.CreateProject(context.Background(), item)
-	if err != nil {
-		return project.Project{}, err
-	}
-	return item, nil
-}
-
-func (h CreateProject) createPDFSplitJob(parentJobID, filename string) error {
-	job := jobs.NewJob(parentJobID, jobs.PDFToImage, "")
-	values := map[string]string{"id": job.ID, "pdfFileName": filename}
-	jsonValue, _ := json.Marshal(values)
-	job.Message = string(jsonValue)
-
-	err := h.JobStore.CreateJob(context.Background(), job)
-	if err != nil {
-		return err
-	}
-
-	err = h.PDFToImageQueue.Add(context.Background(), jsonValue)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 type UpdateProject struct {
 	Logger       logger.Logger
-	ProjectStore project.ProjectStore
+	ProjectStore project.Store
 }
 
 func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -129,8 +59,14 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedProject := project.Project{}
-	err = json.Unmarshal(rawReq, &updatedProject)
+	type updateProjectReq struct {
+		Status        string `json:"status"`
+		VideoOutputID string `json:"video_output_id"`
+		IdemKey       string `json:"idem_key"`
+	}
+
+	req := updateProjectReq{}
+	err = json.Unmarshal(rawReq, &req)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to marshal value out to project item. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -140,11 +76,15 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var textSetters []func(*project.Project)
-	for _, item := range updatedProject.SlideAssets {
-		textSetters = append(textSetters, project.SetSlideText(item.ImageID, item.Text))
+	textSetters = append(textSetters, project.SetStatus(req.Status))
+	if req.IdemKey != "" {
+		textSetters = append(textSetters, project.SetIdemKey(req.IdemKey))
+	}
+	if req.VideoOutputID != "" {
+		textSetters = append(textSetters, project.SetVideoOutputID(req.VideoOutputID))
 	}
 
-	textUpdatedProject, err := h.ProjectStore.UpdateProject(context.Background(), projectID, textSetters...)
+	textUpdatedProject, err := h.ProjectStore.Update(context.Background(), projectID, "user-id", textSetters...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to update project item. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -160,7 +100,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type GetProject struct {
 	Logger       logger.Logger
-	ProjectStore project.ProjectStore
+	ProjectStore project.Store
 }
 
 func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +108,7 @@ func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer h.Logger.Info("End Get Project API Handler")
 
 	projectID := mux.Vars(r)["project_id"]
-	project, err := h.ProjectStore.GetProject(context.Background(), projectID)
+	project, err := h.ProjectStore.Get(context.Background(), projectID, "user-id")
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -186,14 +126,14 @@ func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type GetAllProjects struct {
 	Logger       logger.Logger
-	ProjectStore project.ProjectStore
+	ProjectStore project.Store
 }
 
 func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start View All Parent Jobs API Handler")
 	defer h.Logger.Info("End View All Parent Jobs API Handler")
 
-	projects, err := h.ProjectStore.GetAllProjects(context.Background())
+	projects, err := h.ProjectStore.GetAll(context.Background(), "user-id", 100, 0)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -216,17 +156,19 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-type StartVideoGeneration struct {
+type StartVideoConcat struct {
 	Logger            logger.Logger
-	ImageToVideoQueue queue.Queue
-	ProjectStore      project.ProjectStore
-	JobsStore         jobs.JobStore
+	VideoSegmentStore videosegment.Store
+	VideoConcater     videoconcater.VideoConcater
 }
 
-func (h StartVideoGeneration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start StartVideoConcat API Handler")
+	defer h.Logger.Info("End StartVideoConcat API Handler")
+
 	projectID := mux.Vars(r)["project_id"]
 
-	project, err := h.ProjectStore.GetProject(context.Background(), projectID)
+	videosegments, err := h.VideoSegmentStore.GetAll(context.Background(), projectID, 0, 0)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -235,37 +177,25 @@ func (h StartVideoGeneration) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = project.ValidateForGeneration()
+	videoSegmentIDs := []string{}
+	for _, v := range videosegments {
+		videoSegmentIDs = append(videoSegmentIDs, v.ID)
+	}
+
+	err = h.VideoConcater.Start(context.Background(), projectID, videoSegmentIDs)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - validation issues when attempting to do generation validation. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to start async video generation. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(errMsg))
 		return
 	}
 
-	for _, slideAsset := range project.SlideAssets {
-		job := jobs.NewJob(project.ID, jobs.ImageToVideo, "")
-		jobDetails := map[string]string{
-			"id":       job.ID,
-			"image_id": slideAsset.ImageID,
-			"text":     slideAsset.Text,
-		}
-		rawJobDetails, err := json.Marshal(jobDetails)
-		job.Message = string(rawJobDetails)
-		err = h.JobsStore.CreateJob(context.Background(), job)
-		if err != nil {
-			errMsg := fmt.Sprintf("Error - validation issues when attempting to do generation validation. Error: %v", err)
-			h.Logger.Error(errMsg)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(errMsg))
-			return
-		}
-
-		h.ImageToVideoQueue.Add(context.Background(), rawJobDetails)
-
+	resp := map[string]string{
+		"status": "successfully sent",
 	}
+	rawResp, _ := json.Marshal(resp)
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Implemented"))
+	w.Write(rawResp)
 }
