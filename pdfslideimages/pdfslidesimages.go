@@ -28,8 +28,8 @@ type PDFSlideImages struct {
 	DateCreated        time.Time    `json:"date_created"`
 	SlideAssets        []SlideAsset `json:"slide_assets"`
 	Status             status       `json:"status"`
-	SetRunningIdemKey  string       `json:"idem_key_set_running"`
-	CompleteRecIdemKey string       `json:"idem_key_complete_record"`
+	SetRunningIdemKey  string       `json:"-"`
+	CompleteRecIdemKey string       `json:"-"`
 }
 
 func (p *PDFSlideImages) IsComplete() bool {
