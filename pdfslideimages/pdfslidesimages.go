@@ -22,23 +22,34 @@ type SlideAsset struct {
 }
 
 type PDFSlideImages struct {
-	ID          string       `json:"id" datastore:"-"`
-	ProjectID   string       `json:"project_id" datastore:"-"`
-	PDFFile     string       `json:"pdf_file"`
-	DateCreated time.Time    `json:"date_created"`
-	SlideAssets []SlideAsset `json:"slide_assets"`
-	Status      status       `json:"status"`
-	IdemKey     string       `json:"idem_key"`
+	ID                 string       `json:"id" datastore:"-"`
+	ProjectID          string       `json:"project_id" datastore:"-"`
+	PDFFile            string       `json:"pdf_file"`
+	DateCreated        time.Time    `json:"date_created"`
+	SlideAssets        []SlideAsset `json:"slide_assets"`
+	Status             status       `json:"status"`
+	SetRunningIdemKey  string       `json:"idem_key_set_running"`
+	CompleteRecIdemKey string       `json:"idem_key_complete_record"`
+}
+
+func (p *PDFSlideImages) IsComplete() bool {
+	if p.Status == completed {
+		return true
+	}
+	return false
 }
 
 func New(projectID string) PDFSlideImages {
 	id, _ := uuid.NewV4()
-	pdfFileID, _ := uuid.NewV4()
+	idemKey1, _ := uuid.NewV4()
+	idemKey2, _ := uuid.NewV4()
 	return PDFSlideImages{
-		ID:          id.String(),
-		ProjectID:   projectID,
-		PDFFile:     pdfFileID.String() + ".pdf",
-		DateCreated: time.Now(),
-		Status:      created,
+		ID:                 id.String(),
+		ProjectID:          projectID,
+		PDFFile:            id.String() + ".pdf",
+		DateCreated:        time.Now(),
+		Status:             created,
+		SetRunningIdemKey:  idemKey1.String(),
+		CompleteRecIdemKey: idemKey2.String(),
 	}
 }

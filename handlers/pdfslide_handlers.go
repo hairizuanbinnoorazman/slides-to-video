@@ -15,6 +15,7 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/imageimporter"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 )
 
 type CreatePDFSlideImages struct {
@@ -81,6 +82,7 @@ func (h CreatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 type UpdatePDFSlideImages struct {
 	Logger              logger.Logger
 	PDFSlideImagesStore pdfslideimages.Store
+	VideoSegmentStore   videosegment.Store
 }
 
 func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -99,19 +101,25 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	type updatePDFSlideImagesReq struct {
-		Status      string                      `json:"status"`
-		SlideAssets []pdfslideimages.SlideAsset `json:"slide_assets"`
-		IdemKey     string                      `json:"idem_key"`
+		Status                  string                      `json:"status"`
+		SlideAssets             []pdfslideimages.SlideAsset `json:"slide_assets"`
+		ClearSetRunningIdemKey  string                      `json:"idem_key_set_running"`
+		ClearCompleteRecIdemKey string                      `json:"idem_key_clear_complete_rec"`
 	}
 	req := updatePDFSlideImagesReq{}
 	json.Unmarshal(rawReq, &req)
 
 	h.Logger.Info(req)
 
-	var zz []func(*pdfslideimages.PDFSlideImages)
+	var zz []func(*pdfslideimages.PDFSlideImages) error
 	zz = append(zz, pdfslideimages.SetStatus(req.Status))
 	zz = append(zz, pdfslideimages.SetSlideAssets(req.SlideAssets))
-	zz = append(zz, pdfslideimages.SetIdemKey(req.IdemKey))
+	if req.ClearSetRunningIdemKey != "" {
+		zz = append(zz, pdfslideimages.ClearSetRunningIdemKey(req.ClearSetRunningIdemKey))
+	}
+	if req.ClearCompleteRecIdemKey != "" {
+		zz = append(zz, pdfslideimages.ClearCompleteRecIdemKey(req.ClearCompleteRecIdemKey))
+	}
 	item, err := h.PDFSlideImagesStore.Update(context.Background(), projectID, pdfSlideImagesID, zz...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to update record. Error: %v", err)
@@ -119,6 +127,20 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
 		return
+	}
+
+	if item.IsComplete() {
+		for _, s := range item.SlideAssets {
+			videoSegment := videosegment.New(projectID, s.ImageID, s.Order)
+			err := h.VideoSegmentStore.Create(context.Background(), videoSegment)
+			if err != nil {
+				errMsg := fmt.Sprintf("Error - unable to update video segment. Error: %v", err)
+				h.Logger.Error(errMsg)
+				w.WriteHeader(500)
+				w.Write([]byte(errMsg))
+				return
+			}
+		}
 	}
 
 	rawItem, err := json.Marshal(item)

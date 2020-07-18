@@ -45,7 +45,7 @@ func (g *googleDatastore) Get(ctx context.Context, projectID, ID string) (PDFSli
 	return parentJob, nil
 }
 
-func (g *googleDatastore) Update(ctx context.Context, projectID, ID string, setters ...func(*PDFSlideImages)) (PDFSlideImages, error) {
+func (g *googleDatastore) Update(ctx context.Context, projectID, ID string, setters ...func(*PDFSlideImages) error) (PDFSlideImages, error) {
 	projectKey := datastore.NameKey(g.projectEntityName, projectID, nil)
 	key := datastore.NameKey(g.entityName, ID, projectKey)
 	project := PDFSlideImages{}
@@ -54,12 +54,11 @@ func (g *googleDatastore) Update(ctx context.Context, projectID, ID string, sett
 		if err := g.client.Get(ctx, key, &project); err != nil {
 			return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
 		}
-		previousIdemKey := project.IdemKey
 		for _, setFunc := range setters {
-			setFunc(&project)
-		}
-		if previousIdemKey == project.IdemKey {
-			return fmt.Errorf("idempotent key is not different - this is the same update request triggered")
+			err := setFunc(&project)
+			if err != nil {
+				return err
+			}
 		}
 		_, err := g.client.Put(ctx, key, &project)
 		if err != nil {
