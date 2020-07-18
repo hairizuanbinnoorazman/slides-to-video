@@ -76,22 +76,28 @@ func (h UpdateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type updateVideoSegmentReq struct {
-		VideoFile string `json:"video_file"`
-		Hidden    bool   `json:"hidden"`
-		Status    string `json:"status"`
-		IdemKey   string `json:"idem_key"`
+		VideoFile          string `json:"video_file"`
+		Hidden             bool   `json:"hidden"`
+		Status             string `json:"status"`
+		SetRunningIdemKey  string `json:"idem_key_running"`
+		CompleteRecIdemKey string `json:"idem_key_complete_rec"`
 	}
 	req := updateVideoSegmentReq{}
 	json.Unmarshal(rawReq, &req)
 
-	var updaters []func(*videosegment.VideoSegment)
+	var updaters []func(*videosegment.VideoSegment) error
 	updaters = append(updaters, videosegment.SetHidden(req.Hidden))
-	updaters = append(updaters, videosegment.SetIdemKey(req.IdemKey))
 	if req.VideoFile != "" {
 		updaters = append(updaters, videosegment.SetVideoFile(req.VideoFile))
 	}
 	if req.Status != "" {
 		updaters = append(updaters, videosegment.SetStatus(req.Status))
+	}
+	if req.SetRunningIdemKey != "" {
+		updaters = append(updaters, videosegment.ClearSetRunningIdemKey(req.SetRunningIdemKey))
+	}
+	if req.CompleteRecIdemKey != "" {
+		updaters = append(updaters, videosegment.ClearCompleteRecIdemKey(req.CompleteRecIdemKey))
 	}
 
 	item, err := h.VideoSegmentStore.Update(context.Background(), projectID, videoSegmentID, updaters...)

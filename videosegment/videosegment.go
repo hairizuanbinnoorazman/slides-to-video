@@ -16,15 +16,16 @@ var (
 )
 
 type VideoSegment struct {
-	ID           string    `json:"id" datastore:"-"`
-	ProjectID    string    `json:"project_id" datastore:"-"`
-	VideoFile    string    `json:"video_file"`
-	DateCreated  time.Time `json:"date_created"`
-	DateModified time.Time `json:"date_modified"`
-	Order        int       `json:"order"`
-	Hidden       bool      `json:"hidden"`
-	Status       status    `json:"status"`
-	IdemKey      string    `json:"idem_key"`
+	ID                 string    `json:"id" datastore:"-"`
+	ProjectID          string    `json:"project_id" datastore:"-"`
+	VideoFile          string    `json:"video_file"`
+	DateCreated        time.Time `json:"date_created"`
+	DateModified       time.Time `json:"date_modified"`
+	Order              int       `json:"order"`
+	Hidden             bool      `json:"hidden"`
+	Status             status    `json:"status"`
+	SetRunningIdemKey  string    `json:"-"`
+	CompleteRecIdemKey string    `json:"-"`
 	// Image Source
 	ImageID string `json:"image_id"`
 	Script  string `json:"script"`
