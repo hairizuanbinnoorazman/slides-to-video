@@ -206,7 +206,7 @@ func main() {
 
 	srv := http.Server{
 		Handler:      cors(r),
-		Addr:         "0.0.0.0:8000",
+		Addr:         "0.0.0.0:8080",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
