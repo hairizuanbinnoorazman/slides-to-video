@@ -131,6 +131,8 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	h.Logger.Infof("Store update completed")
+
 	if item.IsComplete() {
 		for _, s := range item.SlideAssets {
 			videoSegment := videosegment.New(projectID, s.ImageID, s.Order)
@@ -144,6 +146,8 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 	}
+
+	h.Logger.Infof("Created video segments")
 
 	rawItem, err := json.Marshal(item)
 	if err != nil {

@@ -3,7 +3,6 @@ package pdfslideimages
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"cloud.google.com/go/datastore"
 )
@@ -50,7 +49,6 @@ func (g *googleDatastore) Update(ctx context.Context, projectID, ID string, sett
 	key := datastore.NameKey(g.entityName, ID, projectKey)
 	project := PDFSlideImages{}
 	_, err := g.client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
-		log.Println(len(setters))
 		if err := g.client.Get(ctx, key, &project); err != nil {
 			return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
 		}
