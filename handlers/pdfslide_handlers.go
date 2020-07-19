@@ -104,7 +104,7 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Status                  string                      `json:"status"`
 		SlideAssets             []pdfslideimages.SlideAsset `json:"slide_assets"`
 		ClearSetRunningIdemKey  string                      `json:"idem_key_set_running"`
-		ClearCompleteRecIdemKey string                      `json:"idem_key_clear_complete_rec"`
+		ClearCompleteRecIdemKey string                      `json:"idem_key_complete_rec"`
 	}
 	req := updatePDFSlideImagesReq{}
 	json.Unmarshal(rawReq, &req)
