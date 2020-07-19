@@ -151,6 +151,7 @@ func main() {
 	s.Handle("/project/{project_id}/pdfslideimages/{pdfslideimages_id}", h.UpdatePDFSlideImages{
 		Logger:              logger,
 		PDFSlideImagesStore: pdfSlideImagesStore,
+		VideoSegmentStore:   videoSegmentsStore,
 	}).Methods("PUT")
 	s.Handle("/project/{project_id}/pdfslideimages/{pdfslideimages_id}", h.GetPDFSlideImages{
 		Logger:              logger,
