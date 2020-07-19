@@ -90,7 +90,7 @@ func main() {
 	if err != nil {
 		logger.Error("Unable to create pubsub client")
 	}
-	_, err = pubsub.NewClient(context.Background(), ProjectID, option.WithCredentialsJSON(credJSON))
+	pubsubClient, err := pubsub.NewClient(context.Background(), ProjectID, option.WithCredentialsJSON(credJSON))
 	if err != nil {
 		logger.Error("Unable to create pubsub client")
 	}
@@ -108,7 +108,7 @@ func main() {
 	videoSegmentsStore := videosegment.NewGoogleDatastore(datastoreClient, ProjectTableName, VideoSegmentsTableName)
 
 	slideToVideoStorage := blobstorage.NewGCSStorage(logger, xClient, BucketName)
-	pdfToImageQueue := queue.NewFake(logger)
+	pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, PDFToImageJobTopic)
 	imageToVideoQueue := queue.NewFake(logger)
 	concatQueue := queue.NewFake(logger)
 
