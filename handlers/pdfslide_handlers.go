@@ -113,7 +113,9 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	var zz []func(*pdfslideimages.PDFSlideImages) error
 	zz = append(zz, pdfslideimages.SetStatus(req.Status))
-	zz = append(zz, pdfslideimages.SetSlideAssets(req.SlideAssets))
+	if len(req.SlideAssets) != 0 {
+		zz = append(zz, pdfslideimages.SetSlideAssets(req.SlideAssets))
+	}
 	if req.ClearSetRunningIdemKey != "" {
 		zz = append(zz, pdfslideimages.ClearSetRunningIdemKey(req.ClearSetRunningIdemKey))
 	}
