@@ -153,7 +153,7 @@ func (h StartVideoSegmentGeneration) ServeHTTP(w http.ResponseWriter, r *http.Re
 	defer h.Logger.Info("End VideoSegmentGeneration API Handler")
 
 	projectID := mux.Vars(r)["project_id"]
-	videosegmentID := mux.Vars(r)["project_id"]
+	videosegmentID := mux.Vars(r)["videosegment_id"]
 
 	videosegment, err := h.VideoSegmentStore.Get(context.Background(), projectID, videosegmentID)
 	if err != nil {
