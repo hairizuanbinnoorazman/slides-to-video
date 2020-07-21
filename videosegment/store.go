@@ -3,6 +3,7 @@ package videosegment
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 type Store interface {
@@ -13,34 +14,68 @@ type Store interface {
 	Delete(ctx context.Context, projectID, ID string) error
 }
 
-func SetStatus(status string) func(*VideoSegment) error {
+func GetUpdaters(runningIdemKey, completeRecIdemKey, state, videoFile string, hidden *bool) ([]func(*VideoSegment) error, error) {
+	var s status
+	switch state {
+	case "running":
+		s = running
+	case "completed":
+		s = completed
+	case "error":
+		s = errorStatus
+	default:
+		s = unset
+	}
+	var setters []func(*VideoSegment) error
+	if s == running && runningIdemKey == "" {
+		return setters, fmt.Errorf("No IdemKey passed to change the status to running state")
+	}
+	if s == errorStatus && completeRecIdemKey == "" || s == completed && completeRecIdemKey == "" {
+		return setters, fmt.Errorf("No CompleteRec IdemKey passed to change status to error/completed")
+	}
+	if s == completed && videoFile == "" || s == completed && !strings.Contains(videoFile, ".mp4") {
+		return setters, fmt.Errorf("Missing/invalid videofile")
+	}
+	if s == running && runningIdemKey != "" {
+		setters = append(setters, setStatus(s), clearSetRunningIdemKey(runningIdemKey))
+		return setters, nil
+	}
+	if s == errorStatus && completeRecIdemKey != "" {
+		setters = append(setters, setStatus(s), clearCompleteRecIdemKey(completeRecIdemKey))
+		return setters, nil
+	}
+	if s == completed && completeRecIdemKey != "" {
+		setters = append(setters, setStatus(s), clearCompleteRecIdemKey(completeRecIdemKey), setVideoFile(videoFile))
+		return setters, nil
+	}
+	if hidden != nil {
+		setters = append(setters, setHidden(*hidden))
+	}
+	return setters, fmt.Errorf("Unexpected issue found")
+}
+
+func setStatus(s status) func(*VideoSegment) error {
 	return func(a *VideoSegment) error {
-		if status == "running" {
-			a.Status = running
-		} else if status == "completed" {
-			a.Status = completed
-		} else if status == "error" {
-			a.Status = errored
-		}
+		a.Status = s
 		return nil
 	}
 }
 
-func SetHidden(hide bool) func(*VideoSegment) error {
+func setHidden(hide bool) func(*VideoSegment) error {
 	return func(a *VideoSegment) error {
 		a.Hidden = hide
 		return nil
 	}
 }
 
-func SetVideoFile(videoFile string) func(*VideoSegment) error {
+func setVideoFile(videoFile string) func(*VideoSegment) error {
 	return func(a *VideoSegment) error {
 		a.VideoFile = videoFile
 		return nil
 	}
 }
 
-func ClearSetRunningIdemKey(idemKey string) func(*VideoSegment) error {
+func clearSetRunningIdemKey(idemKey string) func(*VideoSegment) error {
 	return func(a *VideoSegment) error {
 		if a.SetRunningIdemKey == idemKey {
 			a.SetRunningIdemKey = ""
@@ -50,7 +85,7 @@ func ClearSetRunningIdemKey(idemKey string) func(*VideoSegment) error {
 	}
 }
 
-func ClearCompleteRecIdemKey(idemKey string) func(*VideoSegment) error {
+func clearCompleteRecIdemKey(idemKey string) func(*VideoSegment) error {
 	return func(a *VideoSegment) error {
 		if a.CompleteRecIdemKey == idemKey {
 			a.CompleteRecIdemKey = ""

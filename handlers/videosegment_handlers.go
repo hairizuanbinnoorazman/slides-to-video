@@ -77,7 +77,7 @@ func (h UpdateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	type updateVideoSegmentReq struct {
 		VideoFile          string `json:"video_file"`
-		Hidden             bool   `json:"hidden"`
+		Hidden             *bool  `json:"hidden"`
 		Status             string `json:"status"`
 		SetRunningIdemKey  string `json:"idem_key_running"`
 		CompleteRecIdemKey string `json:"idem_key_complete_rec"`
@@ -85,26 +85,20 @@ func (h UpdateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	req := updateVideoSegmentReq{}
 	json.Unmarshal(rawReq, &req)
 
-	var updaters []func(*videosegment.VideoSegment) error
-	updaters = append(updaters, videosegment.SetHidden(req.Hidden))
-	if req.VideoFile != "" {
-		updaters = append(updaters, videosegment.SetVideoFile(req.VideoFile))
-	}
-	if req.Status != "" {
-		updaters = append(updaters, videosegment.SetStatus(req.Status))
-	}
-	if req.SetRunningIdemKey != "" {
-		updaters = append(updaters, videosegment.ClearSetRunningIdemKey(req.SetRunningIdemKey))
-	}
-	if req.CompleteRecIdemKey != "" {
-		updaters = append(updaters, videosegment.ClearCompleteRecIdemKey(req.CompleteRecIdemKey))
+	updaters, err := videosegment.GetUpdaters(req.SetRunningIdemKey, req.CompleteRecIdemKey, req.Status, req.VideoFile, req.Hidden)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - issue with updating; pre-update check. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errMsg))
+		return
 	}
 
 	item, err := h.VideoSegmentStore.Update(context.Background(), projectID, videoSegmentID, updaters...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to create video segment in datastore. Error: %v", err)
 		h.Logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(errMsg))
 		return
 	}

@@ -9,10 +9,11 @@ import (
 type status string
 
 var (
-	created   status = "created"
-	running   status = "running"
-	errored   status = "error"
-	completed status = "completed"
+	created     status = "created"
+	running     status = "running"
+	errorStatus status = "error"
+	completed   status = "completed"
+	unset       status = "unset"
 )
 
 type VideoSegment struct {
