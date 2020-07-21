@@ -5,7 +5,7 @@ import requests
 from google.cloud import datastore
 
 
-base_endpoint = "http://localhost:8000/api/v1"
+base_endpoint = "https://slides-to-video-manager-sj5kqt5fxq-an.a.run.app/api/v1"
 project_store = "test-Project"
 pdfslides_store = "test-PDFSlideImages"
 videosegment_store = "test-VideoSegments"
@@ -17,8 +17,8 @@ def cleanup():
     client = datastore.Client()
     query = client.query(kind=project_store)
     query_iter = query.fetch()
-    for entity in query_iter:
-        client.delete(entity.key)
+    # for entity in query_iter:
+    #     client.delete(entity.key)
 
 
 @pytest.fixture(scope="session")
@@ -27,8 +27,8 @@ def cleanup_pdfslides():
     client = datastore.Client()
     query = client.query(kind=pdfslides_store)
     query_iter = query.fetch()
-    for entity in query_iter:
-        client.delete(entity.key)
+    # for entity in query_iter:
+    #     client.delete(entity.key)
 
 
 @pytest.fixture(scope="session")
@@ -37,8 +37,8 @@ def cleanup_videosegment():
     client = datastore.Client()
     query = client.query(kind=videosegment_store)
     query_iter = query.fetch()
-    for entity in query_iter:
-        client.delete(entity.key)
+    # for entity in query_iter:
+    #     client.delete(entity.key)
 
 
 @pytest.fixture
@@ -168,7 +168,7 @@ def get_videosegment():
 
 
 @pytest.fixture
-def await_project_ready():
+def await_pdf_slides():
     def lol(project_id):
         loop = 10
         current_loop = 1
@@ -179,11 +179,12 @@ def await_project_ready():
             resp = requests.get(endpoint)
             data = json.loads(resp.content)
             print("Awaiting for PDF Split to be done")
-            print(str(current_loop) + " " + str(data))
-            if data["slide_assets"] is not None:
+            if data.get("pdf_slide_images") is None:
+                continue
+            if data["pdf_slide_images"][0]["status"] == "completed":
                 return data
             current_loop = current_loop + 1
-        assert False, "Awaiting for project to be ready has elapsed"
+        assert False, "Awaiting for PDF Split to be ready has elapsed"
     return lol
 
 
@@ -223,15 +224,15 @@ def test_list_projects(create_project, cleanup):
     assert len(project_list) == 2
 
 
-def test_update_project(create_project, update_project, get_project, cleanup):
-    project = create_project
-    updated_project = update_project(project["id"], {
-        "status": "running",
-        "idem_key": "miao"
-    })
-    assert updated_project["status"] == "running"
-    project = get_project(updated_project["id"])
-    assert project["status"] == "running"
+# def test_update_project(create_project, update_project, get_project, cleanup):
+#     project = create_project
+#     updated_project = update_project(project["id"], {
+#         "status": "running",
+#         "idem_key": "miao"
+#     })
+#     assert updated_project["status"] == "running"
+#     project = get_project(updated_project["id"])
+#     assert project["status"] == "running"
 
 
 def test_add_pdf_slides(create_project, create_pdfslideimages, cleanup):
@@ -241,73 +242,77 @@ def test_add_pdf_slides(create_project, create_pdfslideimages, cleanup):
     assert pdfslideimages["id"] != ""
 
 
-def test_project_on_addpdfslides(create_project, create_pdfslideimages, get_project, cleanup):
+def test_project_on_addpdfslides(create_project, create_pdfslideimages, get_project, await_pdf_slides, cleanup):
     project = create_project
     pdfslideimages = create_pdfslideimages(project["id"])
     project = get_project(project["id"])
     assert project.get("pdf_slide_images") is not None
     assert len(project["pdf_slide_images"]) == 1
-    assert pdfslideimages == project["pdf_slide_images"][0]
+    project = await_pdf_slides(project["id"])
+    assert len(project["pdf_slide_images"][0]["slide_assets"]) == 2
+    assert project["pdf_slide_images"][0]["status"] == "completed"
+    assert project.get("video_segments") is not None
+    assert len(project["video_segments"]) == 2
 
 
-def test_update_pdf_slides(create_project, create_pdfslideimages, update_pdfslideimages, get_pdfslideimages, cleanup, cleanup_pdfslides):
-    project = create_project
-    pdfslideimages = create_pdfslideimages(project["id"])
-    zz = update_pdfslideimages(project["id"], pdfslideimages["id"], {
-        'status': 'running',
-        'idem_key': 'miao',
-    })
-    assert zz["status"] == "running"
-    reretrieve_pdfslideimages = get_pdfslideimages(
-        project["id"], pdfslideimages["id"])
-    assert reretrieve_pdfslideimages["status"] == "running"
+# def test_update_pdf_slides(create_project, create_pdfslideimages, update_pdfslideimages, get_pdfslideimages, cleanup, cleanup_pdfslides):
+#     project = create_project
+#     pdfslideimages = create_pdfslideimages(project["id"])
+#     zz = update_pdfslideimages(project["id"], pdfslideimages["id"], {
+#         'status': 'running',
+#         'idem_key': 'miao',
+#     })
+#     assert zz["status"] == "running"
+#     reretrieve_pdfslideimages = get_pdfslideimages(
+#         project["id"], pdfslideimages["id"])
+#     assert reretrieve_pdfslideimages["status"] == "running"
 
 
-def test_multiple_update_pdf_slides(create_project, create_pdfslideimages, update_pdfslideimages, get_pdfslideimages, cleanup, cleanup_pdfslides):
-    project = create_project
-    pdfslideimages = create_pdfslideimages(project["id"])
-    zzz = update_pdfslideimages(project["id"], pdfslideimages["id"], {
-        "status": "running",
-        "idem_key": "miao0"
-    })
-    assert zzz["status"] == "running"
-    update_pdfslideimages(project["id"], pdfslideimages["id"], {
-        "status": "completed",
-        "idem_key": "miao1"
-    })
-    update_pdfslideimages(project["id"], pdfslideimages["id"], {
-        "status": "running",
-        "idem_key": "miao2"
-    })
-    update_pdfslideimages(project["id"], pdfslideimages["id"], {
-        "status": "completed",
-        "idem_key": "miao3"
-    })
-    reretrieve_pdfslideimages = get_pdfslideimages(
-        project["id"], pdfslideimages["id"])
-    assert reretrieve_pdfslideimages["status"] == "completed"
-    assert reretrieve_pdfslideimages["idem_key"] == "miao3"
+# def test_multiple_update_pdf_slides(create_project, create_pdfslideimages, update_pdfslideimages, get_pdfslideimages, cleanup, cleanup_pdfslides):
+#     project = create_project
+#     pdfslideimages = create_pdfslideimages(project["id"])
+#     zzz = update_pdfslideimages(project["id"], pdfslideimages["id"], {
+#         "status": "running",
+#         "idem_key": "miao0"
+#     })
+#     assert zzz["status"] == "running"
+#     update_pdfslideimages(project["id"], pdfslideimages["id"], {
+#         "status": "completed",
+#         "idem_key": "miao1"
+#     })
+#     update_pdfslideimages(project["id"], pdfslideimages["id"], {
+#         "status": "running",
+#         "idem_key": "miao2"
+#     })
+#     update_pdfslideimages(project["id"], pdfslideimages["id"], {
+#         "status": "completed",
+#         "idem_key": "miao3"
+#     })
+#     reretrieve_pdfslideimages = get_pdfslideimages(
+#         project["id"], pdfslideimages["id"])
+#     assert reretrieve_pdfslideimages["status"] == "completed"
+#     assert reretrieve_pdfslideimages["idem_key"] == "miao3"
 
 
-def test_update_videosegment(create_project, get_videosegment, create_videosegment, update_videosegment, cleanup_videosegment):
-    project = create_project
-    videosegment = create_videosegment(project["id"], "hahaha", 2)
-    req = {
-        "status": "running",
-        "idem_key": "miao"
-    }
-    updated_videosegment_z = update_videosegment(
-        project["id"], videosegment["id"], req)
-    assert updated_videosegment_z["status"] == "running"
-    req = {
-        "status": "completed",
-        "video_file": "test.mp4",
-        "idem_key": "miao2"
-    }
-    update_videosegment(project["id"], videosegment["id"], req)
-    final_videosegment = get_videosegment(project["id"], videosegment["id"])
-    assert final_videosegment["status"] == "completed"
-    assert final_videosegment["idem_key"] == "miao2"
+# def test_update_videosegment(create_project, get_videosegment, create_videosegment, update_videosegment, cleanup_videosegment):
+#     project = create_project
+#     videosegment = create_videosegment(project["id"], "hahaha", 2)
+#     req = {
+#         "status": "running",
+#         "idem_key": "miao"
+#     }
+#     updated_videosegment_z = update_videosegment(
+#         project["id"], videosegment["id"], req)
+#     assert updated_videosegment_z["status"] == "running"
+#     req = {
+#         "status": "completed",
+#         "video_file": "test.mp4",
+#         "idem_key": "miao2"
+#     }
+#     update_videosegment(project["id"], videosegment["id"], req)
+#     final_videosegment = get_videosegment(project["id"], videosegment["id"])
+#     assert final_videosegment["status"] == "completed"
+#     assert final_videosegment["idem_key"] == "miao2"
 
 
 def test_project_onvideosegment(create_project, get_project, create_videosegment, cleanup, cleanup_videosegment):
@@ -318,4 +323,3 @@ def test_project_onvideosegment(create_project, get_project, create_videosegment
     assert len(updated_project["video_segments"]) == 1
     assert updated_project["video_segments"][0]["id"] == videosegment["id"]
     assert updated_project["video_segments"][0]["status"] == videosegment["status"]
-    assert updated_project["video_segments"][0]["date_created"] == videosegment["date_created"]
