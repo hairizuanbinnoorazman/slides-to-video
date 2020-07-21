@@ -44,7 +44,7 @@ func GetUpdaters(runningIdemKey, completeRecIdemKey, state string, assets []Slid
 		return setters, nil
 	}
 	if s == completed && completeRecIdemKey != "" && len(assets) > 0 {
-		setters = append(setters, setStatus(s), clearCompleteRecIdemKey(completeRecIdemKey))
+		setters = append(setters, setStatus(s), clearCompleteRecIdemKey(completeRecIdemKey), setSlideAssets(assets))
 		return setters, nil
 	}
 	return setters, fmt.Errorf("Unexpected issue found")
