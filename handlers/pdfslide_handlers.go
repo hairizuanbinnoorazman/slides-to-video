@@ -31,6 +31,7 @@ func (h CreatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	defer h.Logger.Info("End CreatePDFSlideImages API Handler")
 
 	projectID := mux.Vars(r)["project_id"]
+	ctx := r.Context()
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve parse multipart form data. Error: %v", err)
@@ -53,7 +54,7 @@ func (h CreatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	io.Copy(bw, file)
 
 	slideImages := pdfslideimages.New(projectID)
-	err = h.PDFSlideImagesStore.Create(context.Background(), slideImages)
+	err = h.PDFSlideImagesStore.Create(ctx, slideImages)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to save pdf slide images. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -62,9 +63,9 @@ func (h CreatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	h.Blobstorage.Save(context.Background(), h.BucketFolderName+"/"+slideImages.PDFFile, b.Bytes())
+	h.Blobstorage.Save(ctx, h.BucketFolderName+"/"+slideImages.PDFFile, b.Bytes())
 
-	err = h.PDFSlideImporter.Start(slideImages)
+	err = h.PDFSlideImporter.Start(ctx, slideImages)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to send job. Error: %v", err)
 		h.Logger.Error(errMsg)

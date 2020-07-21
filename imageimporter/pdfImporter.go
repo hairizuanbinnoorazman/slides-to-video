@@ -9,7 +9,7 @@ import (
 )
 
 type PDFImporter interface {
-	Start(pdfslideimages.PDFSlideImages) error
+	Start(context.Context, pdfslideimages.PDFSlideImages) error
 }
 
 // PDFImporter servers to be the holding struct to handle importing pdf to slide images
@@ -23,7 +23,7 @@ func NewBasicPDFImporter(q queue.Queue) basicPDFImporter {
 	}
 }
 
-func (p basicPDFImporter) Start(s pdfslideimages.PDFSlideImages) error {
+func (p basicPDFImporter) Start(ctx context.Context, s pdfslideimages.PDFSlideImages) error {
 	values := map[string]string{
 		"id":                    s.ID,
 		"project_id":            s.ProjectID,
@@ -33,7 +33,7 @@ func (p basicPDFImporter) Start(s pdfslideimages.PDFSlideImages) error {
 	}
 	jsonValue, _ := json.Marshal(values)
 
-	err := p.queue.Add(context.Background(), jsonValue)
+	err := p.queue.Add(ctx, jsonValue)
 	if err != nil {
 		return err
 	}
