@@ -111,17 +111,15 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	h.Logger.Info(req)
 
-	var zz []func(*pdfslideimages.PDFSlideImages) error
-	zz = append(zz, pdfslideimages.SetStatus(req.Status))
-	if len(req.SlideAssets) != 0 {
-		zz = append(zz, pdfslideimages.SetSlideAssets(req.SlideAssets))
+	zz, err := pdfslideimages.GetUpdaters(req.ClearSetRunningIdemKey, req.ClearCompleteRecIdemKey, req.Status, req.SlideAssets)
+	if err != nil {
+		errMsg := fmt.Sprintf("Issue with data validation for updating. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
 	}
-	if req.ClearSetRunningIdemKey != "" {
-		zz = append(zz, pdfslideimages.ClearSetRunningIdemKey(req.ClearSetRunningIdemKey))
-	}
-	if req.ClearCompleteRecIdemKey != "" {
-		zz = append(zz, pdfslideimages.ClearCompleteRecIdemKey(req.ClearCompleteRecIdemKey))
-	}
+
 	item, err := h.PDFSlideImagesStore.Update(context.Background(), projectID, pdfSlideImagesID, zz...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to update record. Error: %v", err)

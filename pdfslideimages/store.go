@@ -13,30 +13,58 @@ type Store interface {
 	Delete(ctx context.Context, projectID, ID string) error
 }
 
-func SetStatus(status string) func(*PDFSlideImages) error {
+func GetUpdaters(runningIdemKey, completeRecIdemKey, state string, assets []SlideAsset) ([]func(*PDFSlideImages) error, error) {
+	var s status
+	switch state {
+	case "running":
+		s = running
+	case "completed":
+		s = completed
+	case "error":
+		s = errorStatus
+	default:
+		return []func(*PDFSlideImages) error{}, fmt.Errorf("Bad status is passed into it")
+	}
+	var setters []func(*PDFSlideImages) error
+	if s == running && runningIdemKey == "" {
+		return setters, fmt.Errorf("No IdemKey passed to change the status to running state")
+	}
+	if s == errorStatus && completeRecIdemKey == "" || s == completed && completeRecIdemKey == "" {
+		return setters, fmt.Errorf("No CompleteRec IdemKey passed to change status to error/completed")
+	}
+	if s == completed && len(assets) == 0 {
+		return setters, fmt.Errorf("Attempt to set complete but no assets found for pdf slides")
+	}
+	if s == running && runningIdemKey != "" {
+		setters = append(setters, setStatus(s), clearSetRunningIdemKey(runningIdemKey))
+		return setters, nil
+	}
+	if s == errorStatus && completeRecIdemKey != "" {
+		setters = append(setters, setStatus(s), clearCompleteRecIdemKey(completeRecIdemKey))
+		return setters, nil
+	}
+	if s == completed && completeRecIdemKey != "" && len(assets) > 0 {
+		setters = append(setters, setStatus(s), clearCompleteRecIdemKey(completeRecIdemKey))
+		return setters, nil
+	}
+	return setters, fmt.Errorf("Unexpected issue found")
+}
+
+func setStatus(s status) func(*PDFSlideImages) error {
 	return func(a *PDFSlideImages) error {
-		if status == "running" {
-			a.Status = running
-		} else if status == "completed" {
-			a.Status = completed
-		} else if status == "error" {
-			a.Status = errorStatus
-		}
+		a.Status = s
 		return nil
 	}
 }
 
-func SetSlideAssets(assets []SlideAsset) func(*PDFSlideImages) error {
+func setSlideAssets(assets []SlideAsset) func(*PDFSlideImages) error {
 	return func(a *PDFSlideImages) error {
-		if len(assets) == 0 {
-			return fmt.Errorf("Empty slide assets passed in")
-		}
 		a.SlideAssets = assets
 		return nil
 	}
 }
 
-func ClearSetRunningIdemKey(idemKey string) func(*PDFSlideImages) error {
+func clearSetRunningIdemKey(idemKey string) func(*PDFSlideImages) error {
 	return func(a *PDFSlideImages) error {
 		if a.SetRunningIdemKey == idemKey {
 			a.SetRunningIdemKey = ""
@@ -46,7 +74,7 @@ func ClearSetRunningIdemKey(idemKey string) func(*PDFSlideImages) error {
 	}
 }
 
-func ClearCompleteRecIdemKey(idemKey string) func(*PDFSlideImages) error {
+func clearCompleteRecIdemKey(idemKey string) func(*PDFSlideImages) error {
 	return func(a *PDFSlideImages) error {
 		if a.CompleteRecIdemKey == idemKey {
 			a.CompleteRecIdemKey = ""
