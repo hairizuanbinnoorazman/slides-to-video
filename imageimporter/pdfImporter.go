@@ -13,11 +13,17 @@ type PDFImporter interface {
 }
 
 // PDFImporter servers to be the holding struct to handle importing pdf to slide images
-type BasicPDFImporter struct {
-	Queue queue.Queue
+type basicPDFImporter struct {
+	queue queue.Queue
 }
 
-func (p BasicPDFImporter) Start(s pdfslideimages.PDFSlideImages) error {
+func NewBasicPDFImporter(q queue.Queue) basicPDFImporter {
+	return basicPDFImporter{
+		queue: q,
+	}
+}
+
+func (p basicPDFImporter) Start(s pdfslideimages.PDFSlideImages) error {
 	values := map[string]string{
 		"id":                    s.ID,
 		"project_id":            s.ProjectID,
@@ -27,7 +33,7 @@ func (p BasicPDFImporter) Start(s pdfslideimages.PDFSlideImages) error {
 	}
 	jsonValue, _ := json.Marshal(values)
 
-	err := p.Queue.Add(context.Background(), jsonValue)
+	err := p.queue.Add(context.Background(), jsonValue)
 	if err != nil {
 		return err
 	}

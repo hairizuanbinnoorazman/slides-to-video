@@ -112,7 +112,7 @@ func main() {
 	imageToVideoQueue := queue.NewFake(logger)
 	concatQueue := queue.NewFake(logger)
 
-	pdfSlideImporter := imageimporter.BasicPDFImporter{Queue: pdfToImageQueue}
+	pdfSlideImporter := imageimporter.NewBasicPDFImporter(pdfToImageQueue)
 	videoGenerator := videogenerator.NewBasic(imageToVideoQueue, videoSegmentsStore)
 	videoConcater := videoconcater.NewBasic(concatQueue)
 
