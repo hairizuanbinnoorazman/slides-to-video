@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/gofrs/uuid"
 )
 
 type Store interface {
@@ -52,6 +54,22 @@ func GetUpdaters(runningIdemKey, completeRecIdemKey, state, videoFile string, hi
 		setters = append(setters, setHidden(*hidden))
 	}
 	return setters, fmt.Errorf("Unexpected issue found")
+}
+
+func RegenerateIdemKeys() ([]func(*VideoSegment) error, error) {
+	var setters []func(*VideoSegment) error
+	setters = append(setters, recreateIdemKeys())
+	return setters, nil
+}
+
+func recreateIdemKeys() func(*VideoSegment) error {
+	return func(a *VideoSegment) error {
+		idemKey1, _ := uuid.NewV4()
+		idemKey2, _ := uuid.NewV4()
+		a.SetRunningIdemKey = idemKey1.String()
+		a.CompleteRecIdemKey = idemKey2.String()
+		return nil
+	}
 }
 
 func setStatus(s status) func(*VideoSegment) error {
