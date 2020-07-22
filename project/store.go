@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/gofrs/uuid"
 )
 
 type Store interface {
@@ -84,6 +86,22 @@ func clearCompleteRecIdemKey(idemKey string) func(*Project) error {
 			return nil
 		}
 		return fmt.Errorf("Idemkey set is not the same. Cannot clear idemkey values")
+	}
+}
+
+func RegenerateIdemKeys() ([]func(*Project) error, error) {
+	var setters []func(*Project) error
+	setters = append(setters, recreateIdemKeys())
+	return setters, nil
+}
+
+func recreateIdemKeys() func(*Project) error {
+	return func(a *Project) error {
+		idemKey1, _ := uuid.NewV4()
+		idemKey2, _ := uuid.NewV4()
+		a.SetRunningIdemKey = idemKey1.String()
+		a.CompleteRecIdemKey = idemKey2.String()
+		return nil
 	}
 }
 

@@ -33,7 +33,7 @@ type VideoSegment struct {
 	// Audio Source
 	AudioID string `json:"audio_id"`
 	// Video Source
-	VideoID string `json:"video_id"`
+	VideoSrcID string `json:"video_src_id"`
 }
 
 func (v *VideoSegment) IsReady() bool {

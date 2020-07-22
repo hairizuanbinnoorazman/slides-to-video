@@ -1,7 +1,6 @@
 package project
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -41,20 +40,6 @@ type Project struct {
 	CompleteRecIdemKey string                          `json:"-"`
 }
 
-// ValidateForConcat is for checking if project item contains the necessary information to
-// do concatenation
-func (p *Project) ValidateForConcat() error {
-	if len(p.VideoSegments) == 0 {
-		return fmt.Errorf("no video segments to concatenate together")
-	}
-	for _, v := range p.VideoSegments {
-		if !v.IsReady() {
-			return fmt.Errorf("video segments are being processed, or may have errors")
-		}
-	}
-	return nil
-}
-
 func New() Project {
 	projectID, _ := uuid.NewV4()
 	return Project{
@@ -63,4 +48,12 @@ func New() Project {
 		DateModified: time.Now(),
 		Status:       created,
 	}
+}
+
+func (p *Project) GetVideoSegmentList() []string {
+	items := []string{}
+	for _, v := range p.VideoSegments {
+		items = append(items, v.VideoFile)
+	}
+	return items
 }
