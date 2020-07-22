@@ -60,9 +60,10 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type updateProjectReq struct {
-		Status        string `json:"status"`
-		VideoOutputID string `json:"video_output_id"`
-		IdemKey       string `json:"idem_key"`
+		Status             string `json:"status"`
+		VideoOutputID      string `json:"video_output_id"`
+		SetRunningIdemKey  string `json:"idem_key_running"`
+		CompleteRecIdemKey string `json:"idem_key_complete_rec"`
 	}
 
 	req := updateProjectReq{}
@@ -75,13 +76,16 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var textSetters []func(*project.Project) error
-	textSetters = append(textSetters, project.SetStatus(req.Status))
-	if req.VideoOutputID != "" {
-		textSetters = append(textSetters, project.SetVideoOutputID(req.VideoOutputID))
+	updaters, err := project.GetUpdaters(req.SetRunningIdemKey, req.CompleteRecIdemKey, req.Status, req.VideoOutputID)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to create the required updaters to update project. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
 	}
 
-	textUpdatedProject, err := h.ProjectStore.Update(context.Background(), projectID, "user-id", textSetters...)
+	updatedProject, err := h.ProjectStore.Update(context.Background(), projectID, "user-id", updaters...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to update project item. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -90,7 +94,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rawUpdateProject, _ := json.Marshal(textUpdatedProject)
+	rawUpdateProject, _ := json.Marshal(updatedProject)
 	w.WriteHeader(200)
 	w.Write(rawUpdateProject)
 }

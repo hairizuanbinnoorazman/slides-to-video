@@ -13,9 +13,10 @@ type status string
 type permissions string
 
 var (
-	created   status = "created"
-	running   status = "running"
-	completed status = "completed"
+	created     status = "created"
+	running     status = "running"
+	completed   status = "completed"
+	errorStatus status = "error"
 
 	owner  status = "owner"
 	editor status = "editor"
@@ -36,7 +37,7 @@ type Project struct {
 	PDFSlideImages     []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-"`
 	VideoOutputID      string                          `json:"video_output_id,omitempty"`
 	ACLs               []ACL                           `json:"acls" datastore:"-"`
-	RunningIdemKey     string                          `json:"-"`
+	SetRunningIdemKey  string                          `json:"-"`
 	CompleteRecIdemKey string                          `json:"-"`
 }
 
