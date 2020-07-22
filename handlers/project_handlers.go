@@ -75,11 +75,8 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var textSetters []func(*project.Project)
+	var textSetters []func(*project.Project) error
 	textSetters = append(textSetters, project.SetStatus(req.Status))
-	if req.IdemKey != "" {
-		textSetters = append(textSetters, project.SetIdemKey(req.IdemKey))
-	}
 	if req.VideoOutputID != "" {
 		textSetters = append(textSetters, project.SetVideoOutputID(req.VideoOutputID))
 	}

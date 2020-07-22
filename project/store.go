@@ -8,70 +8,27 @@ type Store interface {
 	Create(ctx context.Context, e Project) error
 	Get(ctx context.Context, ID string, UserID string) (Project, error)
 	GetAll(ctx context.Context, UserID string, Limit, After int) ([]Project, error)
-	Update(ctx context.Context, ID string, UserID string, setters ...func(*Project)) (Project, error)
+	Update(ctx context.Context, ID string, UserID string, setters ...func(*Project) error) (Project, error)
 	Delete(ctx context.Context, ID string, UserID string) error
 }
 
-// func SetEmptySlideAsset() func(*Project) {
-// 	return func(a *Project) {
-// 		a.SlideAssets = []SlideAsset{}
-// 	}
-// }
-
-func SetVideoOutputID(videoOutputID string) func(*Project) {
-	return func(a *Project) {
+func SetVideoOutputID(videoOutputID string) func(*Project) error {
+	return func(a *Project) error {
 		a.VideoOutputID = videoOutputID
+		return nil
 	}
 }
 
-func SetStatus(status string) func(*Project) {
-	return func(a *Project) {
+func SetStatus(status string) func(*Project) error {
+	return func(a *Project) error {
 		if status == "running" {
 			a.Status = running
 		} else if status == "completed" {
 			a.Status = completed
 		}
+		return nil
 	}
 }
-
-func SetIdemKey(idemKey string) func(*Project) {
-	return func(a *Project) {
-		a.IdemKey = idemKey
-	}
-}
-
-// func SetImage(imageID string, slideNo int) func(*Project) {
-// 	return func(a *Project) {
-// 		for _, item := range a.SlideAssets {
-// 			if item.SlideNo == slideNo {
-// 				return
-// 			}
-// 		}
-// 		a.SlideAssets = append(a.SlideAssets, SlideAsset{ImageID: imageID, SlideNo: slideNo})
-// 	}
-// }
-
-// func SetSlideText(imageID, slideText string) func(*Project) {
-// 	return func(a *Project) {
-// 		for idx, item := range a.SlideAssets {
-// 			if item.ImageID == imageID {
-// 				a.SlideAssets[idx].Text = slideText
-// 			}
-// 		}
-// 		return
-// 	}
-// }
-
-// func SetVideoID(imageID, videoID string) func(*Project) {
-// 	return func(a *Project) {
-// 		for idx, item := range a.SlideAssets {
-// 			if item.ImageID == imageID {
-// 				a.SlideAssets[idx].VideoID = videoID
-// 			}
-// 		}
-// 		return
-// 	}
-// }
 
 type ByDateCreated []Project
 

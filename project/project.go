@@ -28,15 +28,16 @@ type ACL struct {
 }
 
 type Project struct {
-	ID             string                          `json:"id" datastore:"-"`
-	DateCreated    time.Time                       `json:"date_created"`
-	DateModified   time.Time                       `json:"date_modified"`
-	Status         status                          `json:"status"`
-	VideoSegments  []videosegment.VideoSegment     `json:"video_segments,omitempty" datastore:"-"`
-	PDFSlideImages []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-"`
-	VideoOutputID  string                          `json:"video_output_id,omitempty"`
-	ACLs           []ACL                           `json:"acls" datastore:"-"`
-	IdemKey        string                          `json:"idem_key"`
+	ID                 string                          `json:"id" datastore:"-"`
+	DateCreated        time.Time                       `json:"date_created"`
+	DateModified       time.Time                       `json:"date_modified"`
+	Status             status                          `json:"status"`
+	VideoSegments      []videosegment.VideoSegment     `json:"video_segments,omitempty" datastore:"-"`
+	PDFSlideImages     []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-"`
+	VideoOutputID      string                          `json:"video_output_id,omitempty"`
+	ACLs               []ACL                           `json:"acls" datastore:"-"`
+	RunningIdemKey     string                          `json:"-"`
+	CompleteRecIdemKey string                          `json:"-"`
 }
 
 // ValidateForConcat is for checking if project item contains the necessary information to

@@ -70,19 +70,18 @@ func (g *googleDatastore) Get(ctx context.Context, ID, userID string) (Project, 
 	return project, nil
 }
 
-func (g *googleDatastore) Update(ctx context.Context, ID, userID string, setters ...func(*Project)) (Project, error) {
+func (g *googleDatastore) Update(ctx context.Context, ID, userID string, setters ...func(*Project) error) (Project, error) {
 	key := datastore.NameKey(g.entityName, ID, nil)
 	project := Project{}
 	_, err := g.client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
 		if err := g.client.Get(ctx, key, &project); err != nil {
 			return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
 		}
-		previousIdemKey := project.IdemKey
 		for _, setFunc := range setters {
-			setFunc(&project)
-		}
-		if previousIdemKey == project.IdemKey {
-			return fmt.Errorf("idemkey not updated - not allowed to update this")
+			err := setFunc(&project)
+			if err != nil {
+				return err
+			}
 		}
 		project.DateModified = time.Now()
 		_, err := g.client.Put(ctx, key, &project)
