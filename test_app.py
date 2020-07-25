@@ -323,3 +323,15 @@ def test_project_onvideosegment(create_project, get_project, create_videosegment
     assert len(updated_project["video_segments"]) == 1
     assert updated_project["video_segments"][0]["id"] == videosegment["id"]
     assert updated_project["video_segments"][0]["status"] == videosegment["status"]
+
+
+def test_update_script(create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment):
+    project = create_project
+    create_pdfslideimages(project["id"])
+    project = await_pdf_slides(project["id"])
+    for v in project["video_segments"]:
+        update_videosegment(project["id"], v["id"], {"script": "hello"})
+    updated_project = get_project(project["id"])
+    for z in updated_project["video_segments"]:
+        assert z["script"] == "hello"
+        assert z["status"] == "created"
