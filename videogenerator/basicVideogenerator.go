@@ -30,6 +30,7 @@ func (b basic) Start(ctx context.Context, v videosegment.VideoSegment) error {
 
 	values := map[string]string{
 		"id":                    newV.ID,
+		"project_id":            newV.ProjectID,
 		"script":                newV.Script,
 		"image_id":              newV.ImageID,
 		"idem_key_running":      newV.SetRunningIdemKey,
