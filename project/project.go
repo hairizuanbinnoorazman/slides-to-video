@@ -1,6 +1,7 @@
 package project
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -50,10 +51,13 @@ func New() Project {
 	}
 }
 
-func (p *Project) GetVideoSegmentList() []string {
+func (p *Project) GetVideoSegmentList() ([]string, error) {
 	items := []string{}
 	for _, v := range p.VideoSegments {
+		if v.VideoFile == "" {
+			return []string{}, fmt.Errorf("unable to concatenate due to missing video file record")
+		}
 		items = append(items, v.VideoFile)
 	}
-	return items
+	return items, nil
 }
