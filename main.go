@@ -139,7 +139,7 @@ func main() {
 	s.Handle("/project/{project_id}:concat", h.StartVideoConcat{
 		Logger:            logger,
 		VideoSegmentStore: videoSegmentsStore,
-		VideoConcater:     videoConcater,
+		ProjectStore:      projectStore,
 	}).Methods("POST")
 	s.Handle("/project/{project_id}/pdfslideimages", h.CreatePDFSlideImages{
 		Logger:              logger,

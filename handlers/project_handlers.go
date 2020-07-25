@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
-	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 )
@@ -158,10 +157,9 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type StartVideoConcat struct {
-	Logger            logger.Logger
-	VideoSegmentStore videosegment.Store
-	ProjectStore      project.Store
-	VideoConcater     videoconcater.VideoConcater
+	Logger        logger.Logger
+	ProjectStore  project.Store
+	VideoConcater videoconcater.VideoConcater
 }
 
 func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
