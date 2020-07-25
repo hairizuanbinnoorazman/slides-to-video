@@ -178,6 +178,16 @@ def videosegment_generate_video():
 
 
 @pytest.fixture
+def videosegment_concat():
+    def lol(project_id):
+        endpoint = base_endpoint + "/project/" + \
+            project_id + ":concat"
+        resp = requests.post(endpoint)
+        assert resp.status_code == 200
+    return lol
+
+
+@pytest.fixture
 def await_pdf_slides():
     def lol(project_id):
         loop = 10
@@ -216,6 +226,25 @@ def await_video_generation_done():
                     completed_counts += 1
                 if completed_counts == len(project["video_segments"]):
                     return
+            current_loop = current_loop + 1
+        assert False, "Awaiting for video generation to be completed"
+    return lol
+
+
+@pytest.fixture
+def await_video_concat_done():
+    def lol(project_id):
+        loop = 10
+        current_loop = 1
+        sleep_duration = 10
+        endpoint = base_endpoint + "/project/" + project_id
+        while current_loop <= loop:
+            time.sleep(sleep_duration)
+            resp = requests.get(endpoint)
+            project = resp.json()
+            print("Awaiting for video concat to be completed")
+            if project["status"] == "completed":
+                return
             current_loop = current_loop + 1
         assert False, "Awaiting for video generation to be completed"
     return lol
@@ -365,3 +394,21 @@ def test_generate_video(create_project, get_project, create_pdfslideimages, awai
     for z in project["video_segments"]:
         videosegment_generate_video(project["id"], z["id"])
     await_video_generation_done(project["id"])
+
+
+def test_full_flow(
+        create_project, get_project,
+        create_pdfslideimages, await_pdf_slides,
+        update_videosegment, videosegment_generate_video, await_video_generation_done,
+        videosegment_concat, await_video_concat_done):
+    project = create_project
+    create_pdfslideimages(project["id"])
+    project = await_pdf_slides(project["id"])
+    assert len(project["video_segments"]) == 2
+    for v in project["video_segments"]:
+        update_videosegment(project["id"], v["id"], {"script": "hello"})
+    for z in project["video_segments"]:
+        videosegment_generate_video(project["id"], z["id"])
+    await_video_generation_done(project["id"])
+    videosegment_concat(project["id"])
+    await_video_concat_done(project["id"])
