@@ -33,7 +33,7 @@ func (b basic) Start(ctx context.Context, projectID string, videoSegmentList []s
 	}
 
 	values := map[string]interface{}{
-		"project_id":            projectID,
+		"id":                    projectID,
 		"video_segments":        videoSegmentList,
 		"idem_key_running":      newProject.SetRunningIdemKey,
 		"idem_key_complete_rec": newProject.CompleteRecIdemKey,
