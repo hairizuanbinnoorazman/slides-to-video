@@ -160,6 +160,7 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type StartVideoConcat struct {
 	Logger            logger.Logger
 	VideoSegmentStore videosegment.Store
+	ProjectStore      project.Store
 	VideoConcater     videoconcater.VideoConcater
 }
 
@@ -167,27 +168,32 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start StartVideoConcat API Handler")
 	defer h.Logger.Info("End StartVideoConcat API Handler")
 
+	ctx := r.Context()
 	projectID := mux.Vars(r)["project_id"]
 
-	videosegments, err := h.VideoSegmentStore.GetAll(context.Background(), projectID, 0, 0)
+	project, err := h.ProjectStore.Get(ctx, projectID, "")
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
 		h.Logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(errMsg))
 		return
 	}
 
-	videoSegmentIDs := []string{}
-	for _, v := range videosegments {
-		videoSegmentIDs = append(videoSegmentIDs, v.ID)
+	videoSegmentIDs, err := project.GetVideoSegmentList()
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(errMsg))
+		return
 	}
 
 	err = h.VideoConcater.Start(context.Background(), projectID, videoSegmentIDs)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to start async video generation. Error: %v", err)
 		h.Logger.Error(errMsg)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(errMsg))
 		return
 	}
