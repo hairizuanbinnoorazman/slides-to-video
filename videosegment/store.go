@@ -16,7 +16,7 @@ type Store interface {
 	Delete(ctx context.Context, projectID, ID string) error
 }
 
-func GetUpdaters(runningIdemKey, completeRecIdemKey, state, videoFile string, hidden *bool) ([]func(*VideoSegment) error, error) {
+func GetUpdaters(runningIdemKey, completeRecIdemKey, state, videoFile, script string, hidden *bool) ([]func(*VideoSegment) error, error) {
 	var s status
 	switch state {
 	case "running":
@@ -29,6 +29,10 @@ func GetUpdaters(runningIdemKey, completeRecIdemKey, state, videoFile string, hi
 		s = unset
 	}
 	var setters []func(*VideoSegment) error
+	if s == unset && script != "" {
+		setters = append(setters, setScript(script))
+		return setters, nil
+	}
 	if s == running && runningIdemKey == "" {
 		return setters, fmt.Errorf("No IdemKey passed to change the status to running state")
 	}
@@ -89,6 +93,13 @@ func setHidden(hide bool) func(*VideoSegment) error {
 func setVideoFile(videoFile string) func(*VideoSegment) error {
 	return func(a *VideoSegment) error {
 		a.VideoFile = videoFile
+		return nil
+	}
+}
+
+func setScript(script string) func(*VideoSegment) error {
+	return func(a *VideoSegment) error {
+		a.Script = script
 		return nil
 	}
 }

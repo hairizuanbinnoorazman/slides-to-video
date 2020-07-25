@@ -78,6 +78,7 @@ func (h UpdateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type updateVideoSegmentReq struct {
 		VideoFile          string `json:"video_file"`
 		Hidden             *bool  `json:"hidden"`
+		Script             string `json:"script"`
 		Status             string `json:"status"`
 		SetRunningIdemKey  string `json:"idem_key_running"`
 		CompleteRecIdemKey string `json:"idem_key_complete_rec"`
@@ -85,7 +86,7 @@ func (h UpdateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	req := updateVideoSegmentReq{}
 	json.Unmarshal(rawReq, &req)
 
-	updaters, err := videosegment.GetUpdaters(req.SetRunningIdemKey, req.CompleteRecIdemKey, req.Status, req.VideoFile, req.Hidden)
+	updaters, err := videosegment.GetUpdaters(req.SetRunningIdemKey, req.CompleteRecIdemKey, req.Status, req.VideoFile, req.Script, req.Hidden)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - issue with updating; pre-update check. Error: %v", err)
 		h.Logger.Error(errMsg)
