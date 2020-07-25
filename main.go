@@ -110,7 +110,7 @@ func main() {
 	slideToVideoStorage := blobstorage.NewGCSStorage(logger, xClient, BucketName)
 	pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, PDFToImageJobTopic)
 	imageToVideoQueue := queue.NewGooglePubsub(logger, pubsubClient, ImageToVideoJobTopic)
-	concatQueue := queue.NewFake(logger)
+	concatQueue := queue.NewGooglePubsub(logger, pubsubClient, VideoConcatJobTopic)
 
 	pdfSlideImporter := imageimporter.NewBasicPDFImporter(pdfToImageQueue)
 	videoGenerator := videogenerator.NewBasic(imageToVideoQueue, videoSegmentsStore)
