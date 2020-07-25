@@ -17,8 +17,8 @@ def cleanup():
     client = datastore.Client()
     query = client.query(kind=project_store)
     query_iter = query.fetch()
-    # for entity in query_iter:
-    #     client.delete(entity.key)
+    for entity in query_iter:
+        client.delete(entity.key)
 
 
 @pytest.fixture(scope="session")
@@ -27,8 +27,8 @@ def cleanup_pdfslides():
     client = datastore.Client()
     query = client.query(kind=pdfslides_store)
     query_iter = query.fetch()
-    # for entity in query_iter:
-    #     client.delete(entity.key)
+    for entity in query_iter:
+        client.delete(entity.key)
 
 
 @pytest.fixture(scope="session")
@@ -37,8 +37,8 @@ def cleanup_videosegment():
     client = datastore.Client()
     query = client.query(kind=videosegment_store)
     query_iter = query.fetch()
-    # for entity in query_iter:
-    #     client.delete(entity.key)
+    for entity in query_iter:
+        client.delete(entity.key)
 
 
 @pytest.fixture
@@ -168,6 +168,16 @@ def get_videosegment():
 
 
 @pytest.fixture
+def videosegment_generate_video():
+    def lol(project_id, videosegment_id):
+        endpoint = base_endpoint + "/project/" + \
+            project_id + "/videosegment/" + videosegment_id + ":generate"
+        resp = requests.post(endpoint)
+        assert resp.status_code == 200
+    return lol
+
+
+@pytest.fixture
 def await_pdf_slides():
     def lol(project_id):
         loop = 10
@@ -198,24 +208,31 @@ def await_video_generation_done():
         while current_loop <= loop:
             time.sleep(sleep_duration)
             resp = requests.get(endpoint)
-            data = json.loads(resp.content)
+            project = resp.json()
             print("Awaiting for video generation to be completed")
-            print(str(current_loop) + " " + str(data))
-            if data["video_output_id"] != "":
-                return data
+            completed_counts = 0
+            for v in project["video_segments"]:
+                if v["status"] == "completed":
+                    completed_counts += 1
+                if completed_counts == len(project["video_segments"]):
+                    return
             current_loop = current_loop + 1
         assert False, "Awaiting for video generation to be completed"
     return lol
 
 
-def test_get_project(create_project, get_project, cleanup):
+def test_util_cleanup(cleanup, cleanup_pdfslides, cleanup_videosegment):
+    assert 1 == 1
+
+
+def test_get_project(create_project, get_project):
     project = create_project
     project = get_project(project["id"])
     assert project["id"] != ""
     assert project["status"] == "created"
 
 
-def test_list_projects(create_project, cleanup):
+def test_list_projects(create_project):
     endpoint = base_endpoint + "/projects"
     resp = requests.get(endpoint)
     assert resp.status_code == 200
@@ -235,14 +252,14 @@ def test_list_projects(create_project, cleanup):
 #     assert project["status"] == "running"
 
 
-def test_add_pdf_slides(create_project, create_pdfslideimages, cleanup):
+def test_add_pdf_slides(create_project, create_pdfslideimages):
     project = create_project
     pdfslideimages = create_pdfslideimages(project["id"])
     assert pdfslideimages["status"] == "created"
     assert pdfslideimages["id"] != ""
 
 
-def test_project_on_addpdfslides(create_project, create_pdfslideimages, get_project, await_pdf_slides, cleanup):
+def test_project_on_addpdfslides(create_project, create_pdfslideimages, get_project, await_pdf_slides):
     project = create_project
     pdfslideimages = create_pdfslideimages(project["id"])
     project = get_project(project["id"])
@@ -329,9 +346,22 @@ def test_update_script(create_project, get_project, create_pdfslideimages, await
     project = create_project
     create_pdfslideimages(project["id"])
     project = await_pdf_slides(project["id"])
+    assert len(project["video_segments"])
     for v in project["video_segments"]:
         update_videosegment(project["id"], v["id"], {"script": "hello"})
     updated_project = get_project(project["id"])
     for z in updated_project["video_segments"]:
         assert z["script"] == "hello"
         assert z["status"] == "created"
+
+
+def test_generate_video(create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment, videosegment_generate_video, await_video_generation_done):
+    project = create_project
+    create_pdfslideimages(project["id"])
+    project = await_pdf_slides(project["id"])
+    assert len(project["video_segments"]) == 2
+    for v in project["video_segments"]:
+        update_videosegment(project["id"], v["id"], {"script": "hello"})
+    for z in project["video_segments"]:
+        videosegment_generate_video(project["id"], z["id"])
+    await_video_generation_done(project["id"])
