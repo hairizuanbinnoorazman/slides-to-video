@@ -361,7 +361,7 @@ def test_project_on_addpdfslides(create_project, create_pdfslideimages, get_proj
 #     assert final_videosegment["idem_key"] == "miao2"
 
 
-def test_project_onvideosegment(create_project, get_project, create_videosegment, cleanup, cleanup_videosegment):
+def test_project_onvideosegment(create_project, get_project, create_videosegment):
     project = create_project
     videosegment = create_videosegment(project["id"], "hahahax", 3)
     updated_project = get_project(project["id"])
@@ -374,8 +374,10 @@ def test_project_onvideosegment(create_project, get_project, create_videosegment
 def test_update_script(create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment):
     project = create_project
     create_pdfslideimages(project["id"])
-    project = await_pdf_slides(project["id"])
-    assert len(project["video_segments"])
+    await_pdf_slides(project["id"])
+    time.sleep(1)
+    project = get_project(project["id"])
+    assert len(project["video_segments"]) == 2
     for v in project["video_segments"]:
         update_videosegment(project["id"], v["id"], {"script": "hello"})
     updated_project = get_project(project["id"])
@@ -387,7 +389,9 @@ def test_update_script(create_project, get_project, create_pdfslideimages, await
 def test_generate_video(create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment, videosegment_generate_video, await_video_generation_done):
     project = create_project
     create_pdfslideimages(project["id"])
-    project = await_pdf_slides(project["id"])
+    await_pdf_slides(project["id"])
+    time.sleep(1)
+    project = get_project(project["id"])
     assert len(project["video_segments"]) == 2
     for v in project["video_segments"]:
         update_videosegment(project["id"], v["id"], {"script": "hello"})
@@ -403,10 +407,13 @@ def test_full_flow(
         videosegment_concat, await_video_concat_done):
     project = create_project
     create_pdfslideimages(project["id"])
-    project = await_pdf_slides(project["id"])
+    await_pdf_slides(project["id"])
+    time.sleep(1)
+    project = get_project(project["id"])
     assert len(project["video_segments"]) == 2
     for v in project["video_segments"]:
-        update_videosegment(project["id"], v["id"], {"script": "hello"})
+        update_videosegment(project["id"], v["id"], {
+                            "script": "this is a test to check that this works"})
     for z in project["video_segments"]:
         videosegment_generate_video(project["id"], z["id"])
     await_video_generation_done(project["id"])
