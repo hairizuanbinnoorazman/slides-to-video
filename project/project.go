@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 )
@@ -23,11 +24,6 @@ var (
 	reader status = "reader"
 )
 
-type ACL struct {
-	UserID      string
-	Permissions string
-}
-
 type Project struct {
 	ID                 string                          `json:"id" datastore:"-"`
 	DateCreated        time.Time                       `json:"date_created"`
@@ -36,17 +32,18 @@ type Project struct {
 	VideoSegments      []videosegment.VideoSegment     `json:"video_segments,omitempty" datastore:"-"`
 	PDFSlideImages     []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-"`
 	VideoOutputID      string                          `json:"video_output_id,omitempty"`
-	ACLs               []ACL                           `json:"acls" datastore:"-"`
+	ACLs               []acl.ACL                       `json:"acls" datastore:"-"`
 	SetRunningIdemKey  string                          `json:"-"`
 	CompleteRecIdemKey string                          `json:"-"`
 }
 
 func New() Project {
 	projectID, _ := uuid.NewV4()
+	currentTime := time.Now()
 	return Project{
 		ID:           projectID.String(),
-		DateCreated:  time.Now(),
-		DateModified: time.Now(),
+		DateCreated:  currentTime,
+		DateModified: currentTime,
 		Status:       created,
 	}
 }
