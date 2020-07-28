@@ -1,5 +1,15 @@
 # Slide to Video Manager
 
+## Features to be developed
+
+- User + ACL model integration
+- List operations for Project/VideoSegments/PDFSlideImages are broken
+- Delete operations for Project/VideoSegments/PDFSlideImages are broken
+- Move to utilze environment variables rather than static variables
+- Support of mysql as alternative data storage
+- Support of local storage as alternative "blob storage"
+- Support of nats as alternative queue system
+
 ## Happy Path
 
 This defines expected userflow when using the tool:
