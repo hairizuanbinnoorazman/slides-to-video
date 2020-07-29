@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
@@ -43,7 +42,6 @@ var BucketName = "zontext-pdf-2-videos"
 var BucketFolder = "pdf"
 
 var ProjectTableName = "test-Project"
-var JobTableName = "test-Job"
 var UserTableName = "test-User"
 var PDFSlideImagesTableName = "test-PDFSlideImages"
 var VideoSegmentsTableName = "test-VideoSegments"
@@ -71,12 +69,6 @@ func main() {
 	logger.Level = logrus.InfoLevel
 	logger.Info("Application Start Up")
 	defer logger.Info("Application Ended")
-
-	mode := os.Getenv("MODE")
-	if mode == "" {
-		mode = "LOCAL"
-	}
-	logger.Infof("Application Mode: %v", mode)
 
 	credJSON, err := ioutil.ReadFile("slides-to-video-manager.json")
 	if err != nil {
