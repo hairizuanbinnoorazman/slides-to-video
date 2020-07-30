@@ -30,10 +30,11 @@ import (
 )
 
 var (
-	serveCmd = &cobra.Command{
-		Use:   "serve",
-		Short: "Print the version number of slides-to-video-manager",
-		Long:  `Print the version number of slides-to-video-manager`,
+	serverCmd = &cobra.Command{
+		Use:   "server",
+		Short: "Run the API server of the slides to video manager tool",
+		Long: `Runs the API server of the slides to video manager tool
+This tool forms the centerpiece of the whole integration.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			logger := logrus.New()
 			logger.Formatter = stackdriver.NewFormatter(
@@ -67,9 +68,9 @@ var (
 			videoSegmentsStore := videosegment.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
 
 			slideToVideoStorage := blobstorage.NewGCSStorage(logger, xClient, cfg.BlobStorage.GCS.Bucket)
-			pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.PDFToImageJobTopic)
-			imageToVideoQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.ImageToVideoJobTopic)
-			concatQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.VideoConcatJobTopic)
+			pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.PDFToImageTopic)
+			imageToVideoQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.ImageToVideoTopic)
+			concatQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.VideoConcatTopic)
 
 			pdfSlideImporter := imageimporter.NewBasicPDFImporter(pdfToImageQueue)
 			videoGenerator := videogenerator.NewBasic(imageToVideoQueue, videoSegmentsStore)

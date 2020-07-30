@@ -6,13 +6,59 @@ import (
 	"os"
 	"strings"
 
+	"github.com/imdario/mergo"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
 var (
-	cfgFile     string
-	cfg         config
+	cfgFile string
+	readCfg config
+
+	// Includes default configuration
+	// Initial configuration is set to utilize Google Datastore and Google Pubsub for now
+	// Immediately replaces value with environment variables on startup
+	// TODO: Utilize Inmemory queue and inmemory datastores in the future
+	cfg = config{
+		Server: serverConfig{
+			Host:           envVarOrDefault("SERVER_HOST", "0.0.0.0"),
+			Port:           envVarOrDefaultInt("SERVER_PORT", 8080),
+			Scope:          "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.metadata.readonly",
+			ClientID:       envVarOrDefault("SERVER_CLIENTID", ""),
+			ClientSecret:   envVarOrDefault("SERVER_CLIENTSECRET", ""),
+			RedirectURI:    envVarOrDefault("SERVER_REDIRECTURI", "http://localhost:8000/api/v1/callback"),
+			AuthSecret:     "secret",
+			AuthIssuer:     "issuer",
+			AuthExpiryTime: 3600,
+		},
+		Datastore: datastoreConfig{
+			Type: envVarOrDefault("DATASTORE_TYPE", "google_datastore"),
+			GoogleDatastoreConfig: googleDatastoreConfig{
+				ProjectID:              envVarOrDefault("DATASTORE_GOOGLEDATASTORE_PROJECTID", ""),
+				UserTableName:          envVarOrDefault("DATASTORE_GOOGLEDATASTORE_USERTABLENAME", "UserTable"),
+				ProjectTableName:       envVarOrDefault("DATASTORE_GOOGLEDATASTORE_PROJECTTABLENAME", "ProjectTable"),
+				PDFSlidesTableName:     envVarOrDefault("DATASTORE_GOOGLEDATASTORE_PDFSLIDESTABLENAME", "PDFSlideTable"),
+				VideoSegmentsTableName: envVarOrDefault("DATASTORE_GOOGLEDATASTORE_VIDEOSEGMENTSTABLENAME", "VideoSegmentsTable"),
+			},
+		},
+		Queue: queueConfig{
+			Type: envVarOrDefault("QUEUE_TYPE", "google_pubsub"),
+			GooglePubsub: googlePubsubConfig{
+				ProjectID:         envVarOrDefault("QUEUE_GOOGLEPUBSUB_PROJECTID", ""),
+				PDFToImageTopic:   envVarOrDefault("QUEUE_GOOGLEPUBSUB_PDFTOIMAGEJOBTOPIC", "pdf-splitter"),
+				ImageToVideoTopic: envVarOrDefault("QUEUE_GOOGLEPUBSUB_IMAGETOVIDEOTOPIC", "image-to-video"),
+				VideoConcatTopic:  envVarOrDefault("QUEUE_GOOGLEPUBSUB_VIDEOCONCATTOPIC", "video-concat"),
+			},
+		},
+		BlobStorage: blobConfig{
+			Type: envVarOrDefault("BLOBSTORAGE_TYPE", "gcs"),
+			GCS: gcsConfig{
+				ProjectID: envVarOrDefault("BLOBSTORAGE_GCS_PROJECTID", ""),
+				Bucket:    envVarOrDefault("BLOBSTORAGE_GCS_BUCKET", ""),
+				PDFFolder: envVarOrDefault("BLOBSTORAGE_GCS_PDFFOLDER", "pdf"),
+			},
+		},
+	}
 	serviceName = "slides-to-video-manager"
 	version     = "v0.1.0"
 
@@ -31,12 +77,15 @@ func init() {
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
-	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(serverCmd)
 	rootCmd.AddCommand(migrateCmd)
 
 	configCmd.AddCommand(initCmd)
+	configCmd.AddCommand(validateCmd)
 
-	serveCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
+	serverCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
+
+	validateCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
 }
 
 func main() {
@@ -50,10 +99,11 @@ func initConfig() {
 			fmt.Println("unable to read config file")
 			os.Exit(1)
 		}
-		err = yaml.Unmarshal(raw, &cfg)
+		err = yaml.Unmarshal(raw, &readCfg)
 		if err != nil {
 			fmt.Println("unable to process config")
 			os.Exit(1)
 		}
 	}
+	mergo.Merge(&cfg, readCfg, mergo.WithOverride)
 }

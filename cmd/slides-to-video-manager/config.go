@@ -1,5 +1,10 @@
 package main
 
+import (
+	"os"
+	"strconv"
+)
+
 type datastoreConfig struct {
 	Type                  string                `yaml:"type"`
 	GoogleDatastoreConfig googleDatastoreConfig `yaml:"googleDataStore"`
@@ -19,10 +24,10 @@ type queueConfig struct {
 }
 
 type googlePubsubConfig struct {
-	ProjectID            string `yaml:"projectID"`
-	PDFToImageJobTopic   string `yaml:"pdfToImage"`
-	ImageToVideoJobTopic string `yaml:"imageToVideo"`
-	VideoConcatJobTopic  string `yaml:"videoConcat"`
+	ProjectID         string `yaml:"projectID"`
+	PDFToImageTopic   string `yaml:"pdfToImageTopic"`
+	ImageToVideoTopic string `yaml:"imageToVideoTopic"`
+	VideoConcatTopic  string `yaml:"videoConcatTopic"`
 }
 
 type serverConfig struct {
@@ -54,4 +59,24 @@ type config struct {
 	Datastore   datastoreConfig `yaml:"datastore"`
 	Queue       queueConfig     `yaml:"queue"`
 	BlobStorage blobConfig      `yaml:"blobStorage"`
+}
+
+func envVarOrDefault(envVar, defaultVal string) string {
+	overrideVal, exists := os.LookupEnv(envVar)
+	if exists {
+		return overrideVal
+	}
+	return defaultVal
+}
+
+func envVarOrDefaultInt(envVar string, defaultVal int) int {
+	overrideVal, exists := os.LookupEnv(envVar)
+	if exists {
+		num, err := strconv.Atoi(overrideVal)
+		if err != nil {
+			return defaultVal
+		}
+		return num
+	}
+	return defaultVal
 }
