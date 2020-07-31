@@ -26,7 +26,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/api/option"
 )
 
 // ServiceName denotes name of service. In order to reduce confusion, try to make it similar to name on Cloud Run UI
@@ -70,19 +69,19 @@ func main() {
 	logger.Info("Application Start Up")
 	defer logger.Info("Application Ended")
 
-	credJSON, err := ioutil.ReadFile("slides-to-video-manager.json")
-	if err != nil {
-		logger.Error("Unable to load slides-to-video-manager cred file")
-	}
-	xClient, err := storage.NewClient(context.Background(), option.WithCredentialsJSON(credJSON))
+	// credJSON, err := ioutil.ReadFile("slides-to-video-manager.json")
+	// if err != nil {
+	// 	logger.Error("Unable to load slides-to-video-manager cred file")
+	// }
+	xClient, err := storage.NewClient(context.Background())
 	if err != nil {
 		logger.Error("Unable to create storage client")
 	}
-	datastoreClient, err := datastore.NewClient(context.Background(), ProjectID, option.WithCredentialsJSON(credJSON))
+	datastoreClient, err := datastore.NewClient(context.Background(), ProjectID)
 	if err != nil {
 		logger.Error("Unable to create pubsub client")
 	}
-	pubsubClient, err := pubsub.NewClient(context.Background(), ProjectID, option.WithCredentialsJSON(credJSON))
+	pubsubClient, err := pubsub.NewClient(context.Background(), ProjectID)
 	if err != nil {
 		logger.Error("Unable to create pubsub client")
 	}
