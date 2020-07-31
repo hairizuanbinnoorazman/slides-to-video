@@ -45,19 +45,24 @@ This tool forms the centerpiece of the whole integration.`,
 			logger.Info("Application Start Up")
 			defer logger.Info("Application Ended")
 
-			credJSON, err := ioutil.ReadFile("slides-to-video-manager.json")
-			if err != nil {
-				logger.Error("Unable to load slides-to-video-manager cred file")
+			var svcAcctOptions []option.ClientOption
+			if cfg.Server.SvcAcctFile != "" {
+				credJSON, err := ioutil.ReadFile(cfg.Server.SvcAcctFile)
+				if err != nil {
+					logger.Error("Unable to load slides-to-video-manager cred file")
+				}
+				svcAcctOptions = append(svcAcctOptions, option.WithCredentialsJSON(credJSON))
 			}
-			xClient, err := storage.NewClient(context.Background(), option.WithCredentialsJSON(credJSON))
+
+			xClient, err := storage.NewClient(context.Background(), svcAcctOptions...)
 			if err != nil {
 				logger.Error("Unable to create storage client")
 			}
-			datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, option.WithCredentialsJSON(credJSON))
+			datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 			if err != nil {
 				logger.Error("Unable to create pubsub client")
 			}
-			pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, option.WithCredentialsJSON(credJSON))
+			pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 			if err != nil {
 				logger.Error("Unable to create pubsub client")
 			}

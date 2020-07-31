@@ -24,6 +24,7 @@ var (
 			Host:           envVarOrDefault("SERVER_HOST", "0.0.0.0"),
 			Port:           envVarOrDefaultInt("SERVER_PORT", 8080),
 			Scope:          "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.metadata.readonly",
+			SvcAcctFile:    envVarOrDefault("SERVER_SVCACCTFILE", ""),
 			ClientID:       envVarOrDefault("SERVER_CLIENTID", ""),
 			ClientSecret:   envVarOrDefault("SERVER_CLIENTSECRET", ""),
 			RedirectURI:    envVarOrDefault("SERVER_REDIRECTURI", "http://localhost:8000/api/v1/callback"),

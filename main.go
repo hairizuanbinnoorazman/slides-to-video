@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
@@ -18,6 +19,7 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videogenerator"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
+	"google.golang.org/api/option"
 
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/pubsub"
@@ -69,15 +71,26 @@ func main() {
 	logger.Info("Application Start Up")
 	defer logger.Info("Application Ended")
 
-	xClient, err := storage.NewClient(context.Background())
+	// Temporary - prep for move
+	var svcAcctOptions []option.ClientOption
+	svcAcctFile, _ := os.LookupEnv("SERVER_SVCACCT")
+	if svcAcctFile != "" {
+		credJSON, err := ioutil.ReadFile(svcAcctFile)
+		if err != nil {
+			logger.Error("Unable to load slides-to-video-manager cred file")
+		}
+		svcAcctOptions = append(svcAcctOptions, option.WithCredentialsJSON(credJSON))
+	}
+
+	xClient, err := storage.NewClient(context.Background(), svcAcctOptions...)
 	if err != nil {
 		logger.Error("Unable to create storage client")
 	}
-	datastoreClient, err := datastore.NewClient(context.Background(), ProjectID)
+	datastoreClient, err := datastore.NewClient(context.Background(), ProjectID, svcAcctOptions...)
 	if err != nil {
 		logger.Error("Unable to create pubsub client")
 	}
-	pubsubClient, err := pubsub.NewClient(context.Background(), ProjectID)
+	pubsubClient, err := pubsub.NewClient(context.Background(), ProjectID, svcAcctOptions...)
 	if err != nil {
 		logger.Error("Unable to create pubsub client")
 	}

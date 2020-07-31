@@ -34,6 +34,7 @@ type serverConfig struct {
 	Host           string `yaml:"host"`
 	Port           int    `yaml:"port"`
 	Trace          bool   `yaml:"trace"`
+	SvcAcctFile    string `yaml:"svcAccFile"`
 	ClientID       string `yaml:"clientID"`
 	ClientSecret   string `yaml:"clientSecret"`
 	Scope          string `yaml:"scope"`
