@@ -69,10 +69,6 @@ func main() {
 	logger.Info("Application Start Up")
 	defer logger.Info("Application Ended")
 
-	// credJSON, err := ioutil.ReadFile("slides-to-video-manager.json")
-	// if err != nil {
-	// 	logger.Error("Unable to load slides-to-video-manager cred file")
-	// }
 	xClient, err := storage.NewClient(context.Background())
 	if err != nil {
 		logger.Error("Unable to create storage client")
