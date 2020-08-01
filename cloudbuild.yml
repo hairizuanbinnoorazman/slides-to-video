@@ -1,13 +1,4 @@
 steps:
-  - name: "gcr.io/cloud-builders/gcloud"
-    args:
-      - kms
-      - decrypt
-      - --ciphertext-file=config.json.enc
-      - --plaintext-file=config.json
-      - --location=global
-      - --keyring=test
-      - --key=test1
   - name: "gcr.io/cloud-builders/docker"
     args:
       [
