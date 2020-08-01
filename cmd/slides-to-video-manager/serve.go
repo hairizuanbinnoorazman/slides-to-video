@@ -55,6 +55,8 @@ This tool forms the centerpiece of the whole integration.`,
 				svcAcctOptions = append(svcAcctOptions, option.WithCredentialsJSON(credJSON))
 			}
 
+			logger.Infof("Configurations: %v", cfg)
+
 			xClient, err := storage.NewClient(context.Background(), svcAcctOptions...)
 			if err != nil {
 				logger.Errorf("Unable to create storage client %v", err)
@@ -62,10 +64,10 @@ This tool forms the centerpiece of the whole integration.`,
 			}
 			datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 			if err != nil {
-				logger.Errorf("Unable to create pubsub client. %v", err)
+				logger.Errorf("Unable to create datastore client. %v", err)
 				os.Exit(1)
 			}
-			pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
+			pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Queue.GooglePubsub.ProjectID, svcAcctOptions...)
 			if err != nil {
 				logger.Errorf("Unable to create pubsub client. %v", err)
 				os.Exit(1)
