@@ -57,17 +57,17 @@ This tool forms the centerpiece of the whole integration.`,
 
 			xClient, err := storage.NewClient(context.Background(), svcAcctOptions...)
 			if err != nil {
-				logger.Error("Unable to create storage client")
+				logger.Errorf("Unable to create storage client %v", err)
 				os.Exit(1)
 			}
 			datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 			if err != nil {
-				logger.Error("Unable to create pubsub client")
+				logger.Errorf("Unable to create pubsub client. %v", err)
 				os.Exit(1)
 			}
 			pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 			if err != nil {
-				logger.Error("Unable to create pubsub client")
+				logger.Errorf("Unable to create pubsub client. %v", err)
 				os.Exit(1)
 			}
 
