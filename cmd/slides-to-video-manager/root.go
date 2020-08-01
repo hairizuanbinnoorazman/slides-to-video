@@ -28,9 +28,9 @@ var (
 			ClientID:       envVarOrDefault("SERVER_CLIENTID", ""),
 			ClientSecret:   envVarOrDefault("SERVER_CLIENTSECRET", ""),
 			RedirectURI:    envVarOrDefault("SERVER_REDIRECTURI", "http://localhost:8000/api/v1/callback"),
-			AuthSecret:     "secret",
-			AuthIssuer:     "issuer",
-			AuthExpiryTime: 3600,
+			AuthSecret:     envVarOrDefault("SERVER_AUTHSECRET", "secret"),
+			AuthIssuer:     envVarOrDefault("SERVER_AUTHISSUER", "issuer"),
+			AuthExpiryTime: envVarOrDefaultInt("SERVER_AUTHEXPIRYTIME", 3600),
 		},
 		Datastore: datastoreConfig{
 			Type: envVarOrDefault("DATASTORE_TYPE", "google_datastore"),
