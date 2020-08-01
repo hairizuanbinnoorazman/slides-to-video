@@ -5,10 +5,9 @@
 - User + ACL model integration
 - List operations for Project/VideoSegments/PDFSlideImages are broken
 - Delete operations for Project/VideoSegments/PDFSlideImages are broken
-- Move to utilze environment variables rather than static variables
 - Support of mysql as alternative data storage
 - Support of local storage as alternative "blob storage"
-- Support of nats as alternative queue system
+- Support of nats as alternative queue system (workers would require push/pull mode)
 
 ## Happy Path
 
