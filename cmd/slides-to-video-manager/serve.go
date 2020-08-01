@@ -86,6 +86,9 @@ This tool forms the centerpiece of the whole integration.`,
 			videoConcater := videoconcater.NewBasic(concatQueue, projectStore)
 
 			r := mux.NewRouter()
+			r.Handle("/status", h.Status{
+				Logger: logger,
+			})
 
 			s := r.PathPrefix("/api/v1").Subrouter()
 			// Project based routes
