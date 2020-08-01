@@ -50,12 +50,10 @@ This tool forms the centerpiece of the whole integration.`,
 			if cfg.Server.SvcAcctFile != "" {
 				credJSON, err := ioutil.ReadFile(cfg.Server.SvcAcctFile)
 				if err != nil {
-					logger.Error("Unable to load slides-to-video-manager cred file. err: %v", err)
+					logger.Errorf("Unable to load slides-to-video-manager cred file. err: %v", err)
 				}
 				svcAcctOptions = append(svcAcctOptions, option.WithCredentialsJSON(credJSON))
 			}
-
-			logger.Infof("Configurations: %v", cfg)
 
 			xClient, err := storage.NewClient(context.Background(), svcAcctOptions...)
 			if err != nil {
