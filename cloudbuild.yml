@@ -16,5 +16,4 @@ steps:
         "gcr.io/$PROJECT_ID/slides-to-video-manager:$SHORT_SHA",
         ".",
       ]
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/$PROJECT_ID/slides-to-video-manager:$SHORT_SHA"]
+images: ["gcr.io/$PROJECT_ID/slides-to-video-manager:$SHORT_SHA"]
