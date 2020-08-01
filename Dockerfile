@@ -11,4 +11,4 @@ RUN apt update && apt install -y ca-certificates
 COPY --from=builder /go/src/github.com/hairizuanbinnoorazman/slides-to-video-manager/app /usr/bin/app
 WORKDIR /usr/bin
 EXPOSE 8080
-CMD ["app"]
+CMD ["app", "server"]
