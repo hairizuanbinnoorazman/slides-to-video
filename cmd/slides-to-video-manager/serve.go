@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
@@ -57,14 +58,17 @@ This tool forms the centerpiece of the whole integration.`,
 			xClient, err := storage.NewClient(context.Background(), svcAcctOptions...)
 			if err != nil {
 				logger.Error("Unable to create storage client")
+				os.Exit(1)
 			}
 			datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 			if err != nil {
 				logger.Error("Unable to create pubsub client")
+				os.Exit(1)
 			}
 			pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 			if err != nil {
 				logger.Error("Unable to create pubsub client")
+				os.Exit(1)
 			}
 
 			projectStore := project.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
