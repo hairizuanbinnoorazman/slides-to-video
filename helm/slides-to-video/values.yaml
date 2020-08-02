@@ -1,0 +1,22 @@
+slidesToVideoManager:
+  podSecurityContext: {}
+  securityContext: {}
+  annotations: {}
+  name: slides-to-video-manager
+  image: gcr.io/expanded-league-162223/slides-to-video-manager
+  imagePullSecrets: []
+  pullPolicy: IfNotPresent
+  resources: {}
+  service:
+    annotations: {}
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: false
+    annotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+  extraSecretMounts: []
