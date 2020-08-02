@@ -12,8 +12,8 @@ type Status struct {
 }
 
 func (h Status) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.Logger.Info("Start Download Handler")
-	defer h.Logger.Info("End Download Handler")
+	h.Logger.Info("Start Status Handler")
+	defer h.Logger.Info("End Status Handler")
 
 	type resp struct {
 		Status string `json:"status"`
