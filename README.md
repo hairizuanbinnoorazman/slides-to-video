@@ -10,6 +10,10 @@
 - Support of nats as alternative queue system (workers would require push/pull mode)
 - Support deployment mode into GKE (API server - utilizes Google Datastore + Workers - utilizes Google Pubsub Pull mode)
 
+## Development workflow
+
+The application here are aimed to be deployed via Cloud Run and Kubernetes as primary deployment targets. In order to make it slightly easier to deploy apps to K8s clusters, skaffold tool is being used as part of development workflow to quickly test integration/configuration changes of helm chart/dockerfiles
+
 ## Happy Path
 
 This defines expected userflow when using the tool:
