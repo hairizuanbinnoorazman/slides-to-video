@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slides-to-video-manager
+  labels:
+    app.kubernetes.io/component: manager
+{{- if .Values.slidesToVideoManager.annotations }}
+  annotations:
+    {{- toYaml .Values.slidesToVideoManager.annotations | nindent 4 }}
+{{- end }}
+spec:
+  replicas: {{ .Values.slidesToVideoManager.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: manager
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+{{- if .Values.slidesToVideoManager.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.slidesToVideoManager.podAnnotations | nindent 8 }}
+{{- end }}
+      labels:
+        app.kubernetes.io/component: manager
+{{- if .Values.slidesToVideoManager.podLabels }}
+        {{- toYaml .Values.slidesToVideoManager.podLabels | nindent 8 }}
+{{- end }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.slidesToVideoManager.podSecurityContext | nindent 8 }}
+      {{- with .Values.slidesToVideoManager.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: slides-to-video-manager
+        image: {{ .Values.slidesToVideoManager.image }}
+        imagePullPolicy: {{ .Values.slidesToVideoManager.pullPolicy }}
+        args:
+          {{- if .Values.slidesToVideoManager.config}}
+          ["app", "server", "-c", "/etc/conf/config.yaml"]
+          {{- else }}
+          ["app", "server"]
+          {{- end }}
+        ports:
+        - name: api
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.slidesToVideoManager.resources | nindent 10 }}
+        volumeMounts:
+        {{- range .Values.slidesToVideoManager.extraSecretMounts }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath }}
+            subPath: {{ .subPath }}
+            readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- range .Values.slidesToVideoManager.extraConfigmapMounts }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath }}
+            subPath: {{ .subPath }}
+            readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- if .Values.slidesToVideoManager.config}}
+          - name: slides-to-video-configuration
+            mountPath: /etc/conf/
+        {{- end }}
+        {{- if .Values.slidesToVideoManager.svcAcctFile}}
+          - name: slides-to-video-secret
+            mountPath: /etc/svcacct/
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /status
+            port: api
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: api
+      restartPolicy: Always
+      volumes:
+      {{- range .Values.slidesToVideoManager.extraConfigmapMounts }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .configMap }}
+      {{- end }}
+      {{- range .Values.slidesToVideoManager.extraSecretMounts }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ .secretName }}
+      {{- end }}
+      {{- if .Values.slidesToVideoManager.config}}
+        - name: slides-to-video-configuration
+          configMap:
+            name: slides-to-video-configuration
+      {{- end }}
+      {{- if .Values.slidesToVideoManager.svcAcctFile }}
+        - name: slides-to-video-secret
+          secret:
+            secretName: slides-to-video-manager
+      {{- end }}
+    {{- with .Values.slidesToVideoManager.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.slidesToVideoManager.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.slidesToVideoManager.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

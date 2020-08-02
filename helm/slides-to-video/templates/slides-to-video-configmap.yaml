@@ -1,0 +1,11 @@
+{{- if .Values.slidesToVideoManager.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slides-to-video-configuration
+  labels:
+    app.kubernetes.io/component: manager
+data:
+  config.yaml: |-
+{{ .Values.slidesToVideoManager.config | indent 4 }}
+{{- end }}
