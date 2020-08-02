@@ -1,0 +1,19 @@
+apiVersion: skaffold/v2beta6
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+  artifacts:
+    - image: gcr.io/expanded-league-162223/slides-to-video-manager
+deploy:
+  helm:
+    releases:
+      - name: slides-to-video
+        chartPath: ./helm/slides-to-video
+        # In order to test application in appropiate environment, one needs to pass in
+        # the required application configurations. Method suggested here is via config file
+        # but it would be possible to pass the required application creds via environment vars
+        valuesFiles:
+          - override.yaml
+        artifactOverrides:
+          slidesToVideoManager.image: gcr.io/expanded-league-162223/slides-to-video-manager
