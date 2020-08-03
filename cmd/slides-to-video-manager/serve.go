@@ -18,6 +18,7 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videogenerator"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
+	"gopkg.in/go-playground/validator.v9"
 
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/pubsub"
@@ -45,6 +46,13 @@ This tool forms the centerpiece of the whole integration.`,
 			logger.Level = logrus.InfoLevel
 			logger.Info("Application Start Up")
 			defer logger.Info("Application Ended")
+
+			validate := validator.New()
+			err := validate.Struct(cfg)
+			if err != nil {
+				logger.Errorf("Error with loading configuration. %v", err)
+				os.Exit(1)
+			}
 
 			var svcAcctOptions []option.ClientOption
 			if cfg.Server.SvcAcctFile != "" {
