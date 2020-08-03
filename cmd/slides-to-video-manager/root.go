@@ -87,6 +87,8 @@ func init() {
 	serverCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
 
 	validateCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
+
+	migrateCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
 }
 
 func main() {
