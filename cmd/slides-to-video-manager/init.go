@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+
+	"gopkg.in/go-playground/validator.v9"
 )
 
 var (
@@ -33,8 +36,11 @@ One can try to initialize the configuration in order to quickly get started with
 		Short: "Validate configuration",
 		Long:  `Check the configuration to make sure that the configuration`,
 		Run: func(cmd *cobra.Command, args []string) {
-			raw, _ := yaml.Marshal(cfg)
-			fmt.Println(string(raw))
+			validate := validator.New()
+			err := validate.Struct(cfg)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v", err)
+			}
 		},
 	}
 )

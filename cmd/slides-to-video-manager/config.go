@@ -8,14 +8,23 @@ import (
 type datastoreConfig struct {
 	Type                  string                `yaml:"type"`
 	GoogleDatastoreConfig googleDatastoreConfig `yaml:"googleDataStore"`
+	MySQLConfig           mysqlConfig           `yaml:"mysql"`
 }
 
 type googleDatastoreConfig struct {
-	ProjectID              string `yaml:"projectID"`
-	UserTableName          string `yaml:"userTableName"`
-	ProjectTableName       string `yaml:"projectTableName"`
-	PDFSlidesTableName     string `yaml:"pdfSlidesTableName"`
-	VideoSegmentsTableName string `yaml:"videoSegmentsTableName"`
+	ProjectID              string `yaml:"projectID" validate:"required"`
+	UserTableName          string `yaml:"userTableName" validate:"required"`
+	ProjectTableName       string `yaml:"projectTableName" validate:"required"`
+	PDFSlidesTableName     string `yaml:"pdfSlidesTableName" validate:"required"`
+	VideoSegmentsTableName string `yaml:"videoSegmentsTableName" validate:"required"`
+}
+
+type mysqlConfig struct {
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	DBName   string `yaml:"dbName"`
 }
 
 type queueConfig struct {
