@@ -25,16 +25,16 @@ var (
 )
 
 type Project struct {
-	ID                 string                          `json:"id" datastore:"-"`
+	ID                 string                          `json:"id" datastore:"-" gorm:"type:varchar(40);primary_key"`
 	DateCreated        time.Time                       `json:"date_created"`
 	DateModified       time.Time                       `json:"date_modified"`
-	Status             status                          `json:"status"`
-	VideoSegments      []videosegment.VideoSegment     `json:"video_segments,omitempty" datastore:"-"`
-	PDFSlideImages     []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-"`
-	VideoOutputID      string                          `json:"video_output_id,omitempty"`
-	ACLs               []acl.ACL                       `json:"acls" datastore:"-"`
-	SetRunningIdemKey  string                          `json:"-"`
-	CompleteRecIdemKey string                          `json:"-"`
+	Status             status                          `json:"status" gorm:"type:varchar(40)"`
+	VideoSegments      []videosegment.VideoSegment     `json:"video_segments,omitempty" datastore:"-" gorm:"-"`
+	PDFSlideImages     []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-" gorm:"-"`
+	VideoOutputID      string                          `json:"video_output_id,omitempty" gorm:"type:varchar(40)"`
+	ACLs               []acl.ACL                       `json:"acls" datastore:"-" gorm:"-"`
+	SetRunningIdemKey  string                          `json:"-" gorm:"varchar(40)"`
+	CompleteRecIdemKey string                          `json:"-" gorm:"varchar(40)"`
 }
 
 func New() Project {
