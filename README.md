@@ -6,6 +6,7 @@
 - List operations for Project/VideoSegments/PDFSlideImages are broken
 - Delete operations for Project/VideoSegments/PDFSlideImages are broken
 - Support of mysql as alternative data storage
+- Support of cassandra as alternative data storage
 - Support of local storage as alternative "blob storage"
 - Support of nats as alternative queue system (workers would require push/pull mode)
 - Support deployment mode into GKE (API server - utilizes Google Datastore + Workers - utilizes Google Pubsub Pull mode)
