@@ -1,3 +1,6 @@
+####
+# Prepare to migrate commands to deployment repo
+####
 
 setup:
 	@echo "Run setup steps"
@@ -7,3 +10,11 @@ setup:
 encrypt:
 	gcloud kms encrypt --ciphertext-file=slides-to-video-manager.json.enc --plaintext-file=slides-to-video-manager.json --location=global --keyring=test --key=test1
 	gcloud kms encrypt --ciphertext-file=config.json.enc --plaintext-file=config.json --location=global --keyring=test --key=test1
+
+build-mgr:
+	GOOS=linux GOARCH=amd64 go build -o ./cmd/slides-to-video-manager/app ./cmd/slides-to-video-manager
+
+build-bin: build-mgr
+
+build-image-mgr:
+	docker build -t slides-to-video-manager ./cmd/slides-to-video-manager
