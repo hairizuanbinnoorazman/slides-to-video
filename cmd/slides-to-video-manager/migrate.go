@@ -32,7 +32,7 @@ var (
 			case "mysql":
 				logger.Info("Run mysql migration")
 				defer logger.Info("mysql migration complete")
-				connectionString := fmt.Sprintf("%v:%v@%v:%v/%v?charset=utf8mb4&parseTime=True",
+				connectionString := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=True",
 					cfg.Datastore.MySQLConfig.User,
 					cfg.Datastore.MySQLConfig.Password,
 					cfg.Datastore.MySQLConfig.Host,
