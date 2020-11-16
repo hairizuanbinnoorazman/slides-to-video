@@ -1,7 +1,33 @@
-version: '2'
+version: '3.3'
 
 services:
   manager:
+    image: nginx
+    volumes:
+      - ../cmd/slides-to-video-manager/configuration:/root/configuration
+    # command:
+    #   - "app"
+    #   - "server"
+    #   - "-c"
+    #   - "/root/configuration/config.yaml"
+    restart: always
+  migrate:
     image: slides-to-video-manager
+    volumes:
+      - ../cmd/slides-to-video-manager/configuration:/root/configuration
+    command:
+      - "app"
+      - "migrate"
+      - "-c"
+      - "/root/configuration/config.yaml"
+    restart: on-failure
   db:
     image: mysql:5.7
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: some-database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    
