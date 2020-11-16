@@ -12,11 +12,11 @@ type datastoreConfig struct {
 }
 
 type googleDatastoreConfig struct {
-	ProjectID              string `yaml:"projectID" validate:"required"`
-	UserTableName          string `yaml:"userTableName" validate:"required"`
-	ProjectTableName       string `yaml:"projectTableName" validate:"required"`
-	PDFSlidesTableName     string `yaml:"pdfSlidesTableName" validate:"required"`
-	VideoSegmentsTableName string `yaml:"videoSegmentsTableName" validate:"required"`
+	ProjectID              string `yaml:"projectID"`
+	UserTableName          string `yaml:"userTableName"`
+	ProjectTableName       string `yaml:"projectTableName"`
+	PDFSlidesTableName     string `yaml:"pdfSlidesTableName"`
+	VideoSegmentsTableName string `yaml:"videoSegmentsTableName"`
 }
 
 type mysqlConfig struct {
@@ -30,10 +30,17 @@ type mysqlConfig struct {
 type queueConfig struct {
 	Type         string             `yaml:"type"`
 	GooglePubsub googlePubsubConfig `yaml:"googlePubsub"`
+	NatsConfig   natsConfig         `yaml:"nats"`
 }
 
 type googlePubsubConfig struct {
 	ProjectID         string `yaml:"projectID"`
+	PDFToImageTopic   string `yaml:"pdfToImageTopic"`
+	ImageToVideoTopic string `yaml:"imageToVideoTopic"`
+	VideoConcatTopic  string `yaml:"videoConcatTopic"`
+}
+
+type natsConfig struct {
 	PDFToImageTopic   string `yaml:"pdfToImageTopic"`
 	ImageToVideoTopic string `yaml:"imageToVideoTopic"`
 	VideoConcatTopic  string `yaml:"videoConcatTopic"`
@@ -54,13 +61,25 @@ type serverConfig struct {
 }
 
 type blobConfig struct {
-	Type string    `yaml:"type"`
-	GCS  gcsConfig `yaml:"gcs"`
+	Type  string          `yaml:"type"`
+	GCS   gcsConfig       `yaml:"gcs"`
+	Minio minioConfig     `yaml:"minio"`
+	Local localBlobConfig `yaml:"local"`
 }
 
 type gcsConfig struct {
 	ProjectID string `yaml:"projectID"`
 	Bucket    string `yaml:"bucket"`
+	PDFFolder string `yaml:"pdfFolder"`
+}
+
+type minioConfig struct {
+	Bucket    string `yaml:"bucket"`
+	PDFFolder string `yaml:"pdfFolder"`
+}
+
+type localBlobConfig struct {
+	Folder    string `yaml:"folder"`
 	PDFFolder string `yaml:"pdfFolder"`
 }
 
