@@ -1,0 +1,31 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  trace: false
+  svcAccFile: ""
+  clientID: ""
+  clientSecret: ""
+  scope: ""
+  redirectURI: ""
+  authSecret: ""
+  issuer: ""
+  expiryTime: 3600
+datastore:
+  type: "mysql"
+  mysql:
+    user: "user"
+    password: "password"
+    host: "db"
+    port: 3306
+    dbName: "some-database"
+queue:
+  type: "nats"
+  nats:
+    pdfToImageTopic: ""
+    imageToVideoTopic: ""
+    videoConcatTopic: ""
+blobStorage:
+  type: "minio"
+  minio:
+    bucket: ""
+    pdfFolder: ""
