@@ -20,3 +20,5 @@ build-image-mgr:
 	docker build -t slides-to-video-manager ./cmd/slides-to-video-manager
 
 build-images: build-image-mgr
+
+build-all: build-bin build-images
