@@ -30,4 +30,30 @@ services:
       MYSQL_DATABASE: some-database
       MYSQL_USER: user
       MYSQL_PASSWORD: password
+  s3:
+    image: minio/minio:RELEASE.2020-11-19T23-48-16Z
+    ports:
+      - 9999:9000
+    environment:
+      MINIO_ACCESS_KEY: s3_user
+      MINIO_SECRET_KEY: s3_password
+    command:
+      - "server"
+      - "/data"
+  createbuckets:
+    image: minio/mc:RELEASE.2020-11-17T00-39-14Z
+    depends_on:
+      - s3
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add minio http://s3:9000 s3_user s3_password;
+      /usr/bin/mc rm -r --force minio/videos;
+      /usr/bin/mc mb minio/videos;
+      /usr/bin/mc policy download minio/videos;
+      exit 0;
+      "
+    restart: on-failure
+  queue:
+    image: nats:2.1.9
+
     
