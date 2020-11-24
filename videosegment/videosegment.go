@@ -17,23 +17,23 @@ var (
 )
 
 type VideoSegment struct {
-	ID                 string    `json:"id" datastore:"-"`
-	ProjectID          string    `json:"project_id" datastore:"-"`
-	VideoFile          string    `json:"video_file"`
+	ID                 string    `json:"id" datastore:"-" gorm:"type:varchar(40);primary_key"`
+	ProjectID          string    `json:"project_id" datastore:"-" gorm:"type:varchar(40)"`
+	VideoFile          string    `json:"video_file" gorm:"type:varchar(100)"`
 	DateCreated        time.Time `json:"date_created"`
 	DateModified       time.Time `json:"date_modified"`
-	Order              int       `json:"order"`
-	Hidden             bool      `json:"hidden"`
-	Status             status    `json:"status"`
-	SetRunningIdemKey  string    `json:"-"`
-	CompleteRecIdemKey string    `json:"-"`
+	Order              int       `json:"order" gorm:"type:int"`
+	Hidden             bool      `json:"hidden" gorm:"type:bool"`
+	Status             status    `json:"status" gorm:"type:varchar(20)"`
+	SetRunningIdemKey  string    `json:"-" gorm:"type:varchar(40)"`
+	CompleteRecIdemKey string    `json:"-" gorm:"type:varchar(40)"`
 	// Image Source
-	ImageID string `json:"image_id"`
-	Script  string `json:"script"`
+	ImageID string `json:"image_id" gorm:"type:varchar(40)"`
+	Script  string `json:"script" gorm:"type:text"`
 	// Audio Source
-	AudioID string `json:"audio_id"`
+	AudioID string `json:"audio_id" gorm:"type:varchar(40)"`
 	// Video Source
-	VideoSrcID string `json:"video_src_id"`
+	VideoSrcID string `json:"video_src_id" gorm:"type:varchar(40)"`
 }
 
 func (v *VideoSegment) IsReady() bool {
