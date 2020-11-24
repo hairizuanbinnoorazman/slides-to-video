@@ -17,19 +17,20 @@ var (
 )
 
 type SlideAsset struct {
-	ImageID string `json:"image_id"`
-	Order   int    `json:"order"`
+	ImageID         string `json:"image_id" gorm:"type:varchar(40);primary_key"`
+	Order           int    `json:"order" gorm:"type:int"`
+	PDFSlideImageID string `json:"-" datastore:"-" gorm:"type:varchar(40)"`
 }
 
 type PDFSlideImages struct {
-	ID                 string       `json:"id" datastore:"-"`
-	ProjectID          string       `json:"project_id" datastore:"-"`
-	PDFFile            string       `json:"pdf_file"`
+	ID                 string       `json:"id" datastore:"-" gorm:"type:varchar(40);primary_key"`
+	ProjectID          string       `json:"project_id" datastore:"-" gorm:"type:varchar(40)"`
+	PDFFile            string       `json:"pdf_file" gorm:"type:varchar(200)"`
 	DateCreated        time.Time    `json:"date_created"`
 	SlideAssets        []SlideAsset `json:"slide_assets"`
-	Status             status       `json:"status"`
-	SetRunningIdemKey  string       `json:"-"`
-	CompleteRecIdemKey string       `json:"-"`
+	Status             status       `json:"status" gorm:"type:varchar(20)"`
+	SetRunningIdemKey  string       `json:"-" gorm:"type:varchar(40)"`
+	CompleteRecIdemKey string       `json:"-" gorm:"type:varchar(40)"`
 }
 
 func (p *PDFSlideImages) IsComplete() bool {
