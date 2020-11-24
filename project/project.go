@@ -29,8 +29,8 @@ type Project struct {
 	DateCreated        time.Time                       `json:"date_created"`
 	DateModified       time.Time                       `json:"date_modified"`
 	Status             status                          `json:"status" gorm:"type:varchar(40)"`
-	VideoSegments      []videosegment.VideoSegment     `json:"video_segments,omitempty" datastore:"-" gorm:"-"`
-	PDFSlideImages     []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-" gorm:"-"`
+	VideoSegments      []videosegment.VideoSegment     `json:"video_segments,omitempty" datastore:"-"`
+	PDFSlideImages     []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-"`
 	VideoOutputID      string                          `json:"video_output_id,omitempty" gorm:"type:varchar(40)"`
 	ACLs               []acl.ACL                       `json:"acls" datastore:"-" gorm:"-"`
 	SetRunningIdemKey  string                          `json:"-" gorm:"varchar(40)"`
