@@ -14,7 +14,7 @@ import (
 
 func datastoreClientHelper() *datastore.Client {
 	credJSON, _ := ioutil.ReadFile("../slides-to-video-manager.json")
-	xClient, _ := datastore.NewClient(context.Background(), "expanded-league-162223", option.WithCredentialsJSON(credJSON))
+	xClient, _ := datastore.NewClient(context.Background(), "XXXX", option.WithCredentialsJSON(credJSON))
 	return xClient
 }
 
