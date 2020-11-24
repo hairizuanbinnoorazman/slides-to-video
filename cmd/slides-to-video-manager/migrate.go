@@ -5,7 +5,9 @@ import (
 	"os"
 
 	stackdriver "github.com/TV4/logrus-stackdriver-formatter"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -46,6 +48,12 @@ var (
 				}
 				defer db.Close()
 				db.AutoMigrate(&project.Project{})
+				db.AutoMigrate(&videosegment.VideoSegment{})
+				db.AutoMigrate(&pdfslideimages.PDFSlideImages{})
+				db.AutoMigrate(&pdfslideimages.SlideAsset{})
+				db.Model(&pdfslideimages.PDFSlideImages{}).AddForeignKey("project_id", "projects(id)", "RESTRICT", "RESTRICT")
+				db.Model(&videosegment.VideoSegment{}).AddForeignKey("project_id", "projects(id)", "RESTRICT", "RESTRICT")
+				db.Model(&pdfslideimages.SlideAsset{}).AddForeignKey("pdf_slide_image_id", "pdf_slide_images(id)", "RESTRICT", "RESTRICT")
 				if db.Error != nil {
 					logger.Errorf("unable to migrate project table. %v", db.Error)
 				}
