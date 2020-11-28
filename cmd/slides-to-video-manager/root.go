@@ -34,12 +34,19 @@ var (
 		},
 		Datastore: datastoreConfig{
 			Type: envVarOrDefault("DATASTORE_TYPE", "google_datastore"),
-			GoogleDatastoreConfig: googleDatastoreConfig{
+			GoogleDatastoreConfig: &googleDatastoreConfig{
 				ProjectID:              envVarOrDefault("DATASTORE_GOOGLEDATASTORE_PROJECTID", ""),
 				UserTableName:          envVarOrDefault("DATASTORE_GOOGLEDATASTORE_USERTABLENAME", "UserTable"),
 				ProjectTableName:       envVarOrDefault("DATASTORE_GOOGLEDATASTORE_PROJECTTABLENAME", "ProjectTable"),
 				PDFSlidesTableName:     envVarOrDefault("DATASTORE_GOOGLEDATASTORE_PDFSLIDESTABLENAME", "PDFSlideTable"),
 				VideoSegmentsTableName: envVarOrDefault("DATASTORE_GOOGLEDATASTORE_VIDEOSEGMENTSTABLENAME", "VideoSegmentsTable"),
+			},
+			MySQLConfig: &mysqlConfig{
+				User:     envVarOrDefault("DATASTORE_MYSQL_USER", "user"),
+				Password: envVarOrDefault("DATASTORE_MYSQL_PASSWORD", "password"),
+				Host:     envVarOrDefault("DATASTORE_MYSQL_HOST", "mysql"),
+				Port:     envVarOrDefaultInt("DATASTORE_MYSQL_PORT", 3306),
+				DBName:   envVarOrDefault("DATASTORE_MYSQL_DBNAME", "slides_to_video_mgr"),
 			},
 		},
 		Queue: queueConfig{
