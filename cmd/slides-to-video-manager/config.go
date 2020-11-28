@@ -3,12 +3,21 @@ package main
 import (
 	"os"
 	"strconv"
+
+	"gopkg.in/go-playground/validator.v9"
 )
 
+var mysqlDatastore = "mysql"
+var googleDatastore = "google_datastore"
+var natsQueue = "nats"
+var googlePubsubQueue = "google_pubsub"
+var gcsBlobStorage = "gcs"
+var minioBlobStorage = "minio"
+
 type datastoreConfig struct {
-	Type                  string                `yaml:"type"`
-	GoogleDatastoreConfig googleDatastoreConfig `yaml:"googleDataStore"`
-	MySQLConfig           mysqlConfig           `yaml:"mysql"`
+	Type                  string                 `yaml:"type"`
+	GoogleDatastoreConfig *googleDatastoreConfig `yaml:"googleDataStore"`
+	MySQLConfig           *mysqlConfig           `yaml:"mysql"`
 }
 
 type googleDatastoreConfig struct {
@@ -108,4 +117,17 @@ func envVarOrDefaultInt(envVar string, defaultVal int) int {
 		return num
 	}
 	return defaultVal
+}
+
+func ConfigStructLevelValidation(sl validator.StructLevel) {
+	cfg := sl.Current().Interface().(config)
+
+	if cfg.Datastore.Type == mysqlDatastore {
+		if cfg.Datastore.GoogleDatastoreConfig != nil {
+			sl.ReportError(cfg.Datastore.GoogleDatastoreConfig, "googleDatastore", "GoogleDatastoreConfig", "", "")
+		}
+		if cfg.Datastore.MySQLConfig.DBName == "" || cfg.Datastore.MySQLConfig.Host == "" || cfg.Datastore.MySQLConfig.Password == "" || cfg.Datastore.MySQLConfig.User == "" || cfg.Datastore.MySQLConfig.Port == 0 {
+			sl.ReportError(cfg.Datastore.GoogleDatastoreConfig, "mysql", "MySQLConfig", "", "")
+		}
+	}
 }
