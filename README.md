@@ -8,8 +8,10 @@
 - Support of mysql as alternative data storage
 - Support of cassandra as alternative data storage
 - Support of local storage as alternative "blob storage"
+- Support of minio storage as alternative "blob storage"
 - Support of nats as alternative queue system (workers would require push/pull mode)
 - Support deployment mode into GKE (API server - utilizes Google Datastore + Workers - utilizes Google Pubsub Pull mode)
+- Move migrate command to utilize this: https://github.com/golang-migrate/migrate - Automigrate now is only meant to get the initial scheme into db
 
 ## Development workflow
 
@@ -39,6 +41,7 @@ Api flow - based on above flow
 Main interaction
 
 User
+
 - ID - uuid
 - Name
 - DateCreated
@@ -48,6 +51,7 @@ User
 - GoogleAccessExpiry
 
 Group
+
 - ID - uuid
 - Name
 - DateCreated
@@ -56,6 +60,7 @@ Group
 - GroupIDs (List) - max - 5 nested
 
 Project
+
 - ID
 - Name
 - Tags
@@ -117,4 +122,4 @@ Project
       - SlideCount
       - Slides (List)
         - SlideImage
-        - SlideOrder 
+        - SlideOrder
