@@ -63,31 +63,47 @@ This tool forms the centerpiece of the whole integration.`,
 				svcAcctOptions = append(svcAcctOptions, option.WithCredentialsJSON(credJSON))
 			}
 
-			xClient, err := storage.NewClient(context.Background(), svcAcctOptions...)
-			if err != nil {
-				logger.Errorf("Unable to create storage client %v", err)
-				os.Exit(1)
-			}
-			datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
-			if err != nil {
-				logger.Errorf("Unable to create datastore client. %v", err)
-				os.Exit(1)
-			}
-			pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Queue.GooglePubsub.ProjectID, svcAcctOptions...)
-			if err != nil {
-				logger.Errorf("Unable to create pubsub client. %v", err)
-				os.Exit(1)
+			var slideToVideoStorage blobstorage.BlobStorage
+			if cfg.BlobStorage.Type == gcsBlobStorage {
+				var xClient *storage.Client
+				xClient, err = storage.NewClient(context.Background(), svcAcctOptions...)
+				if err != nil {
+					logger.Errorf("Unable to create storage client %v", err)
+					os.Exit(1)
+				}
+				slideToVideoStorage = blobstorage.NewGCSStorage(logger, xClient, cfg.BlobStorage.GCS.Bucket)
 			}
 
-			projectStore := project.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
-			pdfSlideImagesStore := pdfslideimages.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName)
-			userStore := user.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.UserTableName)
-			videoSegmentsStore := videosegment.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
+			var projectStore project.Store
+			var pdfSlideImagesStore pdfslideimages.Store
+			var userStore user.UserStore
+			var videoSegmentsStore videosegment.Store
+			if cfg.Datastore.Type == googleDatastore {
+				datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
+				if err != nil {
+					logger.Errorf("Unable to create datastore client. %v", err)
+					os.Exit(1)
+				}
+				projectStore = project.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
+				pdfSlideImagesStore = pdfslideimages.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName)
+				userStore = user.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.UserTableName)
+				videoSegmentsStore = videosegment.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
+			}
 
-			slideToVideoStorage := blobstorage.NewGCSStorage(logger, xClient, cfg.BlobStorage.GCS.Bucket)
-			pdfToImageQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.PDFToImageTopic)
-			imageToVideoQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.ImageToVideoTopic)
-			concatQueue := queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.VideoConcatTopic)
+			var pdfToImageQueue queue.Queue
+			var imageToVideoQueue queue.Queue
+			var concatQueue queue.Queue
+			if cfg.Queue.Type == googlePubsubQueue {
+				pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Queue.GooglePubsub.ProjectID, svcAcctOptions...)
+				if err != nil {
+					logger.Errorf("Unable to create pubsub client. %v", err)
+					os.Exit(1)
+				}
+
+				pdfToImageQueue = queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.PDFToImageTopic)
+				imageToVideoQueue = queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.ImageToVideoTopic)
+				concatQueue = queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.VideoConcatTopic)
+			}
 
 			pdfSlideImporter := imageimporter.NewBasicPDFImporter(pdfToImageQueue)
 			videoGenerator := videogenerator.NewBasic(imageToVideoQueue, videoSegmentsStore)
