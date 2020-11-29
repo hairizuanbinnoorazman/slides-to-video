@@ -76,7 +76,7 @@ This tool forms the centerpiece of the whole integration.`,
 
 			var projectStore project.Store
 			var pdfSlideImagesStore pdfslideimages.Store
-			var userStore user.UserStore
+			var userStore user.Store
 			var videoSegmentsStore videosegment.Store
 			if cfg.Datastore.Type == googleDatastore {
 				datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)

@@ -62,7 +62,7 @@ type Authenticate struct {
 	ClientSecret string
 	RedirectURI  string
 	Auth         Auth
-	UserStore    user.UserStore
+	UserStore    user.Store
 }
 
 func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
