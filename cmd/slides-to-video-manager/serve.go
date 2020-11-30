@@ -72,6 +72,12 @@ This tool forms the centerpiece of the whole integration.`,
 					os.Exit(1)
 				}
 				slideToVideoStorage = blobstorage.NewGCSStorage(logger, xClient, cfg.BlobStorage.GCS.Bucket)
+			} else if cfg.BlobStorage.Type == minioBlobStorage {
+				slideToVideoStorage, err = blobstorage.NewMinio(logger, cfg.BlobStorage.Minio.Endpoint, cfg.BlobStorage.Minio.AccessKeyID, cfg.BlobStorage.Minio.SecretAccessKey, cfg.BlobStorage.Minio.Bucket)
+				if err != nil {
+					logger.Errorf("Unable to create storage client %v", err)
+					os.Exit(1)
+				}
 			}
 
 			var projectStore project.Store
