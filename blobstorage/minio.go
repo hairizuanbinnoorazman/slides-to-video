@@ -1,7 +1,9 @@
 package blobstorage
 
 import (
+	"bytes"
 	"context"
+	"io/ioutil"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/minio/minio-go/v7"
@@ -29,9 +31,21 @@ func NewMinio(logger logger.Logger, endpoint, accessKeyID, secretAccessKey, buck
 }
 
 func (b Minio) Save(ctx context.Context, fileName string, content []byte) error {
+	_, err := b.Client.PutObject(ctx, b.BucketName, fileName, bytes.NewReader(content), -1, minio.PutObjectOptions{})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (b Minio) Load(ctx context.Context, fileName string) (content []byte, err error) {
-	return []byte{}, nil
+	obj, err := b.Client.GetObject(ctx, b.BucketName, fileName, minio.GetObjectOptions{})
+	if err != nil {
+		return []byte{}, err
+	}
+	rawData, err := ioutil.ReadAll(obj)
+	if err != nil {
+		return []byte{}, err
+	}
+	return rawData, nil
 }
