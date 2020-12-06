@@ -37,7 +37,18 @@ func (m mysql) GetAll(ctx context.Context, UserID string, Limit, After int) ([]P
 }
 
 func (m mysql) Update(ctx context.Context, ID string, UserID string, setters ...func(*Project) error) (Project, error) {
-	return Project{}, nil
+	var p Project
+	result := m.db.Where("id = ?", ID).First(&p)
+	if result.Error != nil {
+		return Project{}, result.Error
+	}
+	for _, s := range setters {
+		err := s(&p)
+		if err != nil {
+			return Project{}, err
+		}
+	}
+	return p, nil
 }
 
 func (m mysql) Delete(ctx context.Context, ID string, UserID string) error {
