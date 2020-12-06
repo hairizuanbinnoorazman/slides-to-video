@@ -8,12 +8,11 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/testcontainers/testcontainers-go"
 )
 
-// Run a mysql before running this test
-// docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test-database -e MYSQL_USER=user -e MYSQL_PASSWORD=password -d -p 3306:3306 mysql:5.7
-func databaseConnProvider() *gorm.DB {
-	connectionString := fmt.Sprintf("user:password@tcp(localhost:3306)/test-database?parseTime=True")
+func databaseConnProvider(port int) *gorm.DB {
+	connectionString := fmt.Sprintf("user:password@tcp(localhost:%v)/test-database?parseTime=True", port)
 	db, err := gorm.Open("mysql", connectionString)
 	if err != nil {
 		panic(err)
@@ -21,47 +20,102 @@ func databaseConnProvider() *gorm.DB {
 	return db
 }
 
-func Test_mysql_Create(t *testing.T) {
-	type fields struct {
-		db *gorm.DB
-	}
-	type args struct {
-		ctx context.Context
-		e   Project
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "Successful case",
-			fields: fields{
-				db: databaseConnProvider(),
+func Test_mysql_ops(t *testing.T) {
+	// Following command is similar to this docker command:
+	// docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test-database -e MYSQL_USER=user -e MYSQL_PASSWORD=password -d -p 3306:3306 mysql:5.7
+	req, err := testcontainers.GenericContainer(context.TODO(), testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image: "mysql:5.7",
+			Name:  "some-mysql",
+			Env: map[string]string{
+				"MYSQL_ROOT_PASSWORD": "root",
+				"MYSQL_DATABASE":      "test-database",
+				"MYSQL_USER":          "user",
+				"MYSQL_PASSWORD":      "password",
 			},
-			args: args{
-				ctx: context.TODO(),
-				e: Project{
-					ID:           "1234",
-					DateCreated:  time.Now(),
-					DateModified: time.Now(),
-					Status:       "created",
-				},
-			},
-			wantErr: false,
+			ExposedPorts: []string{"3306/tcp"},
 		},
-	}
-	db := databaseConnProvider()
+		Started: true,
+	})
+	time.Sleep(20 * time.Second)
+	defer req.Terminate(context.TODO())
+
+	port, err := req.MappedPort(context.TODO(), "3306")
+
+	db := databaseConnProvider(port.Int())
 	db.AutoMigrate(&Project{})
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := mysql{
-				db: tt.fields.db,
-			}
-			if err := m.Create(tt.args.ctx, tt.args.e); (err != nil) != tt.wantErr {
-				t.Errorf("mysql.Create() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+	a := mysql{
+		db: db,
+	}
+	p := Project{
+		ID:           "1234",
+		DateCreated:  time.Now(),
+		DateModified: time.Now(),
+	}
+	p2 := Project{
+		ID:           "1235",
+		DateCreated:  time.Now(),
+		DateModified: time.Now(),
+	}
+
+	// Creating of record
+	err = a.Create(context.TODO(), p)
+	if err != nil {
+		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
+	}
+	err = a.Create(context.TODO(), p2)
+	if err != nil {
+		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
+	}
+
+	// Single get of record
+	retrieveProject, err := a.Get(context.TODO(), "1234", "")
+	if err != nil {
+		t.Fatalf("Failed to retrieve record from mysql database. Err: %v", err)
+	}
+	if retrieveProject.ID != "1234" {
+		t.Fatalf("Unexpectd project ID in retrieved record. Err: %v", err)
+	}
+
+	// Get all records
+	projects, err := a.GetAll(context.TODO(), "", 10, 0)
+	if err != nil {
+		t.Fatalf("Unexpected error when retrieving all records. Err: %v", err)
+	}
+	if len(projects) != 2 {
+		t.Fatalf("Unexpected no of projects. Projects: %+v", projects)
+	}
+
+	// Update a single record
+	p, err = a.Update(context.TODO(), "1235", "", recreateIdemKeys())
+	if err != nil {
+		t.Fatalf("Unexpected error when updating record. Err: %v", err)
+	}
+	if p.SetRunningIdemKey == "" || p.CompleteRecIdemKey == "" {
+		t.Errorf("Bad update - idemkeys are not created. Project: %+v", p)
+	}
+
+	// Update status
+	p, err = a.Update(context.TODO(), "1235", "", setStatus(running))
+	if err != nil {
+		t.Fatalf("Unexpected error when updating record. Err: %v", err)
+	}
+	if p.SetRunningIdemKey != "" && p.Status != running {
+		t.Errorf("Bad update - status is not created accordingly. Project: %+v", p)
+	}
+
+	// Delete single record
+	err = a.Delete(context.TODO(), "1234", "")
+	if err != nil {
+		t.Fatalf("Unexpected error when deleting record. Err: %v", err)
+	}
+
+	// Get all records
+	projects, err = a.GetAll(context.TODO(), "", 10, 0)
+	if err != nil {
+		t.Fatalf("Unexpected error when retrieving all records. Err: %v", err)
+	}
+	if len(projects) != 1 {
+		t.Fatalf("Unexpected no of projects. Projects: %+v", projects)
 	}
 }

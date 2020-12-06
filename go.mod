@@ -18,6 +18,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.6
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.0.0
+	github.com/testcontainers/testcontainers-go v0.9.0
 	google.golang.org/api v0.9.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
