@@ -3,6 +3,7 @@ package blobstorage
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
@@ -31,6 +32,9 @@ func NewMinio(logger logger.Logger, endpoint, accessKeyID, secretAccessKey, buck
 }
 
 func (b Minio) Save(ctx context.Context, fileName string, content []byte) error {
+	if b.Client == nil {
+		return fmt.Errorf("S3 Client not initialized")
+	}
 	_, err := b.Client.PutObject(ctx, b.BucketName, fileName, bytes.NewReader(content), -1, minio.PutObjectOptions{})
 	if err != nil {
 		return err
