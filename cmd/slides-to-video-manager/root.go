@@ -65,6 +65,13 @@ var (
 				Bucket:    envVarOrDefault("BLOBSTORAGE_GCS_BUCKET", ""),
 				PDFFolder: envVarOrDefault("BLOBSTORAGE_GCS_PDFFOLDER", "pdf"),
 			},
+			Minio: minioConfig{
+				Bucket:          envVarOrDefault("BLOBSTORAGE_MINIO_BUCKET", ""),
+				Endpoint:        envVarOrDefault("BLOBSTORAGE_MINIO_ENDPOINT", ""),
+				AccessKeyID:     envVarOrDefault("BLOBSTORAGE_MINIO_ACCESSKEYID", ""),
+				SecretAccessKey: envVarOrDefault("BLOBSTORAGE_MINIO_SECRETACCESSKEY", ""),
+				PDFFolder:       envVarOrDefault("BLOBSTORAGE_MINIO_PDFFOLDER", "pdf"),
+			},
 		},
 	}
 	serviceName = "slides-to-video-manager"
