@@ -76,6 +76,13 @@ func TestMinio_Save(t *testing.T) {
 			if err := b.Save(tt.args.ctx, tt.args.fileName, tt.args.content); (err != nil) != tt.wantErr {
 				t.Errorf("Minio.Save() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			zzz, err := b.Load(tt.args.ctx, tt.args.fileName)
+			if err != nil {
+				t.Errorf("Minio.Load() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if string(zzz) != string(tt.args.content) {
+				t.Errorf("Minio.Load() Content Saved to storage is not the same. got: %+v, want: %+v", string(zzz), string(tt.args.content))
+			}
 		})
 	}
 }
