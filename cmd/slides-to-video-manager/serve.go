@@ -109,6 +109,19 @@ This tool forms the centerpiece of the whole integration.`,
 				pdfToImageQueue = queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.PDFToImageTopic)
 				imageToVideoQueue = queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.ImageToVideoTopic)
 				concatQueue = queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.GooglePubsub.VideoConcatTopic)
+			} else if cfg.Queue.Type == natsQueue {
+				pdfToImageQueue, err = queue.NewNats(logger, cfg.Queue.NatsConfig.Endpoint, cfg.Queue.NatsConfig.PDFToImageTopic)
+				if err != nil {
+					logger.Errorf("Unable to create Nats client. %v", err)
+				}
+				imageToVideoQueue, err = queue.NewNats(logger, cfg.Queue.NatsConfig.Endpoint, cfg.Queue.NatsConfig.ImageToVideoTopic)
+				if err != nil {
+					logger.Errorf("Unable to create Nats client. %v", err)
+				}
+				concatQueue, err = queue.NewNats(logger, cfg.Queue.NatsConfig.Endpoint, cfg.Queue.NatsConfig.VideoConcatTopic)
+				if err != nil {
+					logger.Errorf("Unable to create Nats client. %v", err)
+				}
 			}
 
 			pdfSlideImporter := imageimporter.NewBasicPDFImporter(pdfToImageQueue)

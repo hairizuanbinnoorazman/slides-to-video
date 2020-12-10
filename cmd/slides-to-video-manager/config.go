@@ -50,6 +50,7 @@ type googlePubsubConfig struct {
 }
 
 type natsConfig struct {
+	Endpoint          string `yaml:"endpoint"`
 	PDFToImageTopic   string `yaml:"pdfToImageTopic"`
 	ImageToVideoTopic string `yaml:"imageToVideoTopic"`
 	VideoConcatTopic  string `yaml:"videoConcatTopic"`
