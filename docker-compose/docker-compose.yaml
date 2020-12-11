@@ -2,14 +2,14 @@ version: '3.3'
 
 services:
   manager:
-    image: nginx
+    image: slides-to-video-manager
     volumes:
       - ../cmd/slides-to-video-manager/configuration:/root/configuration
-    # command:
-    #   - "app"
-    #   - "server"
-    #   - "-c"
-    #   - "/root/configuration/config.yaml"
+    command:
+      - "app"
+      - "server"
+      - "-c"
+      - "/root/configuration/config.yaml"
     restart: always
   migrate:
     image: slides-to-video-manager
