@@ -86,8 +86,8 @@ type gcsConfig struct {
 type minioConfig struct {
 	Bucket          string `yaml:"bucket"`
 	Endpoint        string `yaml:"endpoint"`
-	AccessKeyID     string `yaml:"access_key_id"`
-	SecretAccessKey string `yaml:"secret_access_key"`
+	AccessKeyID     string `yaml:"accessKeyId"`
+	SecretAccessKey string `yaml:"secretAccessKey"`
 	PDFFolder       string `yaml:"pdfFolder"`
 }
 
