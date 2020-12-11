@@ -9,16 +9,20 @@ import (
 )
 
 type Pubsub struct {
-	Logger logger.Logger
-	Client *pubsub.Client
-	Topic  string
+	Logger       logger.Logger
+	Client       *pubsub.Client
+	Topic        string
+	Subscription *pubsub.Subscription
 }
 
 func NewGooglePubsub(logger logger.Logger, client *pubsub.Client, topic string) Pubsub {
+	s := client.Subscription(topic)
+	s.ReceiveSettings.Synchronous = true
 	return Pubsub{
-		Logger: logger,
-		Client: client,
-		Topic:  topic,
+		Logger:       logger,
+		Client:       client,
+		Topic:        topic,
+		Subscription: s,
 	}
 }
 
@@ -32,4 +36,16 @@ func (p Pubsub) Add(ctx context.Context, message []byte) error {
 	}
 	p.Logger.Infof("Published a message; msg ID: %v\n", id)
 	return nil
+}
+
+func (p Pubsub) Pop(ctx context.Context) ([]byte, error) {
+	var data []byte
+	err := p.Subscription.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
+		m.Ack()
+		data = m.Data
+	})
+	if err != nil {
+		return []byte{}, err
+	}
+	return data, nil
 }
