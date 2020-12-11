@@ -21,11 +21,12 @@ datastore:
 queue:
   type: "nats"
   nats:
-    pdfToImageTopic: ""
-    imageToVideoTopic: ""
-    videoConcatTopic: ""
+    endpoint: "queue:4222"
+    pdfToImageTopic: "pdf-splitter"
+    imageToVideoTopic: "image-to-video"
+    videoConcatTopic: "concatenate-video"
 blobStorage:
   type: "minio"
   minio:
-    bucket: ""
-    pdfFolder: ""
+    bucket: "videos"
+    pdfFolder: "pdf"
