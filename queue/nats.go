@@ -9,9 +9,10 @@ import (
 )
 
 type Nats struct {
-	Logger logger.Logger
-	Conn   *nats.Conn
-	Topic  string
+	Logger       logger.Logger
+	Conn         *nats.Conn
+	Topic        string
+	Subscription *nats.Subscription
 }
 
 func NewNats(logger logger.Logger, natsEndpoint string, topic string) (Nats, error) {
@@ -19,10 +20,15 @@ func NewNats(logger logger.Logger, natsEndpoint string, topic string) (Nats, err
 	if err != nil {
 		return Nats{}, fmt.Errorf("Error with connecting to Nats. Err: %v", err)
 	}
+	s, err := conn.SubscribeSync(topic)
+	if err != nil {
+		return Nats{}, fmt.Errorf("Error with creating the subscriber. Err: %v", err)
+	}
 	return Nats{
-		Logger: logger,
-		Conn:   conn,
-		Topic:  topic,
+		Logger:       logger,
+		Conn:         conn,
+		Topic:        topic,
+		Subscription: s,
 	}, nil
 }
 
@@ -33,4 +39,12 @@ func (n Nats) Add(ctx context.Context, message []byte) error {
 	}
 	n.Logger.Infof("Message successful transmitted via Nats")
 	return nil
+}
+
+func (n Nats) Pop(ctx context.Context) ([]byte, error) {
+	m, err := n.Subscription.NextMsgWithContext(ctx)
+	if err != nil {
+		return []byte{}, fmt.Errorf("Unable to retrieve message from nats. Err: %v", err)
+	}
+	return m.Data, nil
 }
