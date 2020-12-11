@@ -21,7 +21,7 @@ datastore:
 queue:
   type: "nats"
   nats:
-    endpoint: "queue:4222"
+    endpoint: "nats://queue:4222"
     pdfToImageTopic: "pdf-splitter"
     imageToVideoTopic: "image-to-video"
     videoConcatTopic: "concatenate-video"
@@ -30,3 +30,7 @@ blobStorage:
   minio:
     bucket: "videos"
     pdfFolder: "pdf"
+    endpoint: "s3:9000"
+    accessKeyId: "s3_user"
+    secretAccessKey: "s3_password"
+
