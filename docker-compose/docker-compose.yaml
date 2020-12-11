@@ -3,6 +3,8 @@ version: '3.3'
 services:
   manager:
     image: slides-to-video-manager
+    ports:
+      - 8888:8080
     volumes:
       - ../cmd/slides-to-video-manager/configuration:/root/configuration
     command:
