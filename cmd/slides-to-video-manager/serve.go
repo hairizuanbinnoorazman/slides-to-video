@@ -80,6 +80,11 @@ This tool forms the centerpiece of the whole integration.`,
 				}
 			}
 
+			if slideToVideoStorage == nil {
+				logger.Errorf("Some of the storage is nil")
+				os.Exit(1)
+			}
+
 			var projectStore project.Store
 			var pdfSlideImagesStore pdfslideimages.Store
 			var userStore user.Store
@@ -94,6 +99,11 @@ This tool forms the centerpiece of the whole integration.`,
 				pdfSlideImagesStore = pdfslideimages.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName)
 				userStore = user.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.UserTableName)
 				videoSegmentsStore = videosegment.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
+			}
+
+			if projectStore == nil || pdfSlideImagesStore == nil || userStore == nil || videoSegmentsStore == nil {
+				logger.Errorf("Some of the database is nil")
+				os.Exit(1)
 			}
 
 			var pdfToImageQueue queue.Queue
@@ -122,6 +132,11 @@ This tool forms the centerpiece of the whole integration.`,
 				if err != nil {
 					logger.Errorf("Unable to create Nats client. %v", err)
 				}
+			}
+
+			if pdfToImageQueue == nil || imageToVideoQueue == nil || concatQueue == nil {
+				logger.Errorf("Some of the queue blobs is nil")
+				os.Exit(1)
 			}
 
 			pdfSlideImporter := imageimporter.NewBasicPDFImporter(pdfToImageQueue)
