@@ -1,0 +1,11 @@
+version: '3.3'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.23.0
+    ports:
+      - 9090:9090
+  grafana:
+    image: grafana:grafana:7.3.5
+    ports:
+      - 3000:3000
