@@ -18,6 +18,7 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videogenerator"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
+	"github.com/jinzhu/gorm"
 	"gopkg.in/go-playground/validator.v9"
 
 	"cloud.google.com/go/datastore"
@@ -99,6 +100,17 @@ This tool forms the centerpiece of the whole integration.`,
 				pdfSlideImagesStore = pdfslideimages.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName)
 				userStore = user.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.UserTableName)
 				videoSegmentsStore = videosegment.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
+			} else if cfg.Datastore.Type == mysqlDatastore {
+				connectionString := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=True", cfg.Datastore.MySQLConfig.User, cfg.Datastore.MySQLConfig.Password, cfg.Datastore.MySQLConfig.Host, cfg.Datastore.MySQLConfig.Port, cfg.Datastore.MySQLConfig.DBName)
+				db, err := gorm.Open("mysql", connectionString)
+				if err != nil {
+					logger.Errorf("Unable to create mysql client. %v", err)
+					os.Exit(1)
+				}
+				projectStore = project.NewMySQL(logger, db)
+				pdfSlideImagesStore = pdfslideimages.NewMySQL(logger, db)
+				userStore = user.NewMySQL(logger, db)
+				videoSegmentsStore = videosegment.NewMySQL(logger, db)
 			}
 
 			if projectStore == nil || pdfSlideImagesStore == nil || userStore == nil || videoSegmentsStore == nil {
