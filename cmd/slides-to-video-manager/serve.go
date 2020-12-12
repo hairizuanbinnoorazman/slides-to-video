@@ -81,7 +81,7 @@ This tool forms the centerpiece of the whole integration.`,
 			}
 
 			if slideToVideoStorage == nil {
-				logger.Errorf("Some of the storage is nil")
+				logger.Errorf("Some of the storage instantiation is nil")
 				os.Exit(1)
 			}
 
@@ -102,7 +102,7 @@ This tool forms the centerpiece of the whole integration.`,
 			}
 
 			if projectStore == nil || pdfSlideImagesStore == nil || userStore == nil || videoSegmentsStore == nil {
-				logger.Errorf("Some of the database is nil")
+				logger.Errorf("Some of the database instantiation is nil")
 				os.Exit(1)
 			}
 
@@ -135,7 +135,7 @@ This tool forms the centerpiece of the whole integration.`,
 			}
 
 			if pdfToImageQueue == nil || imageToVideoQueue == nil || concatQueue == nil {
-				logger.Errorf("Some of the queue blobs is nil")
+				logger.Errorf("Some of the queue instatiation is nil")
 				os.Exit(1)
 			}
 
