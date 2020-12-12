@@ -57,6 +57,10 @@ func (m mysql) Update(ctx context.Context, ID string, UserID string, setters ...
 			return Project{}, err
 		}
 	}
+	result = m.db.Save(&p)
+	if result.Error != nil {
+		return Project{}, result.Error
+	}
 	return p, nil
 }
 
