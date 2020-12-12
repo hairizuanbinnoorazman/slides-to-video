@@ -100,15 +100,15 @@ spec:
           secret:
             secretName: slides-to-video-manager
       {{- end }}
-    {{- with .Values.slidesToVideoManager.nodeSelector }}
+      {{- with .Values.slidesToVideoManager.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-    {{- with .Values.slidesToVideoManager.affinity }}
+      {{- with .Values.slidesToVideoManager.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.slidesToVideoManager.tolerations }}
+      {{- end }}
+      {{- with .Values.slidesToVideoManager.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}

@@ -3,7 +3,7 @@ slidesToVideoManager:
   securityContext: {}
   annotations: {}
   name: slides-to-video-manager
-  image: gcr.io/expanded-league-162223/slides-to-video-manager
+  image: slides-to-video-manager
   imagePullSecrets: []
   pullPolicy: IfNotPresent
   resources: {}

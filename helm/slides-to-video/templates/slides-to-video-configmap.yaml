@@ -5,6 +5,9 @@ metadata:
   name: slides-to-video-configuration
   labels:
     app.kubernetes.io/component: manager
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "-5"
 data:
   config.yaml: |-
 {{ .Values.slidesToVideoManager.config | indent 4 }}

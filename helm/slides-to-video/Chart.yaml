@@ -4,7 +4,7 @@ version: 0.0.1
 appVersion: 0.0.1
 description: Slides to Video a system to allow a user to convert presentation slides to video automatically
 engine: gotpl
-# dependencies:
-#   - name: mysql
-#     version: 1.6.6
-#     repository: "@stable"
+dependencies:
+  - name: mysql
+    version: 1.6.6
+    repository: "@stable"
