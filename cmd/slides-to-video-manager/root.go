@@ -89,7 +89,7 @@ var (
 		rootCmd.AddCommand(versionCmd)
 		rootCmd.AddCommand(configCmd())
 		rootCmd.AddCommand(serverCmd)
-		rootCmd.AddCommand(migrateCmd)
+		rootCmd.AddCommand(migrateCmd())
 		return rootCmd
 	}
 )
@@ -98,8 +98,6 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	serverCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
-
-	migrateCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
 }
 
 func main() {
