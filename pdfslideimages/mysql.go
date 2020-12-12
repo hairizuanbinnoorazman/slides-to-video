@@ -20,6 +20,10 @@ func NewMySQL(logger logger.Logger, dbClient *gorm.DB) mysql {
 }
 
 func (m mysql) Create(ctx context.Context, e PDFSlideImages) error {
+	result := m.db.Create(&e)
+	if result.Error != nil {
+		return result.Error
+	}
 	return nil
 }
 
