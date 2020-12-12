@@ -77,23 +77,25 @@ var (
 	serviceName = "slides-to-video-manager"
 	version     = "v0.1.0"
 
-	rootCmd = &cobra.Command{
-		Use:   "slides-to-video-manager",
-		Short: "Server side manager component to manage slides to video remote workers",
-		Long:  ``,
-		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Help()
-		},
+	rootCmd = func() *cobra.Command {
+		rootCmd := &cobra.Command{
+			Use:   "slides-to-video-manager",
+			Short: "Server side manager component to manage slides to video remote workers",
+			Long:  ``,
+			Run: func(cmd *cobra.Command, args []string) {
+				cmd.Help()
+			},
+		}
+		rootCmd.AddCommand(versionCmd)
+		rootCmd.AddCommand(configCmd)
+		rootCmd.AddCommand(serverCmd)
+		rootCmd.AddCommand(migrateCmd)
+		return rootCmd
 	}
 )
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(configCmd)
-	rootCmd.AddCommand(serverCmd)
-	rootCmd.AddCommand(migrateCmd)
 
 	configCmd.AddCommand(initCmd)
 	configCmd.AddCommand(validateCmd)
@@ -106,7 +108,7 @@ func init() {
 }
 
 func main() {
-	rootCmd.Execute()
+	rootCmd().Execute()
 }
 
 func initConfig() {
