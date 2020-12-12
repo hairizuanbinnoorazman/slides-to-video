@@ -104,6 +104,15 @@ func Test_mysql_ops(t *testing.T) {
 		t.Errorf("Bad update - status is not created accordingly. Project: %+v", p)
 	}
 
+	// Grab updated record and check status
+	p, err = a.Get(context.TODO(), "1235", "")
+	if err != nil {
+		t.Fatalf("Unexpected error when getting record. Err: %v", err)
+	}
+	if p.Status != running {
+		t.Errorf("Bad update - status is not updated accordingly. Project: %+v", p)
+	}
+
 	// Delete single record
 	err = a.Delete(context.TODO(), "1234", "")
 	if err != nil {
