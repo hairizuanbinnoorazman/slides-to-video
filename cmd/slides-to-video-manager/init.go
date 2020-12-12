@@ -21,7 +21,7 @@ var (
 			},
 		}
 		configCmd.AddCommand(initCmd)
-		configCmd.AddCommand(validateCmd)
+		configCmd.AddCommand(validateCmd())
 		return configCmd
 	}
 
@@ -36,16 +36,20 @@ One can try to initialize the configuration in order to quickly get started with
 		},
 	}
 
-	validateCmd = &cobra.Command{
-		Use:   "validate",
-		Short: "Validate configuration",
-		Long:  `Check the configuration to make sure that the configuration`,
-		Run: func(cmd *cobra.Command, args []string) {
-			validate := validator.New()
-			err := validate.Struct(cfg)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v", err)
-			}
-		},
+	validateCmd = func() *cobra.Command {
+		validateCmd := &cobra.Command{
+			Use:   "validate",
+			Short: "Validate configuration",
+			Long:  `Check the configuration to make sure that the configuration`,
+			Run: func(cmd *cobra.Command, args []string) {
+				validate := validator.New()
+				err := validate.Struct(cfg)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error: %v", err)
+				}
+			},
+		}
+		validateCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
+		return validateCmd
 	}
 )
