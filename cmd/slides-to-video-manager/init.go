@@ -11,13 +11,18 @@ import (
 )
 
 var (
-	configCmd = &cobra.Command{
-		Use:   "config",
-		Short: "Subcommand to handle config admin functionality of this tool",
-		Long:  `Provides capabilities such as initializing an initial configuration as well as parsing`,
-		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Help()
-		},
+	configCmd = func() *cobra.Command {
+		configCmd := &cobra.Command{
+			Use:   "config",
+			Short: "Subcommand to handle config admin functionality of this tool",
+			Long:  `Provides capabilities such as initializing an initial configuration as well as parsing`,
+			Run: func(cmd *cobra.Command, args []string) {
+				cmd.Help()
+			},
+		}
+		configCmd.AddCommand(initCmd)
+		configCmd.AddCommand(validateCmd)
+		return configCmd
 	}
 
 	initCmd = &cobra.Command{
