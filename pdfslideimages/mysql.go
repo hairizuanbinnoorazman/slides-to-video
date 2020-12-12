@@ -3,11 +3,20 @@ package pdfslideimages
 import (
 	"context"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/jinzhu/gorm"
 )
 
 type mysql struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger logger.Logger
+}
+
+func NewMySQL(logger logger.Logger, dbClient *gorm.DB) mysql {
+	return mysql{
+		db:     dbClient,
+		logger: logger,
+	}
 }
 
 func (m mysql) Create(ctx context.Context, e PDFSlideImages) error {
