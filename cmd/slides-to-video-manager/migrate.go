@@ -52,9 +52,9 @@ var (
 					db.AutoMigrate(&videosegment.VideoSegment{})
 					db.AutoMigrate(&pdfslideimages.PDFSlideImages{})
 					db.AutoMigrate(&pdfslideimages.SlideAsset{})
-					db.Model(&pdfslideimages.PDFSlideImages{}).AddForeignKey("project_id", "projects(id)", "RESTRICT", "RESTRICT")
-					db.Model(&videosegment.VideoSegment{}).AddForeignKey("project_id", "projects(id)", "RESTRICT", "RESTRICT")
-					db.Model(&pdfslideimages.SlideAsset{}).AddForeignKey("pdf_slide_image_id", "pdf_slide_images(id)", "RESTRICT", "RESTRICT")
+					db.Model(&pdfslideimages.PDFSlideImages{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "CASCADE")
+					db.Model(&videosegment.VideoSegment{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "CASCADE")
+					db.Model(&pdfslideimages.SlideAsset{}).AddForeignKey("pdf_slide_image_id", "pdf_slide_images(id)", "CASCADE", "CASCADE")
 					if db.Error != nil {
 						logger.Errorf("unable to migrate project table. %v", db.Error)
 					}
