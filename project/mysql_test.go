@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/testcontainers/testcontainers-go"
@@ -43,6 +46,7 @@ func Test_mysql_ops(t *testing.T) {
 	port, err := req.MappedPort(context.TODO(), "3306")
 
 	db := databaseConnProvider(port.Int())
+	db.AutoMigrate(&pdfslideimages.PDFSlideImages{})
 	db.AutoMigrate(&Project{})
 	a := mysql{
 		db: db,
@@ -58,6 +62,13 @@ func Test_mysql_ops(t *testing.T) {
 		DateModified: time.Now(),
 	}
 
+	pdfItem := pdfslideimages.PDFSlideImages{
+		ID:          "1234",
+		ProjectID:   "1234",
+		DateCreated: time.Now(),
+	}
+	pdfDB := pdfslideimages.NewMySQL(logger.LoggerForTests{Tester: t}, db)
+
 	// Creating of record
 	err = a.Create(context.TODO(), p)
 	if err != nil {
@@ -68,6 +79,11 @@ func Test_mysql_ops(t *testing.T) {
 		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
 	}
 
+	err = pdfDB.Create(context.TODO(), pdfItem)
+	if err != nil {
+		t.Fatalf("Failed to create record in mysql database for pdf slide images. Err: %v", err)
+	}
+
 	// Single get of record
 	retrieveProject, err := a.Get(context.TODO(), "1234", "")
 	if err != nil {
@@ -75,6 +91,9 @@ func Test_mysql_ops(t *testing.T) {
 	}
 	if retrieveProject.ID != "1234" {
 		t.Fatalf("Unexpectd project ID in retrieved record. Err: %v", err)
+	}
+	if len(retrieveProject.PDFSlideImages) == 0 {
+		t.Fatalf("Unexpected - pdf slide images are not fetched")
 	}
 
 	// Get all records

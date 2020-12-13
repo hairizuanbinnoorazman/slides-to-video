@@ -29,7 +29,7 @@ func (m mysql) Create(ctx context.Context, e Project) error {
 
 func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, error) {
 	p := Project{}
-	result := m.db.Where("id = ?", ID).First(&p)
+	result := m.db.Where("id = ?", ID).First(&p).Related(&p.PDFSlideImages)
 	if result.Error != nil {
 		return p, result.Error
 	}
