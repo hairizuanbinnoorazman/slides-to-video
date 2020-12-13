@@ -48,6 +48,7 @@ func Test_mysql_ops(t *testing.T) {
 	db := databaseConnProvider(port.Int())
 	db.AutoMigrate(&pdfslideimages.PDFSlideImages{})
 	db.AutoMigrate(&Project{})
+	db.Model(&pdfslideimages.PDFSlideImages{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "CASCADE")
 	a := mysql{
 		db: db,
 	}

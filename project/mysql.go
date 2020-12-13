@@ -3,6 +3,8 @@ package project
 import (
 	"context"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
+
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/jinzhu/gorm"
 )
@@ -29,10 +31,16 @@ func (m mysql) Create(ctx context.Context, e Project) error {
 
 func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, error) {
 	p := Project{}
-	result := m.db.Where("id = ?", ID).First(&p).Related(&p.PDFSlideImages)
+	result := m.db.Where("id = ?", ID).First(&p)
 	if result.Error != nil {
 		return p, result.Error
 	}
+	var pdfslideimages []pdfslideimages.PDFSlideImages
+	result = m.db.Where("project_id = ?", ID).Find(&pdfslideimages)
+	if result.Error != nil {
+		return p, result.Error
+	}
+	p.PDFSlideImages = pdfslideimages
 	return p, nil
 }
 
