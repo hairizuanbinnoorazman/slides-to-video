@@ -23,8 +23,14 @@ type basic struct {
 	ImagesFolder         string
 }
 
-func NewBasic() basic {
-	return basic{}
+func NewBasic(logger logger.Logger, storage blobstorage.BlobStorage, mgrclient mgrclient.Client, pdfFolder, imageFolder string) basic {
+	return basic{
+		Logger:               logger,
+		SlidesToVideoStorage: storage,
+		MgrClient:            mgrclient,
+		PDFFolder:            pdfFolder,
+		ImagesFolder:         imageFolder,
+	}
 }
 
 func (h *basic) Process(job PdfSplitJob) error {

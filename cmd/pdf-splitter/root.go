@@ -25,12 +25,12 @@ var (
 			ProcessRoute: envVarOrDefault("SERVER_PROCESSROUTE", "/"),
 		},
 		BlobStorage: blobConfig{
-			Type: envVarOrDefault("BLOBSTORAGE_TYPE", ""),
+			Type:         envVarOrDefault("BLOBSTORAGE_TYPE", ""),
+			PDFFolder:    envVarOrDefault("BLOBSTORAGE_GCS_PDFFOLDER", "pdf"),
+			ImagesFolder: envVarOrDefault("BLOBSTORAGE_GCS_IMAGESFOLDER", "images"),
 			GCS: gcsConfig{
-				ProjectID:    envVarOrDefault("BLOBSTORAGE_GCS_PROJECTID", ""),
-				Bucket:       envVarOrDefault("BLOBSTORAGE_GCS_BUCKET", ""),
-				PDFFolder:    envVarOrDefault("BLOBSTORAGE_GCS_PDFFOLDER", ""),
-				ImagesFolder: envVarOrDefault("BLOBSTORAGE_GCS_IMAGESFOLDER", ""),
+				ProjectID: envVarOrDefault("BLOBSTORAGE_GCS_PROJECTID", ""),
+				Bucket:    envVarOrDefault("BLOBSTORAGE_GCS_BUCKET", ""),
 			},
 		},
 	}

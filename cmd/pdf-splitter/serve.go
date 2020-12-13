@@ -7,6 +7,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/queuehandler"
+
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/mgrclient"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/pdfsplitter"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
+
+	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
 	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/handlers"
@@ -74,6 +81,9 @@ var (
 					os.Exit(1)
 				}
 
+				mgrClient := mgrclient.NewBasic(logger, fmt.Sprintf("http://%v:%v", cfg.Server.ManagerHost, cfg.Server.ManagerPort), http.DefaultClient)
+				pdfSplitter := pdfsplitter.NewBasic(logger, slideToVideoStorage, mgrClient, cfg.BlobStorage.PDFFolder, cfg.BlobStorage.ImagesFolder)
+
 				r := mux.NewRouter()
 				r.Handle("/status", h.Status{
 					Logger: logger,
@@ -81,8 +91,35 @@ var (
 
 				if cfg.Server.Mode == "http" {
 					r.Handle(cfg.Server.ProcessRoute, h.ProcessHandler{
-						Logger: logger,
+						Logger:      logger,
+						PDFSplitter: &pdfSplitter,
 					})
+				}
+
+				if cfg.Server.Mode == "queue" {
+					var pdfToImageQueue queue.Queue
+					if cfg.Queue.Type == googlePubsubQueue {
+						pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Queue.GooglePubsub.ProjectID, svcAcctOptions...)
+						if err != nil {
+							logger.Errorf("Unable to create pubsub client. %v", err)
+							os.Exit(1)
+						}
+
+						pdfToImageQueue = queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.PDFToImageTopic)
+					} else if cfg.Queue.Type == natsQueue {
+						pdfToImageQueue, err = queue.NewNats(logger, cfg.Queue.NatsConfig.Endpoint, cfg.Queue.PDFToImageTopic)
+						if err != nil {
+							logger.Errorf("Unable to create Nats client. %v", err)
+						}
+					}
+
+					if pdfToImageQueue == nil {
+						logger.Errorf("Some of the queue instantiation is nil")
+						os.Exit(1)
+					}
+
+					queueHandler := queuehandler.NewBasic(logger, pdfToImageQueue, &pdfSplitter)
+					go queueHandler.HandleMessages()
 				}
 
 				srv := http.Server{

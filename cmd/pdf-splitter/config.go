@@ -23,19 +23,21 @@ type serverConfig struct {
 	SvcAcctFile  string `yaml:"svcAccFile"`
 	Mode         string `yaml:"mode"`         // Accepts either http or queue - defaults to http
 	ProcessRoute string `yaml:"processRoute"` // Only needed when in http mode
+	ManagerHost  string `yaml:"managerHost"`
+	ManagerPort  int    `yaml:"managerPort"`
 }
 
 type blobConfig struct {
-	Type  string      `yaml:"type"`
-	GCS   gcsConfig   `yaml:"gcs"`
-	Minio minioConfig `yaml:"minio"`
+	Type         string      `yaml:"type"`
+	GCS          gcsConfig   `yaml:"gcs"`
+	Minio        minioConfig `yaml:"minio"`
+	PDFFolder    string      `yaml:"pdfFolder"`
+	ImagesFolder string      `yaml:"imagesFolder"`
 }
 
 type gcsConfig struct {
-	ProjectID    string `yaml:"projectID"`
-	Bucket       string `yaml:"bucket"`
-	PDFFolder    string `yaml:"pdfFolder"`
-	ImagesFolder string `yaml:"imagesFolder"`
+	ProjectID string `yaml:"projectID"`
+	Bucket    string `yaml:"bucket"`
 }
 
 type minioConfig struct {
@@ -43,28 +45,21 @@ type minioConfig struct {
 	Endpoint        string `yaml:"endpoint"`
 	AccessKeyID     string `yaml:"accessKeyId"`
 	SecretAccessKey string `yaml:"secretAccessKey"`
-	PDFFolder       string `yaml:"pdfFolder"`
-	ImagesFolder    string `yaml:"imagesFolder"`
 }
 
 type queueConfig struct {
-	Type         string             `yaml:"type"`
-	GooglePubsub googlePubsubConfig `yaml:"googlePubsub"`
-	NatsConfig   natsConfig         `yaml:"nats"`
+	Type            string             `yaml:"type"`
+	GooglePubsub    googlePubsubConfig `yaml:"googlePubsub"`
+	NatsConfig      natsConfig         `yaml:"nats"`
+	PDFToImageTopic string             `yaml:"pdfToImageTopic"`
 }
 
 type googlePubsubConfig struct {
-	ProjectID         string `yaml:"projectID"`
-	PDFToImageTopic   string `yaml:"pdfToImageTopic"`
-	ImageToVideoTopic string `yaml:"imageToVideoTopic"`
-	VideoConcatTopic  string `yaml:"videoConcatTopic"`
+	ProjectID string `yaml:"projectID"`
 }
 
 type natsConfig struct {
-	Endpoint          string `yaml:"endpoint"`
-	PDFToImageTopic   string `yaml:"pdfToImageTopic"`
-	ImageToVideoTopic string `yaml:"imageToVideoTopic"`
-	VideoConcatTopic  string `yaml:"videoConcatTopic"`
+	Endpoint string `yaml:"endpoint"`
 }
 
 func envVarOrDefault(envVar, defaultVal string) string {

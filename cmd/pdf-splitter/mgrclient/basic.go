@@ -17,7 +17,7 @@ type basic struct {
 	logger       logger.Logger
 }
 
-func NewBasic(endpoint string, l logger.Logger, cl *http.Client) basic {
+func NewBasic(l logger.Logger, endpoint string, cl *http.Client) basic {
 	return basic{
 		baseEndpoint: endpoint,
 		logger:       l,
