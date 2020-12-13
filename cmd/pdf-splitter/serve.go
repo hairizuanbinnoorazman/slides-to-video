@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/mgrclient"
-
 	"cloud.google.com/go/storage"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
 	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/handlers"
@@ -83,9 +81,7 @@ var (
 
 				if cfg.Server.Mode == "http" {
 					r.Handle(cfg.Server.ProcessRoute, h.ProcessHandler{
-						Logger:               logger,
-						SlidesToVideoStorage: slideToVideoStorage,
-						MgrClient:            mgrclient.NewBasic("", logger, http.DefaultClient),
+						Logger: logger,
 					})
 				}
 
