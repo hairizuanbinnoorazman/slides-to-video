@@ -17,7 +17,23 @@ var (
 	serviceName = "pdf-splitter"
 	version     = "v0.1.0"
 
-	cfg = config{}
+	cfg = config{
+		Server: serverConfig{
+			Host:         envVarOrDefault("SERVER_HOST", "0.0.0.0"),
+			Port:         envVarOrDefaultInt("SERVER_PORT", 8080),
+			Mode:         envVarOrDefault("SERVER_MODE", "http"),
+			ProcessRoute: envVarOrDefault("SERVER_PROCESSROUTE", "/"),
+		},
+		BlobStorage: blobConfig{
+			Type: envVarOrDefault("BLOBSTORAGE_TYPE", ""),
+			GCS: gcsConfig{
+				ProjectID:    envVarOrDefault("BLOBSTORAGE_GCS_PROJECTID", ""),
+				Bucket:       envVarOrDefault("BLOBSTORAGE_GCS_BUCKET", ""),
+				PDFFolder:    envVarOrDefault("BLOBSTORAGE_GCS_PDFFOLDER", ""),
+				ImagesFolder: envVarOrDefault("BLOBSTORAGE_GCS_IMAGESFOLDER", ""),
+			},
+		},
+	}
 
 	rootCmd = func() *cobra.Command {
 		rootCmd := &cobra.Command{
