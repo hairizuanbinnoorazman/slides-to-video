@@ -13,6 +13,17 @@ services:
       - "-c"
       - "/root/configuration/config.yaml"
     restart: always
+  pdfsplitter:
+    image: pdf-splitter
+    ports:
+      - 8889:8081
+    volumes:
+      - ../cmd/pdf-splitter/configuration:/root/configuration
+    command:
+      - "app"
+      - "server"
+      - "-c"
+      - "/root/configuration/config.yaml"
   migrate:
     image: slides-to-video-manager
     volumes:
