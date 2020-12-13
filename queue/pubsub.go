@@ -2,6 +2,8 @@ package queue
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"cloud.google.com/go/pubsub"
@@ -47,5 +49,24 @@ func (p Pubsub) Pop(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-	return data, nil
+	message := pubsubMsg{}
+	err = json.Unmarshal(data, &message)
+	if err != nil {
+		return []byte{}, err
+	}
+	decodedMsg, err := base64.StdEncoding.DecodeString(message.Message.Data)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return decodedMsg, nil
+}
+
+type pubsubMsg struct {
+	Message struct {
+		Data        string `json:"data"`
+		MessageID   string `json:"messageId"`
+		PublishTime string `json:"publishTime"`
+	} `json:"message"`
+	Subscription string `json:"subscription"`
 }
