@@ -5,6 +5,11 @@ import (
 	"strconv"
 )
 
+var natsQueue = "nats"
+var googlePubsubQueue = "google_pubsub"
+var gcsBlobStorage = "gcs"
+var minioBlobStorage = "minio"
+
 type config struct {
 	Server      serverConfig `yaml:"server"`
 	Queue       queueConfig  `yaml:"queue"`
