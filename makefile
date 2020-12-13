@@ -15,11 +15,13 @@ build-bin:
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/slides-to-video-manager/app ./cmd/slides-to-video-manager
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/pdf-splitter/app ./cmd/pdf-splitter
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/image-to-video/app ./cmd/image-to-video
+	GOOS=linux GOARCH=amd64 go build -o ./cmd/concatenate-video/app ./cmd/concatenate-video
 
 build-images: 
 	docker build -t slides-to-video-manager ./cmd/slides-to-video-manager
 	docker build -t pdf-splitter ./cmd/pdf-splitter
 	docker build -t image-to-video ./cmd/image-to-video
+	docker build -t concatenate-video ./cmd/concatenate-video
 
 build-all: build-bin build-images
 
