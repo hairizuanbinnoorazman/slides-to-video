@@ -33,6 +33,12 @@ func (m mysql) Get(ctx context.Context, projectID, ID string) (PDFSlideImages, e
 	if result.Error != nil {
 		return p, result.Error
 	}
+	s := []SlideAsset{}
+	result = m.db.Where("pdf_slide_image_id = ?", ID).Find(&s)
+	if result.Error != nil {
+		return PDFSlideImages{}, result.Error
+	}
+	p.SlideAssets = s
 	return p, nil
 }
 
@@ -61,6 +67,13 @@ func (m mysql) Update(ctx context.Context, projectID, ID string, setters ...func
 	if result.Error != nil {
 		return PDFSlideImages{}, result.Error
 	}
+	for _, s := range p.SlideAssets {
+		result = m.db.Save(&s)
+		if result.Error != nil {
+			return PDFSlideImages{}, result.Error
+		}
+	}
+
 	return p, nil
 }
 

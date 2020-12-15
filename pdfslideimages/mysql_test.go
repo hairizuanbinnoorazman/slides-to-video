@@ -47,6 +47,8 @@ func Test_mysql_ops(t *testing.T) {
 
 	db := databaseConnProvider(port.Int())
 	db.AutoMigrate(&PDFSlideImages{})
+	db.AutoMigrate(&SlideAsset{})
+	db.Model(&SlideAsset{}).AddForeignKey("pdf_slide_image_id", "pdf_slide_images(id)", "CASCADE", "RESTRICT")
 	a := mysql{
 		db: db,
 	}
@@ -60,6 +62,12 @@ func Test_mysql_ops(t *testing.T) {
 		ProjectID:         "1234",
 		DateCreated:       time.Now(),
 		SetRunningIdemKey: "1235",
+	}
+	s1 := []SlideAsset{
+		SlideAsset{
+			ImageID:         "1111",
+			PDFSlideImageID: "1235",
+		},
 	}
 
 	// Creating of record
@@ -91,7 +99,7 @@ func Test_mysql_ops(t *testing.T) {
 	}
 
 	// Update status
-	p, err = a.Update(context.TODO(), "1234", "1235", setStatus(running))
+	p, err = a.Update(context.TODO(), "1234", "1235", setStatus(running), setSlideAssets(s1))
 	if err != nil {
 		t.Fatalf("Unexpected error when updating record. Err: %v", err)
 	}
@@ -106,6 +114,9 @@ func Test_mysql_ops(t *testing.T) {
 	}
 	if p.Status != running {
 		t.Errorf("Bad update - status is not updated accordingly. Project: %+v", p)
+	}
+	if len(p.SlideAssets) != 1 {
+		t.Errorf("Bad update - expected to store 1 slide asset by this momemnt for this pdfslideimage storage")
 	}
 
 	// Delete single record
