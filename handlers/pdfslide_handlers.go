@@ -34,7 +34,7 @@ func (h CreatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to retrieve parse multipart form data. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to retrieve parse multipart form data. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(errMsg))
@@ -42,7 +42,7 @@ func (h CreatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 	file, _, err := r.FormFile("myfile")
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to retrieve form data. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to retrieve form data. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(errMsg))
@@ -56,7 +56,7 @@ func (h CreatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	slideImages := pdfslideimages.New(projectID)
 	err = h.PDFSlideImagesStore.Create(ctx, slideImages)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to save pdf slide images. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to save pdf slide images. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(errMsg))
@@ -67,7 +67,7 @@ func (h CreatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	err = h.PDFSlideImporter.Start(ctx, slideImages)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to send job. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to send job. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(errMsg))
@@ -94,7 +94,7 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	pdfSlideImagesID := mux.Vars(r)["pdfslideimages_id"]
 	rawReq, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
@@ -114,7 +114,7 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	zz, err := pdfslideimages.GetUpdaters(req.ClearSetRunningIdemKey, req.ClearCompleteRecIdemKey, req.Status, req.SlideAssets)
 	if err != nil {
-		errMsg := fmt.Sprintf("Issue with data validation for updating. Error: %v", err)
+		errMsg := fmt.Sprintf("Issue with data validation for updating. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
@@ -123,7 +123,7 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	item, err := h.PDFSlideImagesStore.Update(context.Background(), projectID, pdfSlideImagesID, zz...)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to update record. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to update record. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
@@ -135,7 +135,7 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			videoSegment := videosegment.New(projectID, s.ImageID, s.Order)
 			err := h.VideoSegmentStore.Create(context.Background(), videoSegment)
 			if err != nil {
-				errMsg := fmt.Sprintf("Error - unable to update video segment. Error: %v", err)
+				errMsg := fmt.Sprintf("Error - unable to update video segment. Error: %+v", err)
 				h.Logger.Error(errMsg)
 				w.WriteHeader(500)
 				w.Write([]byte(errMsg))
@@ -146,7 +146,7 @@ func (h UpdatePDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	rawItem, err := json.Marshal(item)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to render update pdfslides response. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to render update pdfslides response. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
@@ -170,7 +170,7 @@ func (h GetPDFSlideImages) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pdfSlideImagesID := mux.Vars(r)["pdfslideimages_id"]
 	pdfslideimages, err := h.PDFSlideImagesStore.Get(context.Background(), projectID, pdfSlideImagesID)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to retrieve pdfslideimages. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to retrieve pdfslideimages. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(errMsg))
