@@ -68,6 +68,10 @@ func Test_mysql_ops(t *testing.T) {
 			ImageID:         "1111",
 			PDFSlideImageID: "1235",
 		},
+		SlideAsset{
+			ImageID:         "1112",
+			PDFSlideImageID: "1235",
+		},
 	}
 
 	// Creating of record
@@ -115,7 +119,7 @@ func Test_mysql_ops(t *testing.T) {
 	if p.Status != running {
 		t.Errorf("Bad update - status is not updated accordingly. Project: %+v", p)
 	}
-	if len(p.SlideAssets) != 1 {
+	if len(p.SlideAssets) != 2 {
 		t.Errorf("Bad update - expected to store 1 slide asset by this momemnt for this pdfslideimage storage")
 	}
 
