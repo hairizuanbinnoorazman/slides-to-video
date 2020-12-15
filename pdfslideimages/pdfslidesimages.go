@@ -17,9 +17,9 @@ var (
 )
 
 type SlideAsset struct {
-	ImageID         string `json:"image_id" gorm:"type:varchar(40);primary_key"`
+	ImageID         string `json:"image_id" gorm:"type:varchar(200);primary_key"`
 	Order           int    `json:"order" gorm:"type:int"`
-	PDFSlideImageID string `json:"-" datastore:"-" gorm:"type:varchar(40)"`
+	PDFSlideImageID string `json:"-" datastore:"-" gorm:"type:varchar(100)"`
 }
 
 type PDFSlideImages struct {
