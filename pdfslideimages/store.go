@@ -59,6 +59,9 @@ func setStatus(s status) func(*PDFSlideImages) error {
 
 func setSlideAssets(assets []SlideAsset) func(*PDFSlideImages) error {
 	return func(a *PDFSlideImages) error {
+		for k := range assets {
+			assets[k].PDFSlideImageID = a.ID
+		}
 		a.SlideAssets = assets
 		return nil
 	}
