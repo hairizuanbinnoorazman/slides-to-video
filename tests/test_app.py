@@ -227,3 +227,23 @@ def test_list_projects(create_project):
 
     project_list = resp.json()
     assert len(project_list) == 2
+
+
+def test_add_pdf_slides(create_project, create_pdfslideimages):
+    project = create_project
+    pdfslideimages = create_pdfslideimages(project["id"])
+    assert pdfslideimages["status"] == "created"
+    assert pdfslideimages["id"] != ""
+
+
+def test_project_on_addpdfslides(create_project, create_pdfslideimages, get_project, await_pdf_slides):
+    project = create_project
+    pdfslideimages = create_pdfslideimages(project["id"])
+    project = get_project(project["id"])
+    assert project.get("pdf_slide_images") is not None
+    assert len(project["pdf_slide_images"]) == 1
+    project = await_pdf_slides(project["id"])
+    assert len(project["pdf_slide_images"][0]["slide_assets"]) == 2
+    assert project["pdf_slide_images"][0]["status"] == "completed"
+    assert project.get("video_segments") is not None
+    assert len(project["video_segments"]) == 2
