@@ -35,6 +35,10 @@ var (
 	}
 )
 
+func init() {
+	cobra.OnInitialize(initConfig)
+}
+
 func main() {
 	rootCmd().Execute()
 }
