@@ -3,6 +3,8 @@ package project
 import (
 	"context"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
+
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
@@ -35,12 +37,26 @@ func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, erro
 	if result.Error != nil {
 		return p, result.Error
 	}
-	var pdfslideimages []pdfslideimages.PDFSlideImages
-	result = m.db.Where("project_id = ?", ID).Find(&pdfslideimages)
+	var slideImages []pdfslideimages.PDFSlideImages
+	result = m.db.Where("project_id = ?", ID).Find(&slideImages)
 	if result.Error != nil {
 		return p, result.Error
 	}
-	p.PDFSlideImages = pdfslideimages
+	for k, s := range slideImages {
+		var asset []pdfslideimages.SlideAsset
+		result = m.db.Where("pdf_slide_image_id = ?", s.ID).Find(&asset)
+		if result.Error != nil {
+			return p, result.Error
+		}
+		slideImages[k].SlideAssets = asset
+	}
+	p.PDFSlideImages = slideImages
+	var segments []videosegment.VideoSegment
+	result = m.db.Where("project_id = ?", ID).Find(&slideImages)
+	if result.Error != nil {
+		return p, result.Error
+	}
+	p.VideoSegments = segments
 	return p, nil
 }
 
