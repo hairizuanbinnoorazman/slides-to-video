@@ -28,7 +28,7 @@ type VideoSegment struct {
 	SetRunningIdemKey  string    `json:"-" gorm:"type:varchar(40)"`
 	CompleteRecIdemKey string    `json:"-" gorm:"type:varchar(40)"`
 	// Image Source
-	ImageID string `json:"image_id" gorm:"type:varchar(40)"`
+	ImageID string `json:"image_id" gorm:"type:varchar(100)"`
 	Script  string `json:"script" gorm:"type:text"`
 	// Audio Source
 	AudioID string `json:"audio_id" gorm:"type:varchar(40)"`
