@@ -52,7 +52,7 @@ func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, erro
 	}
 	p.PDFSlideImages = slideImages
 	var segments []videosegment.VideoSegment
-	result = m.db.Where("project_id = ?", ID).Find(&slideImages)
+	result = m.db.Where("project_id = ?", ID).Find(&segments)
 	if result.Error != nil {
 		return p, result.Error
 	}
