@@ -3,6 +3,7 @@ package queuehandler
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/pdfsplitter"
 
@@ -25,14 +26,16 @@ func NewBasic(logger logger.Logger, queue queue.Queue, pdfsplitter pdfsplitter.P
 }
 
 func (h basic) HandleMessages() {
+	h.logger.Infof("Queue Handler started")
 	for {
 		msg, err := h.queue.Pop(context.TODO())
 		if err != nil {
 			h.logger.Errorf("Unable to receive message for queue system. Err: %v", err)
+			time.Sleep(10 * time.Second)
 			continue
 		}
 
-		h.logger.Infof("Received the following message. Msg: %v", msg)
+		h.logger.Infof("Received the following message. Msg: %v", string(msg))
 
 		job := pdfsplitter.PdfSplitJob{}
 		err = json.Unmarshal(msg, &job)
