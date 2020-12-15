@@ -81,7 +81,7 @@ var (
 					os.Exit(1)
 				}
 
-				mgrClient := mgrclient.NewBasic(logger, fmt.Sprintf("http://%v:%v", cfg.Server.ManagerHost, cfg.Server.ManagerPort), http.DefaultClient)
+				mgrClient := mgrclient.NewBasic(logger, fmt.Sprintf("http://%v:%v/api/v1", cfg.Server.ManagerHost, cfg.Server.ManagerPort), http.DefaultClient)
 				pdfSplitter := pdfsplitter.NewBasic(logger, slideToVideoStorage, mgrClient, cfg.BlobStorage.PDFFolder, cfg.BlobStorage.ImagesFolder)
 
 				r := mux.NewRouter()
