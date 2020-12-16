@@ -1,5 +1,7 @@
 package image2videoconverter
 
+import "context"
+
 type JobDetails struct {
 	ID                 string `json:"id" validate:"required"`
 	ProjectID          string `json:"project_id" validate:"required"`
@@ -10,7 +12,7 @@ type JobDetails struct {
 }
 
 type Image2VideoConverter interface {
-	Process() error
+	Process(ctx context.Context, job JobDetails) error
 }
 
 type TextToSpeechEngine interface {
