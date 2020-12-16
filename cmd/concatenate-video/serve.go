@@ -1,11 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 
+	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/storage"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
 	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/concatenate-video/handlers"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/concatenate-video/mgrclient"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/concatenate-video/queuehandler"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/concatenate-video/videoconcater"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
+	"google.golang.org/api/option"
 
 	stackdriver "github.com/TV4/logrus-stackdriver-formatter"
 	"github.com/gorilla/mux"
@@ -38,10 +48,78 @@ var (
 					os.Exit(1)
 				}
 
+				var credJSON []byte
+				var svcAcctOptions []option.ClientOption
+				if cfg.Server.SvcAcctFile != "" {
+					credJSON, err = ioutil.ReadFile(cfg.Server.SvcAcctFile)
+					if err != nil {
+						logger.Errorf("Unable to load slides-to-video-manager cred file. err: %v", err)
+					}
+					svcAcctOptions = append(svcAcctOptions, option.WithCredentialsJSON(credJSON))
+				}
+
+				var slideToVideoStorage blobstorage.BlobStorage
+				if cfg.BlobStorage.Type == gcsBlobStorage {
+					var xClient *storage.Client
+					xClient, err = storage.NewClient(context.Background(), svcAcctOptions...)
+					if err != nil {
+						logger.Errorf("Unable to create storage client %v", err)
+						os.Exit(1)
+					}
+					slideToVideoStorage = blobstorage.NewGCSStorage(logger, xClient, cfg.BlobStorage.GCS.Bucket)
+				} else if cfg.BlobStorage.Type == minioBlobStorage {
+					slideToVideoStorage, err = blobstorage.NewMinio(logger, cfg.BlobStorage.Minio.Endpoint, cfg.BlobStorage.Minio.AccessKeyID, cfg.BlobStorage.Minio.SecretAccessKey, cfg.BlobStorage.Minio.Bucket)
+					if err != nil {
+						logger.Errorf("Unable to create storage client %v", err)
+						os.Exit(1)
+					}
+				}
+
+				if slideToVideoStorage == nil {
+					logger.Errorf("Some of the storage instantiation is nil")
+					os.Exit(1)
+				}
+
+				mgrClient := mgrclient.NewBasic(logger, fmt.Sprintf("http://%v:%v/api/v1", cfg.Server.ManagerHost, cfg.Server.ManagerPort), http.DefaultClient)
+				videoConcater := videoconcater.NewBasic(logger, slideToVideoStorage, mgrClient, cfg.BlobStorage.VideoSnippetsFolder, cfg.BlobStorage.VideoFolder)
+
 				r := mux.NewRouter()
 				r.Handle("/status", h.Status{
 					Logger: logger,
 				})
+
+				if cfg.Server.Mode == "http" {
+					r.Handle(cfg.Server.ProcessRoute, h.ProcessHandler{
+						Logger:        logger,
+						VideoConcater: &videoConcater,
+					})
+				}
+
+				if cfg.Server.Mode == "queue" {
+					var imageToVideoQueue queue.Queue
+					if cfg.Queue.Type == googlePubsubQueue {
+						pubsubClient, err := pubsub.NewClient(context.Background(), cfg.Queue.GooglePubsub.ProjectID, svcAcctOptions...)
+						if err != nil {
+							logger.Errorf("Unable to create pubsub client. %v", err)
+							os.Exit(1)
+						}
+
+						imageToVideoQueue = queue.NewGooglePubsub(logger, pubsubClient, cfg.Queue.ConcatenateVideoTopic)
+					} else if cfg.Queue.Type == natsQueue {
+						imageToVideoQueue, err = queue.NewNats(logger, cfg.Queue.NatsConfig.Endpoint, cfg.Queue.ConcatenateVideoTopic)
+						if err != nil {
+							logger.Errorf("Unable to create Nats client. %v", err)
+						}
+					}
+
+					if imageToVideoQueue == nil {
+						logger.Errorf("Some of the queue instantiation is nil")
+						os.Exit(1)
+					}
+
+					queueHandler := queuehandler.NewBasic(logger, imageToVideoQueue, &videoConcater)
+					go queueHandler.HandleMessages()
+				}
 
 				srv := http.Server{
 					Addr: fmt.Sprintf("%v:%v", cfg.Server.Host, cfg.Server.Port),
