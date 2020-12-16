@@ -13,6 +13,13 @@ type GoogleTextToSpeech struct {
 	text2speechClient *texttospeech.Client
 }
 
+func NewGoogleTextToSpeech(l logger.Logger, t *texttospeech.Client) GoogleTextToSpeech {
+	return GoogleTextToSpeech{
+		logger:            l,
+		text2speechClient: t,
+	}
+}
+
 func (g *GoogleTextToSpeech) Generate(text string) ([]byte, error) {
 	req := &texttospeechpb.SynthesizeSpeechRequest{
 		Input: &texttospeechpb.SynthesisInput{
