@@ -17,7 +17,31 @@ var (
 	serviceName = "concatenate-video"
 	version     = "v0.1.0"
 
-	cfg = config{}
+	cfg = config{
+		Server: serverConfig{
+			Host:         envVarOrDefault("SERVER_HOST", "0.0.0.0"),
+			Port:         envVarOrDefaultInt("SERVER_PORT", 8083),
+			Mode:         envVarOrDefault("SERVER_MODE", "http"),
+			ProcessRoute: envVarOrDefault("SERVER_PROCESSROUTE", "/"),
+			ManagerHost:  envVarOrDefault("SERVER_MANAGERHOST", "localhost"),
+			ManagerPort:  envVarOrDefaultInt("SERVER_PORT", 8080),
+		},
+		BlobStorage: blobConfig{
+			Type:                envVarOrDefault("BLOBSTORAGE_TYPE", "minio"),
+			VideoSnippetsFolder: envVarOrDefault("BLOBSTORAGE_VIDEOSNIPPETSFOLDER", "video-snippets"),
+			VideoFolder:         envVarOrDefault("BLOBSTORAGE_VIDEOFOLDER", "videos"),
+			GCS: gcsConfig{
+				ProjectID: envVarOrDefault("BLOBSTORAGE_GCS_PROJECTID", ""),
+				Bucket:    envVarOrDefault("BLOBSTORAGE_GCS_BUCKET", ""),
+			},
+			Minio: minioConfig{
+				Bucket:          envVarOrDefault("BLOBSTORAGE_MINIO_BUCKET", "videos"),
+				Endpoint:        envVarOrDefault("BLOBSTORAGE_MINIO_ENDPOINT", "locahost:9000"),
+				AccessKeyID:     envVarOrDefault("BLOBSTORAGE_MINIO_ACCESSKEY", "s3_user"),
+				SecretAccessKey: envVarOrDefault("BLOBSTORAGE_MINIO_SECRETKEY", "s3_password"),
+			},
+		},
+	}
 
 	rootCmd = func() *cobra.Command {
 		rootCmd := &cobra.Command{
