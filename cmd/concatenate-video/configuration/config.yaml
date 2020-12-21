@@ -1,0 +1,24 @@
+server:
+  host: 0.0.0.0
+  port: 8083
+  trace: false
+  svcAccFile: ""
+  mode: queue
+  processRoute: /
+  managerHost: manager
+  managerPort: 8080
+queue:
+  type: "nats"
+  nats:
+    endpoint: "nats://queue:4222"
+  concatenateVideoTopic: "concatenate-video"
+blobStorage:
+  type: minio
+  minio:
+    bucket: videos
+    endpoint: s3:9000
+    accessKeyId: s3_user
+    secretAccessKey: s3_password
+  videoSnippetsFolder: video-snippets
+  videoFolder: videos
+
