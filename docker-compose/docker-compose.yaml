@@ -34,6 +34,30 @@ services:
       - "-c"
       - "/root/configuration/config.yaml"
     restart: on-failure
+  image2video:
+    image: image-to-video
+    ports:
+      - 8889:8082
+    volumes:
+      - ../cmd/image-to-video/configuration:/root/configuration
+    command:
+      - "app"
+      - "migrate"
+      - "-c"
+      - "/root/configuration/config.yaml"
+    restart: on-failure
+  concatenatevideo:
+    image: concatenate-video
+    ports:
+      - 8889:8083
+    volumes:
+      - ../cmd/concatenate-video/configuration:/root/configuration
+    command:
+      - "app"
+      - "migrate"
+      - "-c"
+      - "/root/configuration/config.yaml"
+    restart: on-failure
   db:
     image: mysql:5.7
     ports:
