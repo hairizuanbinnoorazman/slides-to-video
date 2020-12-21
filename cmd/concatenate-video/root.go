@@ -22,6 +22,7 @@ var (
 			Host:         envVarOrDefault("SERVER_HOST", "0.0.0.0"),
 			Port:         envVarOrDefaultInt("SERVER_PORT", 8083),
 			Mode:         envVarOrDefault("SERVER_MODE", "http"),
+			SvcAcctFile:  envVarOrDefault("SVC_ACCT_FILE", ""),
 			ProcessRoute: envVarOrDefault("SERVER_PROCESSROUTE", "/"),
 			ManagerHost:  envVarOrDefault("SERVER_MANAGERHOST", "localhost"),
 			ManagerPort:  envVarOrDefaultInt("SERVER_PORT", 8080),
@@ -40,6 +41,10 @@ var (
 				AccessKeyID:     envVarOrDefault("BLOBSTORAGE_MINIO_ACCESSKEY", "s3_user"),
 				SecretAccessKey: envVarOrDefault("BLOBSTORAGE_MINIO_SECRETKEY", "s3_password"),
 			},
+		},
+		Queue: queueConfig{
+			Type:                  natsQueue,
+			ConcatenateVideoTopic: envVarOrDefault("QUEUE_CONCATENATEVIDEOTOPIC", "concatenate-video"),
 		},
 	}
 
