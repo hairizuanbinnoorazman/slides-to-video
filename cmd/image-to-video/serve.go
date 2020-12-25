@@ -136,6 +136,7 @@ var (
 				logger.Fatal(srv.ListenAndServe())
 			},
 		}
+		serverCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Configuration File")
 		return serverCmd
 	}
 )
