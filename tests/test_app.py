@@ -3,7 +3,7 @@ import time
 import pytest
 import requests
 
-base_endpoint = "http://localhost:8888/api/v1"
+base_endpoint = "http://localhost:8880/api/v1"
 
 @pytest.fixture
 def create_project():
