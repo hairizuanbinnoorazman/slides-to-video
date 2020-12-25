@@ -4,7 +4,7 @@ services:
   manager:
     image: slides-to-video-manager
     ports:
-      - 8888:8080
+      - 8880:8080
     volumes:
       - ../cmd/slides-to-video-manager/configuration:/root/configuration
     command:
@@ -16,7 +16,7 @@ services:
   pdfsplitter:
     image: pdf-splitter
     ports:
-      - 8889:8081
+      - 8881:8081
     volumes:
       - ../cmd/pdf-splitter/configuration:/root/configuration
     command:
@@ -37,24 +37,26 @@ services:
   image2video:
     image: image-to-video
     ports:
-      - 8889:8082
+      - 8882:8082
     volumes:
       - ../cmd/image-to-video/configuration:/root/configuration
+    secrets:
+      - image_to_video_cred
     command:
       - "app"
-      - "migrate"
+      - "server"
       - "-c"
       - "/root/configuration/config.yaml"
     restart: on-failure
   concatenatevideo:
     image: concatenate-video
     ports:
-      - 8889:8083
+      - 8883:8083
     volumes:
       - ../cmd/concatenate-video/configuration:/root/configuration
     command:
       - "app"
-      - "migrate"
+      - "server"
       - "-c"
       - "/root/configuration/config.yaml"
     restart: on-failure
@@ -92,5 +94,9 @@ services:
     restart: on-failure
   queue:
     image: nats:2.1.9
+
+secrets:
+  image_to_video_cred:
+    file: image-to-video.json
 
     
