@@ -272,3 +272,17 @@ def test_update_script(create_project, get_project, create_pdfslideimages, await
     for z in updated_project["video_segments"]:
         assert z["script"] == "hello"
         assert z["status"] == "created"
+
+
+def test_generate_video(create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment, videosegment_generate_video, await_video_generation_done):
+    project = create_project
+    create_pdfslideimages(project["id"])
+    await_pdf_slides(project["id"])
+    time.sleep(1)
+    project = get_project(project["id"])
+    assert len(project["video_segments"]) == 2
+    for v in project["video_segments"]:
+        update_videosegment(project["id"], v["id"], {"script": "hello"})
+    for z in project["video_segments"]:
+        videosegment_generate_video(project["id"], z["id"])
+    await_video_generation_done(project["id"])
