@@ -24,6 +24,7 @@ services:
       - "server"
       - "-c"
       - "/root/configuration/config.yaml"
+    restart: on-failure
   migrate:
     image: slides-to-video-manager
     volumes:
