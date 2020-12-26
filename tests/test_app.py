@@ -19,8 +19,8 @@ def create_project():
 
 @pytest.fixture
 def get_project():
-    def lol(project_id):
-        endpoint = base_endpoint + "/project/" + project_id
+    def lol(base_endpoint_url, project_id):
+        endpoint = base_endpoint_url + "/project/" + project_id
         resp = requests.get(endpoint)
         assert resp.status_code == 200
         project = resp.json()
@@ -217,7 +217,7 @@ def await_video_concat_done():
 
 def test_get_project(base_endpoint, create_project, get_project):
     project = create_project(base_endpoint)
-    project = get_project(project["id"])
+    project = get_project(base_endpoint, project["id"])
     assert project["id"] != ""
     assert project["status"] == "created"
 
@@ -242,7 +242,7 @@ def test_add_pdf_slides(base_endpoint, create_project, create_pdfslideimages):
 def test_project_on_addpdfslides(base_endpoint, create_project, create_pdfslideimages, get_project, await_pdf_slides):
     project = create_project(base_endpoint)
     pdfslideimages = create_pdfslideimages(project["id"])
-    project = get_project(project["id"])
+    project = get_project(base_endpoint, project["id"])
     assert project.get("pdf_slide_images") is not None
     assert len(project["pdf_slide_images"]) == 1
     project = await_pdf_slides(project["id"])
@@ -255,7 +255,7 @@ def test_project_on_addpdfslides(base_endpoint, create_project, create_pdfslidei
 def test_project_onvideosegment(base_endpoint, create_project, get_project, create_videosegment):
     project = create_project(base_endpoint)
     videosegment = create_videosegment(project["id"], "hahahax", 3)
-    updated_project = get_project(project["id"])
+    updated_project = get_project(base_endpoint, project["id"])
     assert updated_project.get("video_segments") is not None
     assert len(updated_project["video_segments"]) == 1
     assert updated_project["video_segments"][0]["id"] == videosegment["id"]
@@ -267,11 +267,11 @@ def test_update_script(base_endpoint, create_project, get_project, create_pdfsli
     create_pdfslideimages(project["id"])
     await_pdf_slides(project["id"])
     time.sleep(1)
-    project = get_project(project["id"])
+    project = get_project(base_endpoint, project["id"])
     assert len(project["video_segments"]) == 2
     for v in project["video_segments"]:
         update_videosegment(project["id"], v["id"], {"script": "hello"})
-    updated_project = get_project(project["id"])
+    updated_project = get_project(base_endpoint,project["id"])
     for z in updated_project["video_segments"]:
         assert z["script"] == "hello"
         assert z["status"] == "created"
@@ -282,7 +282,7 @@ def test_generate_video(base_endpoint, create_project, get_project, create_pdfsl
     create_pdfslideimages(project["id"])
     await_pdf_slides(project["id"])
     time.sleep(1)
-    project = get_project(project["id"])
+    project = get_project(base_endpoint, project["id"])
     assert len(project["video_segments"]) == 2
     for v in project["video_segments"]:
         update_videosegment(project["id"], v["id"], {"script": "hello"})
@@ -300,7 +300,7 @@ def test_full_flow(
     create_pdfslideimages(project["id"])
     await_pdf_slides(project["id"])
     time.sleep(1)
-    project = get_project(project["id"])
+    project = get_project(base_endpoint, project["id"])
     assert len(project["video_segments"]) == 2
     for v in project["video_segments"]:
         update_videosegment(project["id"], v["id"], {
