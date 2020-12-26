@@ -7,13 +7,15 @@ base_endpoint = "http://localhost:8880/api/v1"
 
 @pytest.fixture
 def create_project():
-    endpoint = base_endpoint + "/project"
-    resp = requests.post(endpoint)
-    assert resp.status_code == 201
-    project = resp.json()
-    assert project["id"] != ""
-    assert project["status"] == "created"
-    return project
+    def create_project(base_endpoint_url):
+        endpoint = base_endpoint_url + "/project"
+        resp = requests.post(endpoint)
+        assert resp.status_code == 201
+        project = resp.json()
+        assert project["id"] != ""
+        assert project["status"] == "created"
+        return project
+    return create_project
 
 @pytest.fixture
 def get_project():
@@ -213,14 +215,15 @@ def await_video_concat_done():
     return lol
 
 
-def test_get_project(create_project, get_project):
-    project = create_project
+def test_get_project(base_endpoint, create_project, get_project):
+    project = create_project(base_endpoint)
     project = get_project(project["id"])
     assert project["id"] != ""
     assert project["status"] == "created"
 
 
-def test_list_projects(create_project):
+def test_list_projects(base_endpoint, create_project):
+    create_project(base_endpoint)
     endpoint = base_endpoint + "/projects"
     resp = requests.get(endpoint)
     assert resp.status_code == 200
@@ -229,15 +232,15 @@ def test_list_projects(create_project):
     assert len(project_list) == 2
 
 
-def test_add_pdf_slides(create_project, create_pdfslideimages):
-    project = create_project
+def test_add_pdf_slides(base_endpoint, create_project, create_pdfslideimages):
+    project = create_project(base_endpoint)
     pdfslideimages = create_pdfslideimages(project["id"])
     assert pdfslideimages["status"] == "created"
     assert pdfslideimages["id"] != ""
 
 
-def test_project_on_addpdfslides(create_project, create_pdfslideimages, get_project, await_pdf_slides):
-    project = create_project
+def test_project_on_addpdfslides(base_endpoint, create_project, create_pdfslideimages, get_project, await_pdf_slides):
+    project = create_project(base_endpoint)
     pdfslideimages = create_pdfslideimages(project["id"])
     project = get_project(project["id"])
     assert project.get("pdf_slide_images") is not None
@@ -249,8 +252,8 @@ def test_project_on_addpdfslides(create_project, create_pdfslideimages, get_proj
     assert len(project["video_segments"]) == 2
 
 
-def test_project_onvideosegment(create_project, get_project, create_videosegment):
-    project = create_project
+def test_project_onvideosegment(base_endpoint, create_project, get_project, create_videosegment):
+    project = create_project(base_endpoint)
     videosegment = create_videosegment(project["id"], "hahahax", 3)
     updated_project = get_project(project["id"])
     assert updated_project.get("video_segments") is not None
@@ -259,8 +262,8 @@ def test_project_onvideosegment(create_project, get_project, create_videosegment
     assert updated_project["video_segments"][0]["status"] == videosegment["status"]
 
 
-def test_update_script(create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment):
-    project = create_project
+def test_update_script(base_endpoint, create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment):
+    project = create_project(base_endpoint)
     create_pdfslideimages(project["id"])
     await_pdf_slides(project["id"])
     time.sleep(1)
@@ -274,8 +277,8 @@ def test_update_script(create_project, get_project, create_pdfslideimages, await
         assert z["status"] == "created"
 
 
-def test_generate_video(create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment, videosegment_generate_video, await_video_generation_done):
-    project = create_project
+def test_generate_video(base_endpoint, create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment, videosegment_generate_video, await_video_generation_done):
+    project = create_project(base_endpoint)
     create_pdfslideimages(project["id"])
     await_pdf_slides(project["id"])
     time.sleep(1)
@@ -289,11 +292,11 @@ def test_generate_video(create_project, get_project, create_pdfslideimages, awai
 
 
 def test_full_flow(
-        create_project, get_project,
+        base_endpoint, create_project, get_project,
         create_pdfslideimages, await_pdf_slides,
         update_videosegment, videosegment_generate_video, await_video_generation_done,
         videosegment_concat, await_video_concat_done):
-    project = create_project
+    project = create_project(base_endpoint)
     create_pdfslideimages(project["id"])
     await_pdf_slides(project["id"])
     time.sleep(1)
