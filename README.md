@@ -2,11 +2,22 @@
 
 ## Features to be developed
 
-- User + ACL model integration
+- Setup monitoring (Prometheus Endpoints)
+- Setup Healthcheck endpoints
+- Setup Distributed Tracing between components
+- Setup Profiling Endpoints (switched on via configuration)
+- Setup integration tests for 2 platform targets: local docker-compose + google cloud run
+- Add documentation regarding the deployment to local (docker-compose), kubernetes, cloud run
+- User + ACL model integration (App-managed)
+- User + ACL model integration (Using Keycloak)
+- Add search capability (Elasticsearch)
+- Add search capability (Bleve)
 - List operations for Project/VideoSegments/PDFSlideImages are broken
 - Delete operations for Project/VideoSegments/PDFSlideImages are broken
 - Support of cassandra as alternative data storage
 - Support of local storage as alternative "blob storage"
+- Support of kafka as queue system
+- Support of rabbitmq as queue system
 - Support deployment mode into GKE (API server - utilizes Google Datastore + Workers - utilizes Google Pubsub Pull mode)
 - Move migrate command to utilize this: https://github.com/golang-migrate/migrate - Automigrate now is only meant to get the initial scheme into db
 
