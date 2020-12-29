@@ -26,13 +26,13 @@ build-images:
 build-all: build-bin build-images
 
 stack-up:
-	cd docker-compose && docker-compose up
+	cd deployment/docker-compose && docker-compose up
 
 stack-down:
-	cd docker-compose && docker-compose down
+	cd deployment/docker-compose && docker-compose down
 
 stack-up-monitoring:
-	cd docker-compose && docker-compose -f docker-compose.yaml -f with-monitoring.yaml up
+	cd deployment/docker-compose && docker-compose -f docker-compose.yaml -f with-monitoring.yaml up
 
 stack-down-monitoring:
-	cd docker-compose && docker-compose -f docker-compose.yaml -f with-monitoring.yaml down
+	cd deployment/docker-compose && docker-compose -f docker-compose.yaml -f with-monitoring.yaml down

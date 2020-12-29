@@ -6,7 +6,7 @@ services:
     ports:
       - 8880:8080
     volumes:
-      - ../cmd/slides-to-video-manager/configuration:/root/configuration
+      - ../../cmd/slides-to-video-manager/configuration:/root/configuration
     command:
       - "app"
       - "server"
@@ -18,7 +18,7 @@ services:
     ports:
       - 8881:8081
     volumes:
-      - ../cmd/pdf-splitter/configuration:/root/configuration
+      - ../../cmd/pdf-splitter/configuration:/root/configuration
     command:
       - "app"
       - "server"
@@ -28,7 +28,7 @@ services:
   migrate:
     image: slides-to-video-manager
     volumes:
-      - ../cmd/slides-to-video-manager/configuration:/root/configuration
+      - ../../cmd/slides-to-video-manager/configuration:/root/configuration
     command:
       - "app"
       - "migrate"
@@ -40,7 +40,7 @@ services:
     ports:
       - 8882:8082
     volumes:
-      - ../cmd/image-to-video/configuration:/root/configuration
+      - ../../cmd/image-to-video/configuration:/root/configuration
     secrets:
       - image_to_video_cred
     command:
@@ -54,7 +54,7 @@ services:
     ports:
       - 8883:8083
     volumes:
-      - ../cmd/concatenate-video/configuration:/root/configuration
+      - ../../cmd/concatenate-video/configuration:/root/configuration
     command:
       - "app"
       - "server"
