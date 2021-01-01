@@ -23,7 +23,9 @@ deploy-mgr:
 		--memory=2Gi \
 		--platform=managed \
 		--allow-unauthenticated \
-		--region=asia-northeast1
+		--set-env-vars=DATASTORE_GOOGLEDATASTORE_PROJECTID=$(PROJECT_ID),QUEUE_GOOGLEPUBSUB_PROJECTID=$(PROJECT_ID) \
+		--region=asia-northeast1 \
+		$(API_SVC)
 
 deploy-pdf-splitter:
 	gcloud run deploy \
