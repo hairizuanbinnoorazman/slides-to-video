@@ -2,6 +2,9 @@
 # Prepare to migrate commands to deployment repo
 ####
 
+git_hash=$$(git rev-parse --short HEAD)
+image_version?=latest
+
 setup:
 	@echo "Run setup steps"
 	~/go/bin/goimports main.go > main_temp.go && mv main_temp.go main.go
@@ -18,10 +21,16 @@ build-bin:
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/concatenate-video/app ./cmd/concatenate-video
 
 build-images: 
-	docker build -t slides-to-video-manager ./cmd/slides-to-video-manager
-	docker build -t pdf-splitter ./cmd/pdf-splitter
-	docker build -t image-to-video ./cmd/image-to-video
-	docker build -t concatenate-video ./cmd/concatenate-video
+	docker build -t slides-to-video-manager:$(image_version) ./cmd/slides-to-video-manager
+	docker build -t pdf-splitter:$(image_version) ./cmd/pdf-splitter
+	docker build -t image-to-video:$(image_version) ./cmd/image-to-video
+	docker build -t concatenate-video:$(image_version) ./cmd/concatenate-video
+
+push-images:
+	docker push slides-to-video-manager:$(image_version)
+	docker push pdf-splitter:$(image_version)
+	docker push image-to-video:$(image_version)
+	docker push concatenate-video:$(image_version)
 
 build-all: build-bin build-images
 
