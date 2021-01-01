@@ -130,7 +130,8 @@ var (
 				}
 
 				srv := http.Server{
-					Addr: fmt.Sprintf("%v:%v", cfg.Server.Host, cfg.Server.Port),
+					Handler: r,
+					Addr:    fmt.Sprintf("%v:%v", cfg.Server.Host, cfg.Server.Port),
 				}
 
 				logger.Fatal(srv.ListenAndServe())
