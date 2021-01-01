@@ -3,6 +3,7 @@
 ####
 
 git_hash=$$(git rev-parse --short HEAD)
+image_repo?=""
 image_version?=latest
 
 setup:
@@ -21,18 +22,28 @@ build-bin:
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/concatenate-video/app ./cmd/concatenate-video
 
 build-images: 
-	docker build -t slides-to-video-manager:$(image_version) ./cmd/slides-to-video-manager
-	docker build -t pdf-splitter:$(image_version) ./cmd/pdf-splitter
-	docker build -t image-to-video:$(image_version) ./cmd/image-to-video
-	docker build -t concatenate-video:$(image_version) ./cmd/concatenate-video
+	docker build -t $(image_repo)/slides-to-video-manager:$(image_version) ./cmd/slides-to-video-manager
+	docker build -t $(image_repo)/pdf-splitter:$(image_version) ./cmd/pdf-splitter
+	docker build -t $(image_repo)/image-to-video:$(image_version) ./cmd/image-to-video
+	docker build -t $(image_repo)/concatenate-video:$(image_version) ./cmd/concatenate-video
 
 push-images:
-	docker push slides-to-video-manager:$(image_version)
-	docker push pdf-splitter:$(image_version)
-	docker push image-to-video:$(image_version)
-	docker push concatenate-video:$(image_version)
+	docker push $(image_repo)/slides-to-video-manager:$(image_version)
+	docker push $(image_repo)/pdf-splitter:$(image_version)
+	docker push $(image_repo)/image-to-video:$(image_version)
+	docker push $(image_repo)/concatenate-video:$(image_version)
 
 build-all: build-bin build-images
+
+build-all-versioned:
+	$(eval image_version := $(shell git rev-parse --short HEAD))
+	$(eval image_repo := gcr.io/$(shell gcloud config list --format yaml | yq r - core.project))
+	make image_version=$(image_version) image_repo=$(image_repo) build-all
+
+push-all-versioned:
+	$(eval image_version := $(shell git rev-parse --short HEAD))
+	$(eval image_repo := gcr.io/$(shell gcloud config list --format yaml | yq r - core.project))
+	make image_version=$(image_version) image_repo=$(image_repo) push-images
 
 stack-up:
 	cd deployment/docker-compose && docker-compose up
