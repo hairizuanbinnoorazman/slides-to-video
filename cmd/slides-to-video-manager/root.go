@@ -55,7 +55,7 @@ var (
 				ProjectID:         envVarOrDefault("QUEUE_GOOGLEPUBSUB_PROJECTID", ""),
 				PDFToImageTopic:   envVarOrDefault("QUEUE_GOOGLEPUBSUB_PDFTOIMAGEJOBTOPIC", "pdf-splitter"),
 				ImageToVideoTopic: envVarOrDefault("QUEUE_GOOGLEPUBSUB_IMAGETOVIDEOTOPIC", "image-to-video"),
-				VideoConcatTopic:  envVarOrDefault("QUEUE_GOOGLEPUBSUB_VIDEOCONCATTOPIC", "video-concat"),
+				VideoConcatTopic:  envVarOrDefault("QUEUE_GOOGLEPUBSUB_VIDEOCONCATTOPIC", "concatenate-video"),
 			},
 		},
 		BlobStorage: blobConfig{
