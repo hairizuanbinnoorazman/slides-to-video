@@ -25,7 +25,7 @@ var (
 			SvcAcctFile:  envVarOrDefault("SVC_ACCT_FILE", ""),
 			ProcessRoute: envVarOrDefault("SERVER_PROCESSROUTE", "/"),
 			ManagerHost:  envVarOrDefault("SERVER_MANAGERHOST", "localhost"),
-			ManagerPort:  envVarOrDefaultInt("SERVER_PORT", 8080),
+			ManagerPort:  envVarOrDefaultInt("SERVER_MANAGERPORT", 8080),
 		},
 		BlobStorage: blobConfig{
 			Type:                envVarOrDefault("BLOBSTORAGE_TYPE", "minio"),
