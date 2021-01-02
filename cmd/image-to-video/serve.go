@@ -82,7 +82,7 @@ var (
 					os.Exit(1)
 				}
 
-				text2speechClient, err := texttospeech.NewClient(context.Background(), option.WithCredentialsJSON(credJSON))
+				text2speechClient, err := texttospeech.NewClient(context.Background(), svcAcctOptions...)
 				if err != nil {
 					logger.Error("Unable to create text to speech client")
 				}
