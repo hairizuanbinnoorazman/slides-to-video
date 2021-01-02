@@ -1,6 +1,6 @@
 APP_VERSION?=$$(git rev-parse --short HEAD)
 API_SVC?="slides-to-video-manager"
-API_SVC_HOST=$$(gcloud beta run services describe $(PDF_SPLITTER_SVC) --region=asia-northeast1 --platform=managed  --format=yaml | yq r - status.address.url | sed -e "s|https://||")
+API_SVC_HOST=$$(gcloud beta run services describe $(API_SVC) --region=asia-northeast1 --platform=managed  --format=yaml | yq r - status.address.url | sed -e "s|https://||")
 
 PDF_SPLITTER_SVC?="pdf-splitter"
 PDF_SPLITTER_SVC_URL=$$(gcloud beta run services describe $(PDF_SPLITTER_SVC) --region=asia-northeast1 --platform=managed  --format=yaml | yq r - status.address.url)
