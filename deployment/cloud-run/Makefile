@@ -51,8 +51,12 @@ deploy-image-to-video:
 		--cpu=2 \
 		--memory=2Gi \
 		--no-allow-unauthenticated \
+		--set-env-vars=SERVER_PORT=8080,BLOBSTORAGE_TYPE=gcs,BLOBSTORAGE_GCS_PROJECTID=$(PROJECT_ID),BLOBSTORAGE_GCS_BUCKET=zontext-pdf-2-videos,SERVER_MANAGERHOST=$(API_SVC_HOST),SERVER_MANAGERPORT=443 \
 		--platform=managed \
-		--region=asia-northeast1
+		--region=asia-northeast1 \
+		--command=/usr/bin/app \
+		--args=server \
+		$(IMAGE_TO_VIDEO_SVC)
 
 deploy-concatenate-video:
 	gcloud run deploy \
@@ -61,8 +65,13 @@ deploy-concatenate-video:
 		--concurrency=1 \
 		--cpu=2 \
 		--memory=2Gi \
+		--no-allow-unauthenticated \
+		--set-env-vars=SERVER_PORT=8080,BLOBSTORAGE_TYPE=gcs,BLOBSTORAGE_GCS_PROJECTID=$(PROJECT_ID),BLOBSTORAGE_GCS_BUCKET=zontext-pdf-2-videos,SERVER_MANAGERHOST=$(API_SVC_HOST),SERVER_MANAGERPORT=443 \
 		--platform=managed \
-		--region=asia-northeast1
+		--region=asia-northeast1 \
+		--command=/usr/bin/app \
+		--args=server \
+		$(CONCAT_VIDEO_SVC)
 
 link-pdf-splitter:
 	gcloud run services add-iam-policy-binding $(PDF_SPLITTER_SVC) \
@@ -78,7 +87,7 @@ link-pdf-splitter:
 
 link-image-to-video:
 	gcloud beta run services add-iam-policy-binding $(IMAGE_TO_VIDEO_SVC) \
-   		--member=serviceAccount:cloud-run-pubsub-invoker@${PROJECT_ID}.iam.gserviceaccount.com \
+   		--member=serviceAccount:$(IMAGE_TO_VIDEO_SVC)@${PROJECT_ID}.iam.gserviceaccount.com \
 		--region=asia-northeast1 \
 		--platform=managed \
    		--role=roles/run.invoker
@@ -86,11 +95,11 @@ link-image-to-video:
 	gcloud beta pubsub subscriptions create $(IMAGE_TO_VIDEO_SVC) --topic $(IMAGE_TO_VIDEO_SVC) \
 		--ack-deadline 300 \
 		--push-endpoint=$(IMAGE_TO_VIDEO_SVC_URL) \
-		--push-auth-service-account=cloud-run-pubsub-invoker@${PROJECT_ID}.iam.gserviceaccount.com
+		--push-auth-service-account=$(IMAGE_TO_VIDEO_SVC)@${PROJECT_ID}.iam.gserviceaccount.com
 
 link-concatenate-video:
 	gcloud beta run services add-iam-policy-binding $(CONCAT_VIDEO_SVC) \
-   		--member=serviceAccount:cloud-run-pubsub-invoker@${PROJECT_ID}.iam.gserviceaccount.com \
+   		--member=serviceAccount:$(CONCAT_VIDEO_SVC)@${PROJECT_ID}.iam.gserviceaccount.com \
 		--region=asia-northeast1 \
 		--platform=managed \
    		--role=roles/run.invoker
@@ -98,7 +107,7 @@ link-concatenate-video:
 	gcloud beta pubsub subscriptions create $(CONCAT_VIDEO_SVC) --topic $(CONCAT_VIDEO_SVC) \
 		--ack-deadline 300 \
 		--push-endpoint=$(CONCAT_VIDEO_SVC_URL) \
-		--push-auth-service-account=cloud-run-pubsub-invoker@${PROJECT_ID}.iam.gserviceaccount.com
+		--push-auth-service-account=$(CONCAT_VIDEO_SVC)@${PROJECT_ID}.iam.gserviceaccount.com
 
 drop-services:
 	gcloud pubsub subscriptions delete $(PDF_SPLITTER_SVC)
