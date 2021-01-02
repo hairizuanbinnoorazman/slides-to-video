@@ -111,7 +111,22 @@ link-concatenate-video:
 
 drop-services:
 	gcloud pubsub subscriptions delete $(PDF_SPLITTER_SVC)
+	gcloud pubsub subscriptions delete $(IMAGE_TO_VIDEO_SVC)
+	gcloud pubsub subscriptions delete $(CONCAT_VIDEO_SVC)
 	gcloud pubsub topics delete $(PDF_SPLITTER_SVC)
+	gcloud pubsub topics delete $(IMAGE_TO_VIDEO_SVC)
+	gcloud pubsub topics delete $(CONCAT_VIDEO_SVC)
 	gcloud run services delete $(API_SVC) --platform=managed --region=asia-northeast1 --quiet
 	gcloud run services delete $(PDF_SPLITTER_SVC) --platform=managed --region=asia-northeast1 --quiet
+	gcloud run services delete $(IMAGE_TO_VIDEO_SVC) --platform=managed --region=asia-northeast1 --quiet
+	gcloud run services delete $(CONCAT_VIDEO_SVC) --platform=managed --region=asia-northeast1 --quiet
+
+deploy-all:
+	make deploy-mgr
+	make deploy-pdf-splitter
+	make deploy-image-to-video
+	make deploy-concatenate-video
+	make link-pdf-splitter
+	make link-image-to-video
+	make link-concatenate-video
 	
