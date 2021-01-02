@@ -1,5 +1,6 @@
 APP_VERSION?=$$(git rev-parse --short HEAD)
 API_SVC?="slides-to-video-manager"
+API_SVC_HOST=$$(gcloud beta run services describe $(PDF_SPLITTER_SVC) --region=asia-northeast1 --platform=managed  --format=yaml | yq r - status.address.url | sed -e "s|https://||")
 
 PDF_SPLITTER_SVC?="pdf-splitter"
 PDF_SPLITTER_SVC_URL=$$(gcloud beta run services describe $(PDF_SPLITTER_SVC) --region=asia-northeast1 --platform=managed  --format=yaml | yq r - status.address.url)
@@ -37,7 +38,7 @@ deploy-pdf-splitter:
 		--platform=managed \
 		--no-allow-unauthenticated \
 		--region=asia-northeast1 \
-		--set-env-vars=SERVER_PORT=8080,BLOBSTORAGE_TYPE=gcs,BLOBSTORAGE_GCS_PROJECTID=$(PROJECT_ID),BLOBSTORAGE_GCS_BUCKET=zontext-pdf-2-videos \
+		--set-env-vars=SERVER_PORT=8080,BLOBSTORAGE_TYPE=gcs,BLOBSTORAGE_GCS_PROJECTID=$(PROJECT_ID),BLOBSTORAGE_GCS_BUCKET=zontext-pdf-2-videos,SERVER_MANAGERHOST=$(API_SVC_HOST),SERVER_MANAGERPORT=443 \
 		--command=/usr/bin/app \
 		--args=server \
 		$(PDF_SPLITTER_SVC)
@@ -65,7 +66,7 @@ deploy-concatenate-video:
 
 link-pdf-splitter:
 	gcloud run services add-iam-policy-binding $(PDF_SPLITTER_SVC) \
-   		--member=serviceAccount:cloud-run-pubsub-invoker@${PROJECT_ID}.iam.gserviceaccount.com \
+   		--member=serviceAccount:$(PDF_SPLITTER_SVC)@${PROJECT_ID}.iam.gserviceaccount.com \
 		--region=asia-northeast1 \
 		--platform=managed \
    		--role=roles/run.invoker
@@ -73,7 +74,7 @@ link-pdf-splitter:
 	gcloud pubsub subscriptions create $(PDF_SPLITTER_SVC) --topic $(PDF_SPLITTER_SVC) \
 		--ack-deadline 300 \
 		--push-endpoint=$(PDF_SPLITTER_SVC_URL) \
-		--push-auth-service-account=cloud-run-pubsub-invoker@${PROJECT_ID}.iam.gserviceaccount.com
+		--push-auth-service-account=$(PDF_SPLITTER_SVC)@${PROJECT_ID}.iam.gserviceaccount.com
 
 link-image-to-video:
 	gcloud beta run services add-iam-policy-binding $(IMAGE_TO_VIDEO_SVC) \
