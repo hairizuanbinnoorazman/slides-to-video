@@ -87,7 +87,12 @@ var (
 					logger.Error("Unable to create text to speech client")
 				}
 
-				mgrclient := mgrclient.NewBasic(logger, fmt.Sprintf("http://%v:%v/api/v1", cfg.Server.ManagerHost, cfg.Server.ManagerPort), http.DefaultClient)
+				mgrURL := fmt.Sprintf("http://%v:%v/api/v1", cfg.Server.ManagerHost, cfg.Server.ManagerPort)
+				if cfg.Server.ManagerPort == 443 {
+					mgrURL = fmt.Sprintf("https://%v/api/v1", cfg.Server.ManagerHost)
+				}
+
+				mgrclient := mgrclient.NewBasic(logger, mgrURL, http.DefaultClient)
 				textToSpeechEngine := image2videoconverter.NewGoogleTextToSpeech(logger, text2speechClient)
 				image2videoConverter := image2videoconverter.NewBasic(logger, slideToVideoStorage, mgrclient, cfg.BlobStorage.ImagesFolder, cfg.BlobStorage.VideoSnippetsFolder, &textToSpeechEngine)
 
