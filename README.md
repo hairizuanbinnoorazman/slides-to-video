@@ -2,13 +2,12 @@
 
 ## Features to be developed
 
+- User + ACL model integration (App-managed)
+- Add Frontend for Integration - Elm
 - Setup monitoring (Prometheus Endpoints)
-- Setup Healthcheck endpoints
 - Setup Distributed Tracing between components
 - Setup Profiling Endpoints (switched on via configuration)
-- Setup integration tests for 2 platform targets: local docker-compose + google cloud run
 - Add documentation regarding the deployment to local (docker-compose), kubernetes, cloud run
-- User + ACL model integration (App-managed)
 - User + ACL model integration (Using Keycloak)
 - Add search capability (Elasticsearch)
 - Add search capability (Bleve)
