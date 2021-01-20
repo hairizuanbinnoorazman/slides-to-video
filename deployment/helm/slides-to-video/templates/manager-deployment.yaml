@@ -72,11 +72,11 @@ spec:
         {{- end }}
         livenessProbe:
           httpGet:
-            path: /status
+            path: /healthz
             port: api
         readinessProbe:
           httpGet:
-            path: /status
+            path: /readyz
             port: api
       restartPolicy: Always
       volumes:
