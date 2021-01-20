@@ -100,6 +100,12 @@ var (
 				r.Handle("/status", h.Status{
 					Logger: logger,
 				})
+				r.Handle("/healthz", h.Status{
+					Logger: logger,
+				})
+				r.Handle("/readyz", h.Status{
+					Logger: logger,
+				})
 
 				if cfg.Server.Mode == "http" {
 					r.Handle(cfg.Server.ProcessRoute, h.ProcessHandler{

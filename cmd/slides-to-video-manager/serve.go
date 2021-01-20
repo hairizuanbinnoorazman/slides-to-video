@@ -160,6 +160,12 @@ var (
 				r.Handle("/status", h.Status{
 					Logger: logger,
 				})
+				r.Handle("/healthz", h.Status{
+					Logger: logger,
+				})
+				r.Handle("/readyz", h.Status{
+					Logger: logger,
+				})
 
 				s := r.PathPrefix("/api/v1").Subrouter()
 				// Project based routes
