@@ -20,18 +20,21 @@ build-bin:
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/pdf-splitter/app ./cmd/pdf-splitter
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/image-to-video/app ./cmd/image-to-video
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/concatenate-video/app ./cmd/concatenate-video
+	GOOS=linux GOARCH=amd64 go build -o ./cmd/slides-to-video-frontend/app ./cmd/slides-to-video-frontend
 
 build-images: 
-	docker build -t $(image_repo)/slides-to-video-manager:$(image_version) ./cmd/slides-to-video-manager
-	docker build -t $(image_repo)/pdf-splitter:$(image_version) ./cmd/pdf-splitter
-	docker build -t $(image_repo)/image-to-video:$(image_version) ./cmd/image-to-video
-	docker build -t $(image_repo)/concatenate-video:$(image_version) ./cmd/concatenate-video
+	docker build -t $(image_repo)slides-to-video-manager:$(image_version) ./cmd/slides-to-video-manager
+	docker build -t $(image_repo)pdf-splitter:$(image_version) ./cmd/pdf-splitter
+	docker build -t $(image_repo)image-to-video:$(image_version) ./cmd/image-to-video
+	docker build -t $(image_repo)concatenate-video:$(image_version) ./cmd/concatenate-video
+	docker build -t $(image_repo)slides-to-video-frontend:$(image_version) ./cmd/slides-to-video-frontend
 
 push-images:
-	docker push $(image_repo)/slides-to-video-manager:$(image_version)
-	docker push $(image_repo)/pdf-splitter:$(image_version)
-	docker push $(image_repo)/image-to-video:$(image_version)
-	docker push $(image_repo)/concatenate-video:$(image_version)
+	docker push $(image_repo)slides-to-video-manager:$(image_version)
+	docker push $(image_repo)pdf-splitter:$(image_version)
+	docker push $(image_repo)image-to-video:$(image_version)
+	docker push $(image_repo)concatenate-video:$(image_version)
+	docker push $(image_repo)slides-to-video-frontend:$(image_version)
 
 build-all: build-bin build-images
 
