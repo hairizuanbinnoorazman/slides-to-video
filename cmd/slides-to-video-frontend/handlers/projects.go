@@ -15,14 +15,6 @@ func (h Projects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start Projects Handler")
 	defer h.Logger.Info("End Projects Handler")
 
-	c, err := r.Cookie("STVID")
-	if err != nil {
-		http.Redirect(w, r, "/healthz", http.StatusTemporaryRedirect)
-		return
-	}
-
-	h.Logger.Info("Cookie found? :: %v :: %v", c.Name, c.Value)
-
 	type resp struct {
 		Status string `json:"status"`
 	}

@@ -6,6 +6,7 @@ import (
 )
 
 type config struct {
+	Secure         bool   `yaml:"secure"`
 	Host           string `yaml:"host"`
 	Port           int    `yaml:"port"`
 	Trace          bool   `yaml:"trace"`
@@ -17,6 +18,18 @@ func envVarOrDefault(envVar, defaultVal string) string {
 	overrideVal, exists := os.LookupEnv(envVar)
 	if exists {
 		return overrideVal
+	}
+	return defaultVal
+}
+
+func envVarOrDefaultBool(envVar string, defaultVal bool) bool {
+	overrideVal, exists := os.LookupEnv(envVar)
+	if exists {
+		if overrideVal == "true" {
+			return true
+		} else {
+			return false
+		}
 	}
 	return defaultVal
 }

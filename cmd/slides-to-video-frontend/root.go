@@ -20,6 +20,7 @@ var (
 	// Immediately replaces value with environment variables on startup
 	// TODO: Utilize Inmemory queue and inmemory datastores in the future
 	cfg = config{
+		Secure:         envVarOrDefaultBool("SECURE", false),
 		Host:           envVarOrDefault("HOST", "0.0.0.0"),
 		Port:           envVarOrDefaultInt("PORT", 8080),
 		Trace:          false,

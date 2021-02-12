@@ -57,8 +57,14 @@ var (
 					handlers.AllowedMethods([]string{"GET", "POST"}),
 				)
 
+				frontendScheme := "http"
+				if cfg.Secure {
+					frontendScheme = "https"
+				}
+
 				s := r.PathPrefix(cfg.IngressPath).Subrouter()
 				s.Handle("/", h.RequireLogin{
+					Scheme:      frontendScheme,
 					IngressPath: cfg.IngressPath,
 					Logger:      logger,
 					NextHandler: h.Home{
@@ -68,8 +74,10 @@ var (
 				s.Handle("/login", h.Login{
 					IngressPath: cfg.IngressPath,
 					Logger:      logger,
+					MgrEndpoint: cfg.ServerEndpoint,
 				})
 				s.Handle("/projects", h.RequireLogin{
+					Scheme:      frontendScheme,
 					IngressPath: cfg.IngressPath,
 					Logger:      logger,
 					NextHandler: h.Projects{
