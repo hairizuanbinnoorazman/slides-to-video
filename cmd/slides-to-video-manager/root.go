@@ -13,7 +13,6 @@ import (
 
 var (
 	cfgFile string
-	readCfg config
 
 	// Includes default configuration
 	// Initial configuration is set to utilize Google Datastore and Google Pubsub for now
@@ -103,17 +102,21 @@ func main() {
 }
 
 func initConfig() {
-	if strings.Contains(cfgFile, ".yml") || strings.Contains(cfgFile, ".yaml") {
-		raw, err := ioutil.ReadFile(cfgFile)
-		if err != nil {
-			fmt.Println("unable to read config file")
-			os.Exit(1)
+	configurationFiles := strings.Split(cfgFile, ",")
+	for _, cFile := range configurationFiles {
+		var readCfg config
+		if strings.Contains(cFile, ".yml") || strings.Contains(cFile, ".yaml") {
+			raw, err := ioutil.ReadFile(cFile)
+			if err != nil {
+				fmt.Println("unable to read config file")
+				os.Exit(1)
+			}
+			err = yaml.Unmarshal(raw, &readCfg)
+			if err != nil {
+				fmt.Println("unable to process config")
+				os.Exit(1)
+			}
 		}
-		err = yaml.Unmarshal(raw, &readCfg)
-		if err != nil {
-			fmt.Println("unable to process config")
-			os.Exit(1)
-		}
+		mergo.Merge(&cfg, readCfg, mergo.WithOverride)
 	}
-	mergo.Merge(&cfg, readCfg, mergo.WithOverride)
 }
