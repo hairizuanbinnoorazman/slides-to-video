@@ -3,7 +3,7 @@
 ## Features to be developed
 
 - User + ACL model integration (App-managed)
-- Add Frontend for Integration - Elm
+- Add Frontend for Integration - Plain HTML + Golang Server
 - Setup monitoring (Prometheus Endpoints)
 - Setup Distributed Tracing between components
 - Setup Profiling Endpoints (switched on via configuration)
