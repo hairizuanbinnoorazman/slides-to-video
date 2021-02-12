@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -42,6 +43,8 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sourceURL := r.URL.Query().Get("source_url")
+
 	q := authURL.Query()
 	q.Add("scope", h.Scope)
 	q.Add("include_granted_scopes", "true")
@@ -49,6 +52,9 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	q.Add("redirect_uri", h.RedirectURI)
 	q.Add("response_type", "code")
 	q.Add("client_id", h.ClientID)
+	if sourceURL != "" {
+		q.Add("state", fmt.Sprintf("source_url=%v", sourceURL))
+	}
 
 	authURL.RawQuery = q.Encode()
 
@@ -77,6 +83,20 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(errMsg))
 		return
 	}
+
+	rawState, ok := r.URL.Query()["state"]
+	if !ok {
+		h.Logger.Info("No state information is being passed")
+	}
+	state := ""
+	redirectURL := ""
+	if ok {
+		state = rawState[0]
+		h.Logger.Infof("Found transferred state. state: %v", state)
+		redirectURL = strings.Split(state, "=")[1]
+	}
+
+	h.Logger.Infof("RedirectURL: %v", redirectURL)
 
 	type authRequestBody struct {
 		Code         string `json:"code"`
@@ -177,6 +197,11 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rawRespTokenResp, _ := json.Marshal(tokenResponse{Token: token})
+
+	if redirectURL != "" {
+		http.Redirect(w, r, redirectURL+fmt.Sprintf("?token=%v", token), http.StatusTemporaryRedirect)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(rawRespTokenResp)
