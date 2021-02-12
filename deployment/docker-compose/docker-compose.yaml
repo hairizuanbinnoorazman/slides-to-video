@@ -1,17 +1,31 @@
 version: '3.3'
 
 services:
+  # frontend:
+  #   image: slides-to-video-frontend
+  #   ports:
+  #     - 8870:8080
+  #   volumes:
+  #     - ../../cmd/slides-to-video-frontend/configuration:/root/configuration
+  #   command:
+  #     - "app"
+  #     - "server"
+  #     - "-c"
+  #     - "/root/configuration/config.yaml"
+  #   restart: always
   manager:
     image: slides-to-video-manager
     ports:
       - 8880:8080
     volumes:
       - ../../cmd/slides-to-video-manager/configuration:/root/configuration
+    secrets:
+      - manager_secrets.yaml
     command:
       - "app"
       - "server"
       - "-c"
-      - "/root/configuration/config.yaml"
+      - "/root/configuration/config.yaml,/run/secrets/manager_secrets.yaml"
     restart: always
   pdfsplitter:
     image: pdf-splitter
@@ -99,5 +113,7 @@ services:
 secrets:
   image_to_video_cred:
     file: image-to-video.json
+  manager_secrets.yaml:
+    file: manager_secrets.yaml
 
     
