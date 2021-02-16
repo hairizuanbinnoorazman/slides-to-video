@@ -1,0 +1,25 @@
+<html>
+    <head>{{template "head.html"}}</head>
+    <body>
+        {{template "header.html"}}
+        <h1>Projects</h1>
+        <table class="table table-dark">
+            <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Project Name</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Projects }}
+                    <tr>
+                        <td>{{ .DateCreated }}</td>
+                        <td>{{ .ID }}</td>
+                        <td>{{ .Status }}</td>
+                    </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </body>
+</html>

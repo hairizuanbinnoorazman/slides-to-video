@@ -1,7 +1,10 @@
 <html>
-    <header></header>
+    <head>{{template "head.html"}}</head>
     <body>
-        <p>Login to google</p>
-        <a href="{{ .MgrLoginURL }}">Google Login</a>
+        <div class="container-fluid">
+            {{template "header.html"}}
+            <p>Login to google</p>
+            <a href="{{ .MgrLoginURL }}">Google Login</a> 
+        </div>
     </body>
 </html>
