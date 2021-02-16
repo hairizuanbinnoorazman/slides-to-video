@@ -25,3 +25,21 @@ func (c *Client) GetProjects() ([]project.Project, error) {
 	}
 	return respProjects, nil
 }
+
+func (c *Client) GetProject() (project.Project, error) {
+	endpoint := c.mgrURL + "/api/v1/projects"
+	resp, err := c.httpClient.Get(endpoint)
+	if err != nil {
+		return project.Project{}, fmt.Errorf("Unable to retrieve projects from api endpoint")
+	}
+	rawProject, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return project.Project{}, fmt.Errorf("Unable to retrieve read data")
+	}
+	respProject := project.Project{}
+	err = json.Unmarshal(rawProject, &respProject)
+	if err != nil {
+		return project.Project{}, fmt.Errorf("Unable to marshall response")
+	}
+	return respProject, nil
+}
