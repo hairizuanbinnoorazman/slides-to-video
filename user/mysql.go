@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/jinzhu/gorm"
@@ -30,6 +31,9 @@ func (m mysql) StoreUser(ctx context.Context, u User) error {
 func (m mysql) GetUser(ctx context.Context, ID string) (User, error) {
 	u := User{}
 	result := m.db.Where("id = ?", ID).First(&u)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return User{}, nil
+	}
 	if result.Error != nil {
 		return User{}, result.Error
 	}
@@ -39,6 +43,9 @@ func (m mysql) GetUser(ctx context.Context, ID string) (User, error) {
 func (m mysql) GetUserByEmail(ctx context.Context, Email string) (User, error) {
 	u := User{}
 	result := m.db.Where("email = ?", Email).First(&u)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return User{}, nil
+	}
 	if result.Error != nil {
 		return User{}, result.Error
 	}
