@@ -1,0 +1,23 @@
+<html>
+    <head>
+        {{template "head.html"}}
+        <script>
+            $(document).ready(function(){
+                $("#concat-video").click(function(){
+                    $.post("{{ .MgrConcatVideoURL }}", {}, function(){
+                        alert("Starting to concatenate project")
+                    })
+                });
+                $(".generate").click(function(){
+                    $.post("{{ .MgrURL }}", {}, function(){
+                        alert("Starting to concatenate project")
+                    })
+                });
+            });
+        </script>
+    </head>
+    <body>
+        {{template "header.html"}}
+        <h1>Project Name: {{ .Project.ID }}</h1>
+    </body>
+</html>

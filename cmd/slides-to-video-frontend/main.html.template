@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Main</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <script src="/assets/main.js"></script>
+</head>
+
+<body>
+    <script>
+        var token = localStorage.getItem('STVID')
+        var app = Elm.Main.init({
+            flags: {'serverEndpoint': '${SERVER_ENDPOINT}', 'ingressPath': '${INGRESS_PATH}', 'token': token}
+        });
+        app.ports.storeToken.subscribe(function(token) {
+            localStorage.setItem('STVID', token);
+        });
+        app.ports.removeToken.subscribe(function() {
+            localStorage.removeItem('STVID'); 
+        });
+    </script>
+</body>
+
+</html>

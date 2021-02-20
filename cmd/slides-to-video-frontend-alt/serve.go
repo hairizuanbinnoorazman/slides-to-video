@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/slides-to-video-frontend/handlers"
+	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/slides-to-video-frontend-alt/handlers"
 	"gopkg.in/go-playground/validator.v9"
 
 	stackdriver "github.com/TV4/logrus-stackdriver-formatter"

@@ -1,8 +1,20 @@
 <html>
-    <head>{{template "head.html"}}</head>
+    <head>
+        {{template "head.html"}}
+        <script>
+            $(document).ready(function(){
+                $("#create-project").click(function(){
+                    $.post("{{ .MgrCreateProjectURL }}", {}, function(){
+                        alert("A new project is created")
+                    })
+                });
+            });
+        </script>
+    </head>
     <body>
         {{template "header.html"}}
         <h1>Projects</h1>
+        <button type="button" class="btn btn-primary" id="create-project">Create Project</button>
         <table class="table table-dark">
             <thead>
                 <tr>
@@ -17,6 +29,7 @@
                         <td>{{ .DateCreated }}</td>
                         <td>{{ .ID }}</td>
                         <td>{{ .Status }}</td>
+                        <td><a href="">Download Video</a></td>
                     </tr>
                 {{ end }}
             </tbody>

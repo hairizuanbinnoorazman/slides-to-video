@@ -1,6 +1,9 @@
-FROM ubuntu:20.04 as prod
-RUN apt update && apt install -y ca-certificates
-COPY app /usr/bin/app
-WORKDIR /usr/bin
+FROM nginx
+ADD main.html.template /usr/share/nginx/test/index.html.template
+ADD default.conf /etc/nginx/conf.d/default.conf
+ADD main.js /usr/share/nginx/html/assets/main.js
+ENV NGINX_ENVSUBST_TEMPLATE_DIR=/usr/share/nginx/test
+ENV NGINX_ENVSUBST_OUTPUT_DIR=/usr/share/nginx/html
+ENV SERVER_ENDPOINT=http://localhost:8081
+ENV INGRESS_PATH=""
 EXPOSE 8080
-CMD ["app", "server"]
