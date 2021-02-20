@@ -15,26 +15,30 @@ encrypt:
 	gcloud kms encrypt --ciphertext-file=slides-to-video-manager.json.enc --plaintext-file=slides-to-video-manager.json --location=global --keyring=test --key=test1
 	gcloud kms encrypt --ciphertext-file=config.json.enc --plaintext-file=config.json --location=global --keyring=test --key=test1
 
+
+rebuild-frontend:
+	cd ./cmd/slides-to-video-frontend && elm make src/* --output main.js
+	docker stop frontend && docker rm frontend || true
+	docker build -t frontend ./cmd/slides-to-video-frontend
+	docker run -p 8081:8080 --name=frontend -e SERVER_ENDPOINT=http://localhost:8880 frontend
+
 build-bin: 
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/slides-to-video-manager/app ./cmd/slides-to-video-manager
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/pdf-splitter/app ./cmd/pdf-splitter
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/image-to-video/app ./cmd/image-to-video
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/concatenate-video/app ./cmd/concatenate-video
-	GOOS=linux GOARCH=amd64 go build -o ./cmd/slides-to-video-frontend/app ./cmd/slides-to-video-frontend
 
 build-images: 
 	docker build -t $(image_repo)slides-to-video-manager:$(image_version) ./cmd/slides-to-video-manager
 	docker build -t $(image_repo)pdf-splitter:$(image_version) ./cmd/pdf-splitter
 	docker build -t $(image_repo)image-to-video:$(image_version) ./cmd/image-to-video
 	docker build -t $(image_repo)concatenate-video:$(image_version) ./cmd/concatenate-video
-	docker build -t $(image_repo)slides-to-video-frontend:$(image_version) ./cmd/slides-to-video-frontend
 
 push-images:
 	docker push $(image_repo)slides-to-video-manager:$(image_version)
 	docker push $(image_repo)pdf-splitter:$(image_version)
 	docker push $(image_repo)image-to-video:$(image_version)
 	docker push $(image_repo)concatenate-video:$(image_version)
-	docker push $(image_repo)slides-to-video-frontend:$(image_version)
 
 build-all: build-bin build-images
 
