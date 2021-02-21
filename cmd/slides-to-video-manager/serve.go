@@ -254,9 +254,9 @@ var (
 				})
 
 				cors := handlers.CORS(
-					handlers.AllowedHeaders([]string{"content-type"}),
+					handlers.AllowedHeaders([]string{"content-type", "Authorization"}),
 					handlers.AllowedOrigins([]string{"*"}),
-					handlers.AllowedMethods([]string{"GET", "POST"}),
+					handlers.AllowedMethods([]string{"GET", "POST", "PUT"}),
 				)
 
 				srv := http.Server{
