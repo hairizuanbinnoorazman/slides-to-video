@@ -2,6 +2,8 @@ package services
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -45,8 +47,15 @@ func NewToken(id string, exp int, secret, issuer string) (string, error) {
 // ExtractToken takes a JWT Token that is used by the application and extracts the values out
 // with the application secret. If process goes well, it would be able to
 // return the values
+// This function is only expected to be used to deal with incoming HTTP requests
+// - so we would expect the word "Bearer" as well
 func ExtractToken(tokenString, secret string) (string, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTCustomClaims{},
+	splitTokenString := strings.Split(tokenString, " ")
+	if len(splitTokenString) != 2 {
+		return "", fmt.Errorf("Invalid JWT. No type provided")
+	}
+
+	token, err := jwt.ParseWithClaims(splitTokenString[1], &JWTCustomClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			return []byte(secret), nil
 		})
