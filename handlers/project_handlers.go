@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
@@ -133,7 +134,28 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start View All Parent Jobs API Handler")
 	defer h.Logger.Info("End View All Parent Jobs API Handler")
 
-	projects, err := h.ProjectStore.GetAll(context.Background(), "user-id", 100, 0)
+	ctx := r.Context()
+
+	rawOffset := r.URL.Query().Get("offset")
+	offset := 0
+	if rawOffset != "" {
+		offset, _ = strconv.Atoi(rawOffset)
+	}
+
+	rawLimit := r.URL.Query().Get("limit")
+	limit := 10
+	if rawLimit != "" {
+		limit, _ = strconv.Atoi(rawLimit)
+	}
+
+	type getAllProjectsResp struct {
+		Projects []project.Project `json:"projects"`
+		Offset   int               `json:"offset"`
+		Total    int               `json:"total"`
+		Limit    int               `json:"limit"`
+	}
+
+	projects, err := h.ProjectStore.GetAll(ctx, "user-id", limit, offset)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
