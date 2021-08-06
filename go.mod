@@ -15,8 +15,8 @@ require (
 	github.com/imdario/mergo v0.3.10
 	github.com/jinzhu/gorm v1.9.15
 	github.com/minio/minio-go/v7 v7.0.6
-	github.com/nats-io/nats-server/v2 v2.1.9 // indirect
-	github.com/nats-io/nats.go v1.10.0
+	github.com/nats-io/nats-server/v2 v2.2.0 // indirect
+	github.com/nats-io/nats.go v1.10.1-0.20210228004050-ed743748acac
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.0.0
 	github.com/testcontainers/testcontainers-go v0.9.0
