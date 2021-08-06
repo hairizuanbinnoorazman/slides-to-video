@@ -11,4 +11,4 @@ requests = "*"
 google-cloud-datastore = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.9"
