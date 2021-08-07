@@ -2,9 +2,22 @@
 
 ## Features to be developed
 
+- Build out a simple user authentication system that can be used for integration testing purposes
+  - Password based
+  - Passwordless based (Send email links for login)
+- Integrate MailSlurper for integration testing purposes
+  - https://mailslurper.com/
 - User + ACL model integration (App-managed)
   - Require need to have the capability to limits to amount of projects that can be created per user
-- Add Frontend for Integration - Plain HTML + Golang Server
+  - Rate limiting of all APIs
+- Add Frontend for Integration
+  - Retrieve results for list of projects
+  - Create new project
+  - Process and generate video
+  - Create dashboard on per user basis
+- API Security
+  - Add CORS configuration to API Server
+  - Add capability to check presence of authorization -> have flag to disable it for integration testing purposes
 - Setup monitoring (Prometheus Endpoints)
 - Setup Distributed Tracing between components
 - Setup Profiling Endpoints (switched on via configuration)
