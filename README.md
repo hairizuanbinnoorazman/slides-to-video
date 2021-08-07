@@ -1,5 +1,24 @@
 # Slide to Video Manager
 
+## Quickstart
+
+For quickly getting started with this on local environment. Current minimum requirements is 4 core and 4.5 GB of memory
+
+```bash
+make build-bin
+make build-images
+make stack-up
+```
+
+To test that all endpoints is working:
+
+```bash
+cd ./tests
+pipenv shell
+pipenv install
+pytest test_app.py
+```
+
 ## Features to be developed
 
 - Build out a simple user authentication system that can be used for integration testing purposes
