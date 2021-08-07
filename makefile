@@ -3,7 +3,7 @@
 ####
 
 git_hash=$$(git rev-parse --short HEAD)
-image_repo?=""
+#image_repo?=""
 image_version?=latest
 
 setup:
