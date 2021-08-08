@@ -9,18 +9,18 @@ import (
 )
 
 type GoogleDatastore struct {
-	EntityName string
-	Client     *datastore.Client
+	entityName string
+	client     *datastore.Client
 }
 
 func NewGoogleDatastore(ds *datastore.Client, en string) *GoogleDatastore {
-	datastore := GoogleDatastore{Client: ds, EntityName: en}
+	datastore := GoogleDatastore{client: ds, entityName: en}
 	return &datastore
 }
 
 func (g *GoogleDatastore) StoreUser(ctx context.Context, u User) error {
-	newKey := datastore.NameKey(g.EntityName, u.ID, nil)
-	_, err := g.Client.Put(ctx, newKey, &u)
+	newKey := datastore.NameKey(g.entityName, u.ID, nil)
+	_, err := g.client.Put(ctx, newKey, &u)
 	if err != nil {
 		return fmt.Errorf("unable to send record to datastore: err: %v", err)
 	}
@@ -28,9 +28,9 @@ func (g *GoogleDatastore) StoreUser(ctx context.Context, u User) error {
 }
 
 func (g *GoogleDatastore) GetUser(ctx context.Context, ID string) (User, error) {
-	key := datastore.NameKey(g.EntityName, ID, nil)
+	key := datastore.NameKey(g.entityName, ID, nil)
 	user := User{}
-	if err := g.Client.Get(ctx, key, &user); err != nil {
+	if err := g.client.Get(ctx, key, &user); err != nil {
 		return User{}, fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
 	}
 	return user, nil
@@ -38,8 +38,8 @@ func (g *GoogleDatastore) GetUser(ctx context.Context, ID string) (User, error) 
 
 func (g *GoogleDatastore) GetUserByEmail(ctx context.Context, Email string) (User, error) {
 	var users []User
-	q := datastore.NewQuery(g.EntityName).Filter("Email =", Email).Limit(1)
-	if _, err := g.Client.GetAll(ctx, q, &users); err != nil {
+	q := datastore.NewQuery(g.entityName).Filter("Email =", Email).Limit(1)
+	if _, err := g.client.GetAll(ctx, q, &users); err != nil {
 		return User{}, fmt.Errorf("unable to retrieve list of users. err: %v", err)
 	}
 	if len(users) == 0 {
@@ -49,10 +49,10 @@ func (g *GoogleDatastore) GetUserByEmail(ctx context.Context, Email string) (Use
 }
 
 func (g *GoogleDatastore) Update(ctx context.Context, userID string, setters ...func(*User) error) (User, error) {
-	key := datastore.NameKey(g.EntityName, userID, nil)
+	key := datastore.NameKey(g.entityName, userID, nil)
 	user := User{}
-	_, err := g.Client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
-		if err := g.Client.Get(ctx, key, &user); err != nil {
+	_, err := g.client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
+		if err := g.client.Get(ctx, key, &user); err != nil {
 			return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
 		}
 		for _, setFunc := range setters {
@@ -62,7 +62,7 @@ func (g *GoogleDatastore) Update(ctx context.Context, userID string, setters ...
 			}
 		}
 		user.DateModified = time.Now()
-		_, err := g.Client.Put(ctx, key, &user)
+		_, err := g.client.Put(ctx, key, &user)
 		if err != nil {
 			return fmt.Errorf("unable to send record to datastore: err: %v", err)
 		}
