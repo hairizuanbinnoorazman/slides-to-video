@@ -23,14 +23,14 @@ type Auth struct {
 	Issuer     string `json:"issuer"`
 }
 
-type Login struct {
+type GoogleLogin struct {
 	Logger      logger.Logger
 	ClientID    string
 	RedirectURI string
 	Scope       string
 }
 
-func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h GoogleLogin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start Login Handler")
 	defer h.Logger.Info("End Login Handler")
 
@@ -205,4 +205,104 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(rawRespTokenResp)
+}
+
+// Login - Handles situation of user signing in if user exists - else, throw back error
+// Require search of user by email address
+type Login struct {
+	Logger      logger.Logger
+	UserStore   user.Store
+	Auth        Auth
+	RedirectURI string
+}
+
+func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start Login Handler")
+	defer h.Logger.Info("End Login Handler")
+
+	rawReq, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(400)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type loginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	req := loginReq{}
+	err = json.Unmarshal(rawReq, &req)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to parse login body. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(400)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	u, err := h.UserStore.GetUserByEmail(context.TODO(), req.Email)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to find user. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(404)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	passwordCorrect := u.IsPasswordCorrect(req.Password)
+	if passwordCorrect == false {
+		errMsg := fmt.Sprintf("Error - unable to find user. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	token, err := services.NewToken(u.ID, h.Auth.ExpiryTime, h.Auth.Secret, h.Auth.Issuer)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to create token. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type tokenResponse struct {
+		Token string `json:"token"`
+	}
+
+	rawRespTokenResp, _ := json.Marshal(tokenResponse{Token: token})
+
+	if h.RedirectURI != "" {
+		http.Redirect(w, r, h.RedirectURI+fmt.Sprintf("?token=%v", token), http.StatusTemporaryRedirect)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(rawRespTokenResp)
+}
+
+// ActivateUser - Handles the sign up url
+// Activation link will have 2 query params - user id as well as the user activation token
+type ActivateUser struct {
+	Logger logger.Logger
+}
+
+func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start ActivateUser Handler")
+	defer h.Logger.Info("End ActivateUser Handler")
+}
+
+// ForgetPassword - Handles situation where user forget password and needs to reset it
+// Forget link will have 2 query params - user id as well as the forget password token
+type ForgetPassword struct {
+	Logger logger.Logger
+}
+
+func (h ForgetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start ForgetPassword Handler")
+	defer h.Logger.Info("End ForgetPassword Handler")
 }

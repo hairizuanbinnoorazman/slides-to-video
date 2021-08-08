@@ -232,7 +232,7 @@ var (
 					Logger:        logger,
 					StorageClient: slideToVideoStorage,
 				}).Methods("GET")
-				s.Handle("/login", h.Login{
+				s.Handle("/login", h.GoogleLogin{
 					Logger:      logger,
 					ClientID:    cfg.Server.ClientID,
 					RedirectURI: cfg.Server.RedirectURI,
