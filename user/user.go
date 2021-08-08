@@ -3,6 +3,7 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -91,64 +92,72 @@ func (u *User) setPassword(password string) error {
 }
 
 func (u *User) IsPasswordCorrect(password string) bool {
-	parsedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	if err != nil {
 		return false
 	}
-	if u.Password == string(parsedPassword) {
-		return true
-	}
-	return false
+	return true
 }
 
 // ForgetPassword resets the forget password token to a random UUID as well as resets the
 // forget password expiry token. The function will return the forgetPasswordToken
-func (u *User) ForgetPassword() (string, error) {
-	u.ForgetPasswordToken = uuid.New().String()
-	u.ForgetPasswordExpiryDate = time.Now()
-	return u.ForgetPasswordToken, nil
+func (u *User) ForgetPassword() ([]func(*User) error, error) {
+	return []func(*User) error{setForgetPasswordToken()}, nil
 }
 
 // ChangePasswordFromForget requires you to provide the forget password token. This function
 // will then check the forgetPasswordToken if its correct and alters it accordingly
-func (u *User) ChangePasswordFromForget(forgetPasswordToken, password string) error {
+func (u *User) ChangePasswordFromForget(forgetPasswordToken, password string) ([]func(*User) error, error) {
+	errCompare := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	if errCompare == nil {
+		return []func(*User) error{}, ErrSamePassword
+	}
+	if time.Now().After(u.ForgetPasswordExpiryDate) {
+		return []func(*User) error{}, fmt.Errorf("Forget Password Expiry Token Expired")
+	}
 	if u.ForgetPasswordToken == forgetPasswordToken {
 		err := u.setPassword(password)
 		if err != nil {
-			return err
+			return []func(*User) error{}, err
 		}
-		return nil
+		return []func(*User) error{setNewPassword(password)}, nil
 	}
-	return ErrForgetPasswordTokenInvalid
+	return []func(*User) error{}, ErrForgetPasswordTokenInvalid
 }
 
 // ChangePassword changes the password on the user object before saving it
-func (u *User) ChangePassword(password string) error {
+func (u *User) ChangePassword(password string) ([]func(*User) error, error) {
 	errCompare := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	if errCompare == nil {
-		return ErrSamePassword
+		return []func(*User) error{}, ErrSamePassword
 	}
 	err := u.setPassword(password)
 	if err != nil {
-		return err
+		return []func(*User) error{}, err
 	}
-	return nil
+	return []func(*User) error{setNewPassword(password)}, nil
 }
 
 // ReactivateToken resets the activation token in the case the user did not activate the account
 // in time. Returns an activationToken
-func (u *User) ReactivateToken() (string, error) {
-	newToken := uuid.New().String()
-	u.ActivationToken = newToken
-	return newToken, nil
+func (u *User) ReactivateToken() ([]func(*User) error, error) {
+	if u.Activated {
+		return []func(*User) error{}, fmt.Errorf("User account already activated")
+	}
+	return []func(*User) error{setActivationToken()}, nil
 }
 
 // Activate user. You would need to provide a activation token to check if it correct.
 // If correct, it would return the status of the user which should be true or false
-func (u *User) Activate(activationToken string) (bool, error) {
-	if u.ActivationToken == activationToken {
-		u.Activated = true
-		return true, nil
+func (u *User) Activate(activationToken string) ([]func(*User) error, error) {
+	if u.Activated {
+		return []func(*User) error{}, fmt.Errorf("User is already activated")
 	}
-	return false, ErrActivationTokenInvalid
+	if time.Now().After(u.ActivationExpiryDate) {
+		return []func(*User) error{}, fmt.Errorf("Activation link already expired. Please login and request for new activation link")
+	}
+	if u.ActivationToken == activationToken {
+		return []func(*User) error{setActivate()}, nil
+	}
+	return []func(*User) error{}, ErrActivationTokenInvalid
 }
