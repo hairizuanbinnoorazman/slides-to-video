@@ -18,7 +18,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode exposing (Decoder, decodeString, float, int, list, null, string)
-import Json.Decode.Pipeline exposing (hardcoded, optional, optionalAt, required, requiredAt)
+import Json.Decode.Pipeline as Pipeline
 import Ports
 import String
 import Time
@@ -349,11 +349,11 @@ type alias SingleProject =
 singleProjectDecoder : Decoder SingleProject
 singleProjectDecoder =
     Decode.succeed SingleProject
-        |> required "id" string
-        |> required "date_created" string
-        |> required "date_modified" string
-        |> required "status" string
-        |> optional "video_output_id" string ""
+        |> Pipeline.required "id" string
+        |> Pipeline.required "date_created" string
+        |> Pipeline.required "date_modified" string
+        |> Pipeline.required "status" string
+        |> Pipeline.optional "video_output_id" string ""
 
 
 indexPage : String -> String -> Html msg
