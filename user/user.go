@@ -2,7 +2,6 @@
 package user
 
 import (
-	"context"
 	"errors"
 	"regexp"
 	"time"
@@ -58,12 +57,6 @@ func NewUser(firstName, lastName, email, password string) (*User, error) {
 	return &user, nil
 }
 
-type Store interface {
-	StoreUser(ctx context.Context, u User) error
-	GetUser(ctx context.Context, ID string) (User, error)
-	GetUserByEmail(ctx context.Context, Email string) (User, error)
-}
-
 func (u User) validateEmail() error {
 	reEmail := regexp.MustCompile(`\w+@\w{2,3}.\w{2,3}`)
 	isValid := reEmail.MatchString(u.Email)
@@ -95,6 +88,17 @@ func (u *User) setPassword(password string) error {
 		return nil
 	}
 	return ErrPasswordInvalid
+}
+
+func (u *User) IsPasswordCorrect(password string) bool {
+	parsedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	if err != nil {
+		return false
+	}
+	if u.Password == string(parsedPassword) {
+		return true
+	}
+	return false
 }
 
 // ForgetPassword resets the forget password token to a random UUID as well as resets the
