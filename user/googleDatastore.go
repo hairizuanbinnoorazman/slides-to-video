@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/datastore"
 )
@@ -45,4 +46,31 @@ func (g *GoogleDatastore) GetUserByEmail(ctx context.Context, Email string) (Use
 		return User{}, nil
 	}
 	return users[0], nil
+}
+
+func (g *GoogleDatastore) Update(ctx context.Context, userID string, setters ...func(*User) error) (User, error) {
+	key := datastore.NameKey(g.EntityName, userID, nil)
+	user := User{}
+	_, err := g.Client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
+		if err := g.Client.Get(ctx, key, &user); err != nil {
+			return fmt.Errorf("unable to retrieve value from datastore. err: %v", err)
+		}
+		for _, setFunc := range setters {
+			err := setFunc(&user)
+			if err != nil {
+				return err
+			}
+		}
+		user.DateModified = time.Now()
+		_, err := g.Client.Put(ctx, key, &user)
+		if err != nil {
+			return fmt.Errorf("unable to send record to datastore: err: %v", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return User{}, fmt.Errorf("unable to send record to datastore: err: %v", err)
+	}
+	user.ID = userID
+	return user, nil
 }
