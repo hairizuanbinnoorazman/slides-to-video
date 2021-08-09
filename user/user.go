@@ -43,7 +43,8 @@ type User struct {
 	DateModified time.Time
 }
 
-func NewUser(firstName, lastName, email, password string) (*User, error) {
+// NewUser is the default way to create new user if you're signing in via email + password authentication
+func NewUser(email, password string) (*User, error) {
 	user := User{Email: email}
 	err := user.setPassword(password)
 	user.ID = uuid.New().String()
