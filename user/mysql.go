@@ -20,7 +20,7 @@ func NewMySQL(logger logger.Logger, dbClient *gorm.DB) mysql {
 	}
 }
 
-func (m mysql) StoreUser(ctx context.Context, u User) error {
+func (m mysql) Create(ctx context.Context, u User) error {
 	result := m.db.Create(&u)
 	if result.Error != nil {
 		return result.Error

@@ -180,7 +180,7 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			DateCreated:  currentTime,
 			DateModified: currentTime,
 		}
-		h.UserStore.StoreUser(context.Background(), newUser)
+		h.UserStore.Create(context.Background(), newUser)
 	}
 
 	token, err := services.NewToken(retrievedUser.ID, h.Auth.ExpiryTime, h.Auth.Secret, h.Auth.Issuer)
@@ -388,7 +388,7 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.UserStore.StoreUser(context.TODO(), *newUser)
+	err = h.UserStore.Create(context.TODO(), *newUser)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to store newly created user. Error: %+v", err)
 		h.Logger.Error(errMsg)

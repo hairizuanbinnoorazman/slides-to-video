@@ -18,7 +18,7 @@ func NewGoogleDatastore(ds *datastore.Client, en string) *GoogleDatastore {
 	return &datastore
 }
 
-func (g *GoogleDatastore) StoreUser(ctx context.Context, u User) error {
+func (g *GoogleDatastore) Create(ctx context.Context, u User) error {
 	newKey := datastore.NameKey(g.entityName, u.ID, nil)
 	_, err := g.client.Put(ctx, newKey, &u)
 	if err != nil {
