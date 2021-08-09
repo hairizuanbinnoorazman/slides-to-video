@@ -294,6 +294,27 @@ type ActivateUser struct {
 func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start ActivateUser Handler")
 	defer h.Logger.Info("End ActivateUser Handler")
+
+	userID, ok := r.URL.Query()["id"]
+	if !ok {
+		errMsg := fmt.Sprintf("Error - Invalid activation link")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(400)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	token, ok := r.URL.Query()["token"]
+	if !ok {
+		errMsg := fmt.Sprintf("Error - Invalid activation link")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(400)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	h.Logger.Info(token)
+	h.Logger.Info(userID)
 }
 
 // ForgetPassword - Handles situation where user forget password and needs to reset it
