@@ -345,6 +345,63 @@ func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Activated"))
 }
 
+// CreateUser - Handles situation of new sign up to the service
+type CreateUser struct {
+	Logger    logger.Logger
+	UserStore user.Store
+}
+
+func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start CreateUser Handler")
+	defer h.Logger.Info("End CreateUser Handler")
+
+	rawReq, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %+v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type createUserRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	createUserReq := createUserRequest{}
+	err = json.Unmarshal(rawReq, &createUserReq)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to parse json body. Error: %+v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	newUser, err := user.NewUser(createUserReq.Email, createUserReq.Password)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to create new user. Error: %+v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	err = h.UserStore.StoreUser(context.TODO(), *newUser)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to store newly created user. Error: %+v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("User Created"))
+	return
+}
+
 // ForgetPassword - Handles situation where user forget password and needs to reset it
 // Forget link will have 2 query params - user id as well as the forget password token
 type ForgetPassword struct {
