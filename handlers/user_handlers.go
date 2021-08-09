@@ -288,7 +288,8 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // ActivateUser - Handles the sign up url
 // Activation link will have 2 query params - user id as well as the user activation token
 type ActivateUser struct {
-	Logger logger.Logger
+	Logger    logger.Logger
+	UserStore user.Store
 }
 
 func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -313,8 +314,35 @@ func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.Logger.Info(token)
-	h.Logger.Info(userID)
+	u, err := h.UserStore.GetUser(context.TODO(), userID[0])
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to find user")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(404)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	updateSetters, err := u.Activate(token[0])
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to update user's activation")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	_, err = h.UserStore.Update(context.TODO(), userID[0], updateSetters...)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to update user's activation")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write([]byte("Activated"))
 }
 
 // ForgetPassword - Handles situation where user forget password and needs to reset it
