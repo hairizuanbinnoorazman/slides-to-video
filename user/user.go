@@ -44,7 +44,7 @@ type User struct {
 }
 
 // NewUser is the default way to create new user if you're signing in via email + password authentication
-func NewUser(email, password string) (*User, error) {
+func New(email, password string) (User, error) {
 	user := User{Email: email}
 	err := user.setPassword(password)
 	user.ID = uuid.New().String()
@@ -54,9 +54,9 @@ func NewUser(email, password string) (*User, error) {
 	user.ForgetPasswordExpiryDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
 	user.ActivationExpiryDate = time.Now().Add(1 * time.Hour)
 	if err != nil {
-		return nil, err
+		return User{}, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (u User) validateEmail() error {

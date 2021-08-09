@@ -379,7 +379,7 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newUser, err := user.NewUser(createUserReq.Email, createUserReq.Password)
+	newUser, err := user.New(createUserReq.Email, createUserReq.Password)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to create new user. Error: %+v", err)
 		h.Logger.Error(errMsg)
@@ -388,7 +388,7 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.UserStore.Create(context.TODO(), *newUser)
+	err = h.UserStore.Create(context.TODO(), newUser)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to store newly created user. Error: %+v", err)
 		h.Logger.Error(errMsg)
