@@ -51,3 +51,23 @@ func (m mysql) GetUserByEmail(ctx context.Context, Email string) (User, error) {
 	}
 	return u, nil
 }
+
+func (m mysql) Update(ctx context.Context, ID string, setters ...func(*User) error) (User, error) {
+	var u User
+	result := m.db.Where("id = ?", ID).First(&u)
+	if result.Error != nil {
+		return User{}, result.Error
+	}
+	for _, s := range setters {
+		err := s(&u)
+		if err != nil {
+			return User{}, err
+		}
+	}
+	result = m.db.Save(&u)
+	if result.Error != nil {
+		return User{}, result.Error
+	}
+
+	return u, nil
+}
