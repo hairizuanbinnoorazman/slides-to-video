@@ -11,9 +11,6 @@ slidesToVideoManager:
     annotations: {}
     type: ClusterIP
     port: 80
-  ingress:
-    enabled: false
-    annotations: {}
   nodeSelector: {}
   tolerations: []
   affinity: {}
