@@ -5,6 +5,11 @@ appVersion: 0.0.1
 description: Slides to Video a system to allow a user to convert presentation slides to video automatically
 engine: gotpl
 dependencies:
-  - name: mysql
-    version: 1.6.6
-    repository: "@stable"
+  - condition: mysql.enabled
+    name: mysql
+    version: 8.X.X
+    repository: https://charts.bitnami.com/bitnami
+  - condition: nats.enabled
+    name: nats
+    version: 0.X.X
+    repository: https://nats-io.github.io/k8s/helm/charts/
