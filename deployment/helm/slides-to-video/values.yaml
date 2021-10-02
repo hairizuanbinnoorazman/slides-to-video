@@ -18,7 +18,6 @@ serviceAccount:
   automountServiceAccountToken: true
 
 slidesToVideoManager:
-  name: slides-to-video-manager
   image: 
     registry: docker.io
     repository: slides-to-video-manager
@@ -32,11 +31,90 @@ slidesToVideoManager:
   service:
     annotations: {}
     type: ClusterIP
-    port: 80
+    port: 8080
   nodeSelector: {}
   tolerations: []
   affinity: {}
   podAnnotations: {}
   podLabels: {}
-  extraSecretMounts: []
   config: {}
+  extraSecretMounts: []
+  extraConfigmapMounts: []
+  
+pdfSplitter:
+  image: 
+    registry: docker.io
+    repository: pdf-splitter
+    tag: null
+    pullPolicy: IfNotPresent
+  podSecurityContext: {}
+  securityContext: {}
+  annotations: {}
+  imagePullSecrets: []
+  resources: {}
+  service:
+    annotations: {}
+    type: ClusterIP
+    port: 8080
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+  config: {}
+  extraSecretMounts: []
+  extraConfigmapMounts: []
+
+imageToVideo:
+  image: 
+    registry: docker.io
+    repository: image-to-video
+    tag: null
+    pullPolicy: IfNotPresent
+  podSecurityContext: {}
+  securityContext: {}
+  annotations: {}
+  imagePullSecrets: []
+  resources: {}
+  service:
+    annotations: {}
+    type: ClusterIP
+    port: 8080
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+  config: {}
+  extraSecretMounts: []
+  extraConfigmapMounts: []
+
+concatenateVideo:
+  image: 
+    registry: docker.io
+    repository: concatenate-video
+    tag: null
+    pullPolicy: IfNotPresent
+  podSecurityContext: {}
+  securityContext: {}
+  annotations: {}
+  imagePullSecrets: []
+  resources: {}
+  service:
+    annotations: {}
+    type: ClusterIP
+    port: 8080
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+  config: {}
+  extraSecretMounts: []
+  extraConfigmapMounts: []
+
+mysql:
+  enabled: true
+
+nats:
+  enabled: true
