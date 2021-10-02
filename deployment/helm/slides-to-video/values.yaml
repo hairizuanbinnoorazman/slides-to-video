@@ -28,7 +28,6 @@ slidesToVideoManager:
   securityContext: {}
   annotations: {}
   imagePullSecrets: []
-  pullPolicy: IfNotPresent
   resources: {}
   service:
     annotations: {}
