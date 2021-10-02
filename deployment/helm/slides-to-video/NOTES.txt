@@ -1,0 +1,17 @@
+***********************************************************************
+ Welcome to Slides to Video Tool
+ Chart version: {{ .Chart.Version }}
+ App version: {{ .Chart.AppVersion }}
+***********************************************************************
+
+Installed components:
+* slides-to-video-manager
+* pdf-splitter
+* image-to-video
+* concatenate-video
+{{- if .Values.mysql.enabled }}
+* mysql
+{{- end }}
+{{- if .Values.nats.enabled }}
+* nats
+{{- end }}
