@@ -1,9 +1,32 @@
+global:
+  image:
+    registry: null
+
+imagePullSecrets: []
+
+serviceAccount:
+  # -- Specifies whether a ServiceAccount should be created
+  create: true
+  # -- The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: null
+  # -- Image pull secrets for the service account
+  imagePullSecrets: []
+  # -- Annotations for the service account
+  annotations: {}
+  # -- Set this toggle to false to opt out of automounting API credentials for the service account
+  automountServiceAccountToken: true
+
 slidesToVideoManager:
+  name: slides-to-video-manager
+  image: 
+    registry: docker.io
+    repository: slides-to-video-manager
+    tag: null
+    pullPolicy: IfNotPresent
   podSecurityContext: {}
   securityContext: {}
   annotations: {}
-  name: slides-to-video-manager
-  image: slides-to-video-manager
   imagePullSecrets: []
   pullPolicy: IfNotPresent
   resources: {}
@@ -17,3 +40,4 @@ slidesToVideoManager:
   podAnnotations: {}
   podLabels: {}
   extraSecretMounts: []
+  config: {}
