@@ -36,7 +36,7 @@ spec:
       containers:
       - name: slides-to-video-manager
         image: {{ .Values.slidesToVideoManager.image }}
-        imagePullPolicy: {{ .Values.slidesToVideoManager.pullPolicy }}
+        imagePullPolicy: {{ .Values.slidesToVideoManager.image.pullPolicy }}
         args:
           {{- if .Values.slidesToVideoManager.config}}
           ["app", "server", "-c", "/etc/conf/config.yaml"]
