@@ -77,10 +77,6 @@ pdfSplitter:
   annotations: {}
   imagePullSecrets: []
   resources: {}
-  service:
-    annotations: {}
-    type: ClusterIP
-    port: 8080
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -101,10 +97,6 @@ imageToVideo:
   annotations: {}
   imagePullSecrets: []
   resources: {}
-  service:
-    annotations: {}
-    type: ClusterIP
-    port: 8080
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -125,10 +117,6 @@ concatenateVideo:
   annotations: {}
   imagePullSecrets: []
   resources: {}
-  service:
-    annotations: {}
-    type: ClusterIP
-    port: 8080
   nodeSelector: {}
   tolerations: []
   affinity: {}
