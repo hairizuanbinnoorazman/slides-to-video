@@ -1,0 +1,14 @@
+{{- if .Values.imageToVideo.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "slidesToVideo.imageToVideoFullname" . }}
+  labels:
+    {{- include "slidesToVideo.imageToVideoLabels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "-5"
+data:
+  config.yaml: |-
+{{ .Values.imageToVideo.config | indent 4 }}
+{{- end }}

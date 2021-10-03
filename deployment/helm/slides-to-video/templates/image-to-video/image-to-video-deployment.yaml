@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "slidesToVideo.imageToVideoFullname" . }}
+  labels:
+    {{- include "slidesToVideo.imageToVideoLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.imageToVideo.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "slidesToVideo.imageToVideoSelectorLabels" . | nindent 4 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+{{- if .Values.imageToVideo.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.imageToVideo.podAnnotations | nindent 8 }}
+{{- end }}
+      labels:
+        {{- include "slidesToVideo.imageToVideoSelectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.imageToVideo.podSecurityContext | nindent 8 }}
+      {{- with .Values.imageToVideo.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: slides-to-video-imageToVideo
+        image: {{ include "slidesToVideo.imageToVideoImage" . }}
+        imagePullPolicy: {{ .Values.imageToVideo.image.pullPolicy }}
+        args:
+          {{- if .Values.imageToVideo.config}}
+          ["app", "server", "-c", "/etc/conf/config.yaml"]
+          {{- else }}
+          ["app", "server"]
+          {{- end }}
+        ports:
+        - name: api
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.imageToVideo.resources | nindent 10 }}
+        volumeMounts:
+        {{- range .Values.imageToVideo.extraSecretMounts }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath }}
+            subPath: {{ .subPath }}
+            readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- range .Values.imageToVideo.extraConfigmapMounts }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath }}
+            subPath: {{ .subPath }}
+            readOnly: {{ .readOnly }}
+        {{- end }}
+        {{- if .Values.imageToVideo.config}}
+          - name: slides-to-video-configuration
+            mountPath: /etc/conf/
+        {{- end }}
+        {{- if .Values.imageToVideo.svcAcctFile}}
+          - name: slides-to-video-secret
+            mountPath: /etc/svcacct/
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: api
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: api
+      restartPolicy: Always
+      volumes:
+      {{- range .Values.imageToVideo.extraConfigmapMounts }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .configMap }}
+      {{- end }}
+      {{- range .Values.imageToVideo.extraSecretMounts }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ .secretName }}
+      {{- end }}
+      {{- if .Values.imageToVideo.config}}
+        - name: slides-to-video-configuration
+          configMap:
+            name: slides-to-video-configuration
+      {{- end }}
+      {{- if .Values.imageToVideo.svcAcctFile }}
+        - name: slides-to-video-secret
+          secret:
+            secretName: slides-to-video-imageToVideo
+      {{- end }}
+      {{- with .Values.imageToVideo.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.imageToVideo.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.imageToVideo.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
