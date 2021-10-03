@@ -61,3 +61,13 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Docker image name for Slides To Video
+*/}}
+{{- define "slidesToVideo.image" -}}
+{{- $registry := coalesce .global.registry .service.registry -}}
+{{- $repository := coalesce .service.repository -}}
+{{- $tag := coalesce .service.tag .defaultVersion | toString -}}
+{{- printf "%s/%s:%s" $registry $repository $tag -}}
+{{- end -}}
