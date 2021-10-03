@@ -1,12 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: slides-to-video-manager
+  name: {{ include "slidesToVideo.managerFullname" . }}
   labels:
-    app.kubernetes.io/component: manager
-    {{- with .Values.manager.serviceLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- include "slidesToVideo.managerLabels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
@@ -15,4 +12,4 @@ spec:
       targetPort: http
       protocol: TCP
   selector:
-    app.kubernetes.io/component: manager
+    {{- include "slidesToVideo.managerSelectorLabels" . | nindent 4 }}

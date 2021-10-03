@@ -2,9 +2,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: slides-to-video-migration
+  name: {{ include "slidesToVideo.managerFullname" . }}-migration
   labels:
-    app.kubernetes.io/component: manager
+    {{- include "slidesToVideo.managerLabels" . | nindent 4 }}
 {{- if .Values.manager.annotations }}
   annotations:
     {{- toYaml .Values.manager.annotations | nindent 4 }}

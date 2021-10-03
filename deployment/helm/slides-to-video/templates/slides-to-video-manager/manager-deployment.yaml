@@ -8,7 +8,7 @@ spec:
   replicas: {{ .Values.manager.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/component: manager
+      {{- include "slidesToVideo.managerSelectorLabels" . | nindent 4 }}
   strategy:
     type: Recreate
   template:

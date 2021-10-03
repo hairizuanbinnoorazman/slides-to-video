@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: slides-to-video-configuration
+  name: {{ include "slidesToVideo.managerFullname" . }}
   labels:
-    app.kubernetes.io/component: manager
+    {{- include "slidesToVideo.managerLabels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": "pre-install"
     "helm.sh/hook-weight": "-5"
