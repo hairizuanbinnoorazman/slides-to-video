@@ -65,6 +65,42 @@ manager:
   config: {}
   extraSecretMounts: []
   extraConfigmapMounts: []
+  config: |
+    server:
+      host: "0.0.0.0"
+      port: 8080
+      trace: false
+      svcAccFile: ""
+      clientID: ""
+      clientSecret: ""
+      scope: ""
+      redirectURI: ""
+      authSecret: ""
+      issuer: ""
+      expiryTime: 3600
+    datastore:
+      type: "mysql"
+      mysql:
+        user: "user"
+        password: "password"
+        host: "mysql.default.svc"
+        port: 3306
+        dbName: "some-database"
+    queue:
+      type: "nats"
+      nats:
+        endpoint: "nats://nats.default.svc:4222"
+        pdfToImageTopic: "pdf-splitter"
+        imageToVideoTopic: "image-to-video"
+        videoConcatTopic: "concatenate-video"
+    blobStorage:
+      type: "minio"
+      minio:
+        bucket: "videos"
+        pdfFolder: "pdf"
+        endpoint: "minio1-hl.default.svc.cluster.local:9000"
+        accessKeyId: "minio"
+        secretAccessKey: "minio123"
   
 pdfSplitter:
   image: 
@@ -85,6 +121,30 @@ pdfSplitter:
   config: {}
   extraSecretMounts: []
   extraConfigmapMounts: []
+  config: |
+    server:
+      host: 0.0.0.0
+      port: 8081
+      trace: false
+      svcAccFile: ""
+      mode: queue
+      processRoute: /
+      managerHost: slides-to-video-manager.default.svc
+      managerPort: 8080
+    queue:
+      type: "nats"
+      nats:
+        endpoint: "nats://nats.default.svc:4222"
+      pdfToImageTopic: "pdf-splitter"
+    blobStorage:
+      type: minio
+      minio:
+        bucket: videos
+        endpoint: "minio1-hl.default.svc.cluster.local:9000"
+        accessKeyId: minio
+        secretAccessKey: minio123
+      pdfFolder: pdf
+      imagesFolder: images
 
 imageToVideo:
   image: 
@@ -105,6 +165,30 @@ imageToVideo:
   config: {}
   extraSecretMounts: []
   extraConfigmapMounts: []
+  config: |
+    server:
+      host: 0.0.0.0
+      port: 8080
+      trace: false
+      svcAccFile: ""
+      mode: queue
+      processRoute: /
+      managerHost: slides-to-video-manager.default.svc
+      managerPort: 8080
+    queue:
+      type: "nats"
+      nats:
+        endpoint: "nats://nats.default.svc:4222"
+      imageToVideoTopic: "image-to-video"
+    blobStorage:
+      type: minio
+      minio:
+        bucket: videos
+        endpoint: "minio1-hl.default.svc.cluster.local:9000"
+        accessKeyId: minio
+        secretAccessKey: minio123
+      imagesFolder: images
+      videoSnippetsFolder: video-snippets
 
 concatenateVideo:
   image: 
@@ -125,9 +209,37 @@ concatenateVideo:
   config: {}
   extraSecretMounts: []
   extraConfigmapMounts: []
+  config: |
+    server:
+      host: 0.0.0.0
+      port: 8080
+      trace: false
+      svcAccFile: ""
+      mode: queue
+      processRoute: /
+      managerHost: slides-to-video-manager.default.svc
+      managerPort: 8080
+    queue:
+      type: "nats"
+      nats:
+        endpoint: "nats://nats.default.svc:4222"
+      concatenateVideoTopic: "concatenate-video"
+    blobStorage:
+      type: minio
+      minio:
+        bucket: videos
+        endpoint: minio1-hl.default.svc.cluster.local:9000
+        accessKeyId: minio
+        secretAccessKey: minio123
+      videoSnippetsFolder: video-snippets
+      videoFolder: videos
 
 mysql:
   enabled: true
+  auth:
+    database: some-database
+    username: user
+    password: password
 
 nats:
   enabled: true
