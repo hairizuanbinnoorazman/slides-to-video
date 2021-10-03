@@ -1,76 +1,76 @@
-{{- if .Values.slidesToVideoManager.type }}
+{{- if .Values.manager.type }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: slides-to-video-migration
   labels:
     app.kubernetes.io/component: manager
-{{- if .Values.slidesToVideoManager.annotations }}
+{{- if .Values.manager.annotations }}
   annotations:
-    {{- toYaml .Values.slidesToVideoManager.annotations | nindent 4 }}
+    {{- toYaml .Values.manager.annotations | nindent 4 }}
 {{- end }}
 spec:
   template:
     spec:
       securityContext:
-        {{- toYaml .Values.slidesToVideoManager.podSecurityContext | nindent 8 }}
+        {{- toYaml .Values.manager.podSecurityContext | nindent 8 }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       containers:
       - name: slides-to-video-manager
-        image: {{ .Values.slidesToVideoManager.image }}
-        imagePullPolicy: {{ .Values.slidesToVideoManager.pullPolicy }}
+        image: {{ .Values.manager.image }}
+        imagePullPolicy: {{ .Values.manager.pullPolicy }}
         args:
-          {{- if .Values.slidesToVideoManager.config}}
+          {{- if .Values.manager.config}}
           ["app", "migrate", "-c", "/etc/conf/config.yaml"]
           {{- else }}
           ["app", "migrate"]
           {{- end }}
         resources:
-          {{- toYaml .Values.slidesToVideoManager.resources | nindent 10 }}
+          {{- toYaml .Values.manager.resources | nindent 10 }}
         volumeMounts:
-        {{- range .Values.slidesToVideoManager.extraSecretMounts }}
+        {{- range .Values.manager.extraSecretMounts }}
           - name: {{ .name }}
             mountPath: {{ .mountPath }}
             subPath: {{ .subPath }}
             readOnly: {{ .readOnly }}
         {{- end }}
-        {{- range .Values.slidesToVideoManager.extraConfigmapMounts }}
+        {{- range .Values.manager.extraConfigmapMounts }}
           - name: {{ .name }}
             mountPath: {{ .mountPath }}
             subPath: {{ .subPath }}
             readOnly: {{ .readOnly }}
         {{- end }}
-        {{- if .Values.slidesToVideoManager.config}}
+        {{- if .Values.manager.config}}
           - name: slides-to-video-configuration
             mountPath: /etc/conf/
         {{- end }}
         volumes:
-        {{- range .Values.slidesToVideoManager.extraConfigmapMounts }}
+        {{- range .Values.manager.extraConfigmapMounts }}
           - name: {{ .name }}
             configMap:
               name: {{ .configMap }}
         {{- end }}
-        {{- range .Values.slidesToVideoManager.extraSecretMounts }}
+        {{- range .Values.manager.extraSecretMounts }}
           - name: {{ .name }}
             secret:
               secretName: {{ .secretName }}
         {{- end }}
-        {{- if .Values.slidesToVideoManager.config}}
+        {{- if .Values.manager.config}}
           - name: slides-to-video-configuration
             configMap:
               name: slides-to-video-configuration
         {{- end }}
       restartPolicy: Never
-      {{- with .Values.slidesToVideoManager.nodeSelector }}
+      {{- with .Values.manager.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.slidesToVideoManager.affinity }}
+      {{- with .Values.manager.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.slidesToVideoManager.tolerations }}
+      {{- with .Values.manager.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

@@ -4,7 +4,7 @@ metadata:
   name: slides-to-video-manager
   labels:
     app.kubernetes.io/component: manager
-    {{- with .Values.slidesToVideoManager.serviceLabels }}
+    {{- with .Values.manager.serviceLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
