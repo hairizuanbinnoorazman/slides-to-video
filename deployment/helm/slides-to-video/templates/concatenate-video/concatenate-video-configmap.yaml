@@ -1,0 +1,11 @@
+{{- if .Values.concatenateVideo.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "slidesToVideo.concatenateVideoFullname" . }}
+  labels:
+    {{- include "slidesToVideo.concatenateVideoLabels" . | nindent 4 }}
+data:
+  config.yaml: |-
+{{ .Values.concatenateVideo.config | indent 4 }}
+{{- end }}
