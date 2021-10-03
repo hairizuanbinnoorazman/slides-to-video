@@ -1,0 +1,11 @@
+{{- if .Values.pdfSplitter.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "slidesToVideo.pdfSplitterFullname" . }}
+  labels:
+    {{- include "slidesToVideo.pdfSplitterLabels" . | nindent 4 }}
+data:
+  config.yaml: |-
+{{ .Values.pdfSplitter.config | indent 4 }}
+{{- end }}
