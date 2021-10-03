@@ -2,6 +2,9 @@ global:
   image:
     registry: null
 
+nameOverride: null
+fullNameOverride: null
+
 imagePullSecrets: []
 
 serviceAccount:
@@ -40,15 +43,14 @@ serviceMonitor:
   # -- ServiceMonitor will use these tlsConfig settings to make the health check requests
   tlsConfig: null
 
-slidesToVideoManager:
+manager:
   image: 
     registry: docker.io
-    repository: slides-to-video-manager
+    repository: slides-to-video/manager
     tag: null
     pullPolicy: IfNotPresent
   podSecurityContext: {}
   securityContext: {}
-  annotations: {}
   imagePullSecrets: []
   resources: {}
   service:
@@ -67,7 +69,7 @@ slidesToVideoManager:
 pdfSplitter:
   image: 
     registry: docker.io
-    repository: pdf-splitter
+    repository: slides-to-video/pdf-splitter
     tag: null
     pullPolicy: IfNotPresent
   podSecurityContext: {}
@@ -91,7 +93,7 @@ pdfSplitter:
 imageToVideo:
   image: 
     registry: docker.io
-    repository: image-to-video
+    repository: slides-to-video/image-to-video
     tag: null
     pullPolicy: IfNotPresent
   podSecurityContext: {}
@@ -115,7 +117,7 @@ imageToVideo:
 concatenateVideo:
   image: 
     registry: docker.io
-    repository: concatenate-video
+    repository: slides-to-video/concatenate-video
     tag: null
     pullPolicy: IfNotPresent
   podSecurityContext: {}
