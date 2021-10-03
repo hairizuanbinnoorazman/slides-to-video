@@ -8,7 +8,7 @@ spec:
   replicas: {{ .Values.concatenateVideo.replicaCount }}
   selector:
     matchLabels:
-      {{- include "slidesToVideo.concatenateVideoSelectorLabels" . | nindent 4 }}
+      {{- include "slidesToVideo.concatenateVideoSelectorLabels" . | nindent 6 }}
   strategy:
     type: Recreate
   template:
@@ -27,7 +27,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: slides-to-video-concatenateVideo
+      - name: concatenate-video
         image: {{ include "slidesToVideo.concatenateVideoImage" . }}
         imagePullPolicy: {{ .Values.concatenateVideo.image.pullPolicy }}
         args:

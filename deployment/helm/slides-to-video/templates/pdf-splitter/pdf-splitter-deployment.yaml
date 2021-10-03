@@ -8,7 +8,7 @@ spec:
   replicas: {{ .Values.pdfSplitter.replicaCount }}
   selector:
     matchLabels:
-      {{- include "slidesToVideo.pdfSplitterSelectorLabels" . | nindent 4 }}
+      {{- include "slidesToVideo.pdfSplitterSelectorLabels" . | nindent 6 }}
   strategy:
     type: Recreate
   template:
@@ -27,7 +27,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: slides-to-video-pdfSplitter
+      - name: pdf-splitter
         image: {{ include "slidesToVideo.pdfSplitterImage" . }}
         imagePullPolicy: {{ .Values.pdfSplitter.image.pullPolicy }}
         args:

@@ -8,7 +8,7 @@ spec:
   replicas: {{ .Values.imageToVideo.replicaCount }}
   selector:
     matchLabels:
-      {{- include "slidesToVideo.imageToVideoSelectorLabels" . | nindent 4 }}
+      {{- include "slidesToVideo.imageToVideoSelectorLabels" . | nindent 6 }}
   strategy:
     type: Recreate
   template:
@@ -27,7 +27,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: slides-to-video-imageToVideo
+      - name: image-to-video
         image: {{ include "slidesToVideo.imageToVideoImage" . }}
         imagePullPolicy: {{ .Values.imageToVideo.image.pullPolicy }}
         args:
