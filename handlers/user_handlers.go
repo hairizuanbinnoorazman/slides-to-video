@@ -420,6 +420,16 @@ type ResetPassword struct {
 }
 
 func (h ResetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.Logger.Info("Start ForgetPassword Handler")
-	defer h.Logger.Info("End ForgetPassword Handler")
+	h.Logger.Info("Start ResetPassword Handler")
+	defer h.Logger.Info("End ResetPassword Handler")
+}
+
+type GetUser struct {
+	Logger    logger.Logger
+	UserStore user.Store
+}
+
+func (h GetUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start GetUser Handler")
+	defer h.Logger.Info("End GetUser Handler")
 }
