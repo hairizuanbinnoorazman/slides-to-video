@@ -399,16 +399,27 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("User Created"))
-	return
 }
 
-// ForgetPassword - Handles situation where user forget password and needs to reset it
-// Forget link will have 2 query params - user id as well as the forget password token
+// ForgetPassword issues a link to user via email provider to reset password
 type ForgetPassword struct {
-	Logger logger.Logger
+	Logger    logger.Logger
+	UserStore user.Store
 }
 
 func (h ForgetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start ForgetPassword Handler")
+	defer h.Logger.Info("End ForgetPassword Handler")
+}
+
+// ResetPassword - Handles situation where user forget password and needs to reset it
+// Reset link will have 2 query params - user id as well as the forget password token
+type ResetPassword struct {
+	Logger    logger.Logger
+	UserStore user.Store
+}
+
+func (h ResetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start ForgetPassword Handler")
 	defer h.Logger.Info("End ForgetPassword Handler")
 }
