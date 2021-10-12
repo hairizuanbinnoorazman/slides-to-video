@@ -232,7 +232,27 @@ var (
 					Logger:        logger,
 					StorageClient: slideToVideoStorage,
 				}).Methods("GET")
-				s.Handle("/login", h.GoogleLogin{
+				s.Handle("/user/register", h.CreateUser{
+					Logger:    logger,
+					UserStore: userStore,
+				}).Methods("POST")
+				s.Handle("/user/{user_id}/activate", h.ActivateUser{
+					Logger:    logger,
+					UserStore: userStore,
+				}).Methods("GET")
+				s.Handle("/user/forgetpassword", h.ForgetPassword{
+					Logger:    logger,
+					UserStore: userStore,
+				}).Methods("POST")
+				s.Handle("/user/{user_id}/resetpassword", h.ForgetPassword{
+					Logger:    logger,
+					UserStore: userStore,
+				}).Methods("GET")
+				s.Handle("/login", h.Login{
+					Logger:    logger,
+					UserStore: userStore,
+				}).Methods("POST")
+				s.Handle("/connect/google", h.GoogleLogin{
 					Logger:      logger,
 					ClientID:    cfg.Server.ClientID,
 					RedirectURI: cfg.Server.RedirectURI,
@@ -243,7 +263,7 @@ var (
 					Issuer:     cfg.Server.AuthIssuer,
 					ExpiryTime: cfg.Server.AuthExpiryTime,
 				}
-				s.Handle("/callback", h.Authenticate{
+				s.Handle("/callback/google", h.Authenticate{
 					Logger:       logger,
 					TableName:    cfg.Datastore.GoogleDatastoreConfig.UserTableName,
 					ClientID:     cfg.Server.ClientID,
