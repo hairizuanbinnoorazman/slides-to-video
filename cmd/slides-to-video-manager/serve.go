@@ -232,11 +232,17 @@ var (
 					Logger:        logger,
 					StorageClient: slideToVideoStorage,
 				}).Methods("GET")
+
+				// User based endpoints
+				s.Handle("/user/{user_id}", h.GetUser{
+					Logger:    logger,
+					UserStore: userStore,
+				})
 				s.Handle("/user/register", h.CreateUser{
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("POST")
-				s.Handle("/user/{user_id}/activate", h.ActivateUser{
+				s.Handle("/user/activate", h.ActivateUser{
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("GET")
@@ -244,10 +250,10 @@ var (
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("POST")
-				s.Handle("/user/{user_id}/resetpassword", h.ForgetPassword{
+				s.Handle("/user/resetpassword", h.ForgetPassword{
 					Logger:    logger,
 					UserStore: userStore,
-				}).Methods("GET")
+				}).Methods("POST")
 				s.Handle("/login", h.Login{
 					Logger:    logger,
 					UserStore: userStore,
