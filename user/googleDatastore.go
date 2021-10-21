@@ -48,6 +48,30 @@ func (g *GoogleDatastore) GetUserByEmail(ctx context.Context, Email string) (Use
 	return users[0], nil
 }
 
+func (g *GoogleDatastore) GetUserByActivationToken(ctx context.Context, ActivationToken string) (User, error) {
+	var users []User
+	q := datastore.NewQuery(g.entityName).Filter("ActivationToken =", ActivationToken).Limit(1)
+	if _, err := g.client.GetAll(ctx, q, &users); err != nil {
+		return User{}, fmt.Errorf("unable to retrieve list of users. err: %v", err)
+	}
+	if len(users) == 0 {
+		return User{}, nil
+	}
+	return users[0], nil
+}
+
+func (g *GoogleDatastore) GetUserByForgetPasswordToken(ctx context.Context, ForgetPasswordToken string) (User, error) {
+	var users []User
+	q := datastore.NewQuery(g.entityName).Filter("ForgetPasswordToken =", ForgetPasswordToken).Limit(1)
+	if _, err := g.client.GetAll(ctx, q, &users); err != nil {
+		return User{}, fmt.Errorf("unable to retrieve list of users. err: %v", err)
+	}
+	if len(users) == 0 {
+		return User{}, nil
+	}
+	return users[0], nil
+}
+
 func (g *GoogleDatastore) Update(ctx context.Context, userID string, setters ...func(*User) error) (User, error) {
 	key := datastore.NameKey(g.entityName, userID, nil)
 	user := User{}

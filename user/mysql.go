@@ -52,6 +52,30 @@ func (m mysql) GetUserByEmail(ctx context.Context, Email string) (User, error) {
 	return u, nil
 }
 
+func (m mysql) GetUserByActivationToken(ctx context.Context, ActivationToken string) (User, error) {
+	u := User{}
+	result := m.db.Where("activation_token = ?", ActivationToken).First(&u)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return User{}, nil
+	}
+	if result.Error != nil {
+		return User{}, result.Error
+	}
+	return u, nil
+}
+
+func (m mysql) GetUserByForgetPasswordToken(ctx context.Context, ForgetPasswordToken string) (User, error) {
+	u := User{}
+	result := m.db.Where("forget_password_token = ?", ForgetPasswordToken).First(&u)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return User{}, nil
+	}
+	if result.Error != nil {
+		return User{}, result.Error
+	}
+	return u, nil
+}
+
 func (m mysql) Update(ctx context.Context, ID string, setters ...func(*User) error) (User, error) {
 	var u User
 	result := m.db.Where("id = ?", ID).First(&u)

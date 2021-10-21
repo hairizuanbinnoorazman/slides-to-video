@@ -11,6 +11,8 @@ type Store interface {
 	Create(ctx context.Context, u User) error
 	GetUser(ctx context.Context, ID string) (User, error)
 	GetUserByEmail(ctx context.Context, Email string) (User, error)
+	GetUserByActivationToken(ctx context.Context, ActivationToken string) (User, error)
+	GetUserByForgetPasswordToken(ctx context.Context, ForgetPasswordToken string) (User, error)
 	Update(ctx context.Context, ID string, setters ...func(*User) error) (User, error)
 }
 
