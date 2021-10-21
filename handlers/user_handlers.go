@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/gorilla/mux"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/services"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/user"
@@ -296,15 +297,6 @@ func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start ActivateUser Handler")
 	defer h.Logger.Info("End ActivateUser Handler")
 
-	userID, ok := r.URL.Query()["id"]
-	if !ok {
-		errMsg := fmt.Sprintf("Error - Invalid activation link")
-		h.Logger.Error(errMsg)
-		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
-		return
-	}
-
 	token, ok := r.URL.Query()["token"]
 	if !ok {
 		errMsg := fmt.Sprintf("Error - Invalid activation link")
@@ -314,7 +306,7 @@ func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.UserStore.GetUser(context.TODO(), userID[0])
+	u, err := h.UserStore.GetUserByActivationToken(context.TODO(), token[0])
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - Unable to find user")
 		h.Logger.Error(errMsg)
@@ -332,7 +324,7 @@ func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.UserStore.Update(context.TODO(), userID[0], updateSetters...)
+	_, err = h.UserStore.Update(context.TODO(), u.ID, updateSetters...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - Unable to update user's activation")
 		h.Logger.Error(errMsg)
@@ -410,6 +402,55 @@ type ForgetPassword struct {
 func (h ForgetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start ForgetPassword Handler")
 	defer h.Logger.Info("End ForgetPassword Handler")
+
+	rawReq, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(400)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type forgetPasswordReq struct {
+		Email string `json:"email"`
+	}
+	req := forgetPasswordReq{}
+	err = json.Unmarshal(rawReq, &req)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to parse forget password req body. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(400)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	u, err := h.UserStore.GetUserByEmail(context.TODO(), req.Email)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to find user. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(404)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	updateSetters, err := u.ForgetPassword()
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to update user's activation")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	_, err = h.UserStore.Update(context.TODO(), u.ID, updateSetters...)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to update user's forget password token")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
 }
 
 // ResetPassword - Handles situation where user forget password and needs to reset it
@@ -422,6 +463,56 @@ type ResetPassword struct {
 func (h ResetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start ResetPassword Handler")
 	defer h.Logger.Info("End ResetPassword Handler")
+
+	rawReq, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(400)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	type resetPasswordReq struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+	req := resetPasswordReq{}
+	err = json.Unmarshal(rawReq, &req)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to parse login body. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(400)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	u, err := h.UserStore.GetUserByForgetPasswordToken(context.TODO(), req.Token)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to find user")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(404)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	updateSetters, err := u.ChangePasswordFromForget(req.Token, req.Password)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to update user's change password configuration")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	_, err = h.UserStore.Update(context.TODO(), u.ID, updateSetters...)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to update user's password")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
 }
 
 type GetUser struct {
@@ -432,4 +523,26 @@ type GetUser struct {
 func (h GetUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start GetUser Handler")
 	defer h.Logger.Info("End GetUser Handler")
+
+	userID := mux.Vars(r)["user_id"]
+	if userID == "" {
+		errMsg := fmt.Sprintf("Missing user id field")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	u, err := h.UserStore.GetUser(context.TODO(), userID)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - Unable to find user")
+		h.Logger.Error(errMsg)
+		w.WriteHeader(404)
+		w.Write([]byte(errMsg))
+		return
+	}
+
+	resp, _ := json.Marshal(u)
+	w.Write(resp)
+	w.WriteHeader(http.StatusOK)
 }
