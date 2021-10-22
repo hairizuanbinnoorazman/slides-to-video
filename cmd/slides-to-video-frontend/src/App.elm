@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
+module App exposing (Model, Msg(..), Flags, init, main, subscriptions, update, view)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
@@ -94,7 +94,6 @@ urlParser =
         , Url.map Projects (Url.s "projects")
         , Url.map Project (Url.s "projects" </> Url.string)
         ]
-
 
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
