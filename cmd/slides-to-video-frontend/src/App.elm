@@ -20,6 +20,7 @@ import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode exposing (Decoder, decodeString, float, int, list, null, string)
 import Json.Decode.Pipeline as Pipeline
+import Json.Encode as Encode
 import Ports
 import String
 import Time
@@ -65,6 +66,14 @@ type alias Model =
     , alertVisibility : Alert.Visibility
     , serverSettings : Flags
     , userToken : String
+    , userDetails : UserDetails
+    }
+
+
+type alias UserDetails =
+    { username : String
+    , password : String
+    , passwordAgain : String
     }
 
 
@@ -115,27 +124,27 @@ init flags url key =
                 Dashboard newUserToken ->
                     case newUserToken of
                         Nothing ->
-                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "", Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
+                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" ""), Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
 
                         Just userToken ->
-                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken, Cmd.batch [ navbarCmd, Ports.storeToken userToken ] )
+                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" ""), Cmd.batch [ navbarCmd, Ports.storeToken userToken ] )
 
                 Login ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "", Cmd.batch [ navbarCmd ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" ""), Cmd.batch [ navbarCmd ] )
 
                 UserRegister ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "", Cmd.batch [ navbarCmd ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" ""), Cmd.batch [ navbarCmd ] )
 
                 _ ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "", Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" ""), Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
 
         Just userToken ->
             case urlToPage url of
                 Project projectID ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken, Cmd.batch [ navbarCmd ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" ""), Cmd.batch [ navbarCmd ] )
 
                 _ ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken, Cmd.batch [ navbarCmd ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" ""), Cmd.batch [ navbarCmd ] )
 
 
 
@@ -152,11 +161,35 @@ type Msg
     | SubmitJob
     | ToggleAlert Alert.Visibility
     | Tick Time.Posix
+    | EmptyResponse (Result Http.Error ())
+    | UsernameInput String
+    | PasswordInput String
+    | PasswordAgainInput String
+    | RegisterUserCredentials
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        RegisterUserCredentials ->
+            let
+                tempUsername =
+                    model.userDetails.username
+
+                tempPassword =
+                    model.userDetails.password
+            in
+            ( { model | userDetails = UserDetails "" "" "" }, createUser model.serverSettings.serverEndpoint tempUsername tempPassword )
+
+        UsernameInput username ->
+            ( { model | userDetails = UserDetails username model.userDetails.password model.userDetails.passwordAgain }, Cmd.none )
+
+        PasswordInput password ->
+            ( { model | userDetails = UserDetails model.userDetails.username password model.userDetails.passwordAgain }, Cmd.none )
+
+        PasswordAgainInput passwordAgain ->
+            ( { model | userDetails = UserDetails model.userDetails.username model.userDetails.password passwordAgain }, Cmd.none )
+
         Tick time ->
             case model.page of
                 _ ->
@@ -170,6 +203,14 @@ update msg model =
 
         UpdateScriptTextArea scriptText ->
             ( { model | script = scriptText }, Cmd.none )
+
+        EmptyResponse result ->
+            case result of
+                Ok a ->
+                    ( model, Cmd.none )
+
+                Err a ->
+                    ( { model | alertVisibility = Alert.shown }, Cmd.none )
 
         TemporaryResp result ->
             case result of
@@ -346,7 +387,7 @@ view model =
                     dashboardPage
 
                 UserRegister ->
-                    registerPage
+                    registerPage model
             ]
         ]
     }
@@ -371,60 +412,65 @@ singleProjectDecoder =
         |> Pipeline.optional "video_output_id" string ""
 
 
-indexPage : String -> String -> Html msg
+indexPage : String -> String -> Html Msg
 indexPage aaa bbb =
     div [] [ text (aaa ++ bbb ++ "This is the Index Page. It is still not rendered out properly yet") ]
 
 
-loginPage : String -> Url.Url -> Html msg
+loginPage : String -> Url.Url -> Html Msg
 loginPage mgrurl sourceURL =
     Grid.row []
         [ Grid.col []
-            [ div []
-                [ a [ href (mgrurl ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ]
-                , br [] []
-                , a [ href "/register" ] [ text "Register with Email" ]
-                ]
+            [ a [ href (mgrurl ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ]
+            , br [] []
+            , a [ href "/register" ] [ text "Register with Email" ]
             ]
         ]
 
 
-registerPage : Html msg
-registerPage =
+registerPage : Model -> Html Msg
+registerPage model =
     Grid.row []
         [ Grid.col []
             [ h2 [] [ text "Register New Account" ]
             , Form.form []
                 [ Form.group []
                     [ Form.label [ for "useremail" ] [ text "Email address" ]
-                    , Input.email [ Input.id "useremail" ]
+                    , Input.email [ Input.id "useremail", Input.value model.userDetails.username, Input.onInput UsernameInput ]
                     , Form.help [] [ text "We'll never share your email with anyone else." ]
                     ]
                 , Form.group []
                     [ Form.label [ for "userpassword" ] [ text "Password" ]
-                    , Input.password [ Input.id "userpassword" ]
+                    , Input.password [ Input.id "userpassword", Input.value model.userDetails.password, Input.onInput PasswordInput ]
                     ]
                 ]
             , Form.group []
                 [ Form.label [ for "confirmuserpassword" ] [ text "Confirm Password" ]
-                , Input.password [ Input.id "confirmuserpassword" ]
+                , Input.password [ Input.id "confirmuserpassword", Input.value model.userDetails.passwordAgain, Input.onInput PasswordAgainInput ]
                 ]
-            , Button.button [ Button.primary ] [ text "Submit" ]
+            , if model.userDetails.password == model.userDetails.passwordAgain then
+                div []
+                    [ p [ style "color" "green" ] [ text "OK" ]
+                    , Button.button [ Button.primary ] [ text "Submit" ]
+                    ]
+
+              else
+                p [ style "color" "red" ] [ text "Passwords do not match!" ]
             ]
         ]
 
 
-dashboardPage : Html msg
+dashboardPage : Html Msg
 dashboardPage =
     div [] [ text "Dashboard Page" ]
 
 
-projectsPage : Html msg
+projectsPage : Html Msg
 projectsPage =
     div [] [ text "Projects Page" ]
 
 
-singleProjectPage : Html msg
+singleProjectPage : Html Msg
 singleProjectPage =
     div [] [ text "Single Project Page" ]
 
@@ -440,4 +486,28 @@ uploadFile mgrURL files =
         { url = mgrURL ++ "/api/v1/job"
         , expect = Http.expectString TemporaryResp
         , body = Http.multipartBody (List.map (Http.filePart "myfile") files)
+        }
+
+
+createUser : String -> String -> String -> Cmd Msg
+createUser mgrURL userEmail userPassword =
+    let
+        url =
+            mgrURL ++ "/api/v1/user/register"
+
+        body =
+            Http.jsonBody <|
+                Encode.object
+                    [ ( "email", Encode.string userEmail )
+                    , ( "password", Encode.string userPassword )
+                    ]
+    in
+    Http.request
+        { body = body
+        , method = "POST"
+        , url = url
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectWhatever EmptyResponse
         }
