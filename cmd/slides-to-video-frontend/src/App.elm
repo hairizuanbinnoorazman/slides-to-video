@@ -74,6 +74,7 @@ type Page
     | Logout
     | Project String
     | Projects
+    | UserRegister
 
 
 urlToPage : Url.Url -> Page
@@ -93,6 +94,7 @@ urlParser =
         , Url.map Dashboard (Url.s "dashboard" <?> Query.string "token")
         , Url.map Projects (Url.s "projects")
         , Url.map Project (Url.s "projects" </> Url.string)
+        , Url.map UserRegister (Url.s "register") 
         ]
 
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -117,6 +119,9 @@ init flags url key =
                             ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken, Cmd.batch [ navbarCmd, Ports.storeToken userToken ] )
 
                 Login ->
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "", Cmd.batch [ navbarCmd ] )
+
+                UserRegister ->
                     ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "", Cmd.batch [ navbarCmd ] )
 
                 _ ->
@@ -199,6 +204,11 @@ update msg model =
                             , Cmd.none
                             )
 
+                        UserRegister ->
+                            ( { model | url = url, page = urlToPage url }
+                            , Cmd.none
+                            )
+
                         _ ->
                             ( model
                             , Cmd.batch [ Nav.pushUrl model.key (Url.toString loginURL) ]
@@ -236,6 +246,11 @@ update msg model =
                             )
 
                         Dashboard token ->
+                            ( { model | url = url, page = urlToPage url }
+                            , Cmd.none
+                            )
+
+                        UserRegister ->
                             ( { model | url = url, page = urlToPage url }
                             , Cmd.none
                             )
@@ -329,6 +344,9 @@ view model =
 
                         Dashboard token ->
                             dashboardPage
+
+                        UserRegister ->
+                            indexPage "user register" "user register"
                     ]
                 ]
             ]
@@ -362,7 +380,11 @@ indexPage aaa bbb =
 
 loginPage : String -> Url.Url -> Html msg
 loginPage mgrurl sourceURL =
-    div [] [ a [ href (mgrurl ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ] ]
+    div [] [ 
+        a [ href (mgrurl ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ] 
+        , br [] []
+        , a [ href "/register" ] [ text "Register with Email" ] 
+    ]
 
 
 dashboardPage : Html msg
