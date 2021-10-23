@@ -179,7 +179,7 @@ update msg model =
                 tempPassword =
                     model.userDetails.password
             in
-            ( { model | userDetails = UserDetails "" "" "" }, Cmd.batch [ createUser model.serverSettings.serverEndpoint tempUsername tempPassword, Nav.pushUrl model.key "/" ] )
+            ( { model | userDetails = UserDetails "" "" "" }, Cmd.batch [ createUser model.serverSettings.serverEndpoint tempUsername tempPassword ] )
 
         UsernameInput username ->
             ( { model | userDetails = UserDetails username model.userDetails.password model.userDetails.passwordAgain }, Cmd.none )
@@ -207,7 +207,7 @@ update msg model =
         EmptyResponse result ->
             case result of
                 Ok a ->
-                    ( model, Cmd.none )
+                    ( model, Nav.pushUrl model.key "/" )
 
                 Err a ->
                     ( { model | alertVisibility = Alert.shown }, Cmd.none )
@@ -432,7 +432,14 @@ registerPage : Model -> Html Msg
 registerPage model =
     Grid.row []
         [ Grid.col []
-            [ h2 [] [ text "Register New Account" ]
+            [ Alert.config
+                |> Alert.danger
+                |> Alert.dismissable ToggleAlert
+                |> Alert.children
+                    [ p [] [ text "Unable to register user" ]
+                    ]
+                |> Alert.view model.alertVisibility
+            , h2 [] [ text "Register New Account" ]
             , Form.form []
                 [ Form.group []
                     [ Form.label [ for "useremail" ] [ text "Email address" ]
