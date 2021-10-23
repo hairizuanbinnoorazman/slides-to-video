@@ -179,7 +179,7 @@ update msg model =
                 tempPassword =
                     model.userDetails.password
             in
-            ( { model | userDetails = UserDetails "" "" "" }, createUser model.serverSettings.serverEndpoint tempUsername tempPassword )
+            ( { model | userDetails = UserDetails "" "" "" }, Cmd.batch [ createUser model.serverSettings.serverEndpoint tempUsername tempPassword, Nav.pushUrl model.key "/" ] )
 
         UsernameInput username ->
             ( { model | userDetails = UserDetails username model.userDetails.password model.userDetails.passwordAgain }, Cmd.none )
@@ -451,7 +451,7 @@ registerPage model =
             , if model.userDetails.password == model.userDetails.passwordAgain then
                 div []
                     [ p [ style "color" "green" ] [ text "OK" ]
-                    , Button.button [ Button.primary ] [ text "Submit" ]
+                    , Button.button [ Button.primary, Button.onClick RegisterUserCredentials ] [ text "Submit" ]
                     ]
 
               else
@@ -493,7 +493,31 @@ createUser : String -> String -> String -> Cmd Msg
 createUser mgrURL userEmail userPassword =
     let
         url =
-            mgrURL ++ "/api/v1/user/register"
+            mgrURL ++ "/api/v1/users/register"
+
+        body =
+            Http.jsonBody <|
+                Encode.object
+                    [ ( "email", Encode.string userEmail )
+                    , ( "password", Encode.string userPassword )
+                    ]
+    in
+    Http.request
+        { body = body
+        , method = "POST"
+        , url = url
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectWhatever EmptyResponse
+        }
+
+
+loginUser : String -> String -> String -> Cmd Msg
+loginUser mgrURL userEmail userPassword =
+    let
+        url =
+            mgrURL ++ "/api/v1/login"
 
         body =
             Http.jsonBody <|
