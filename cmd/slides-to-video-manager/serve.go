@@ -237,20 +237,20 @@ var (
 				s.Handle("/user/{user_id}", h.GetUser{
 					Logger:    logger,
 					UserStore: userStore,
-				})
-				s.Handle("/user/register", h.CreateUser{
+				}).Methods("GET")
+				s.Handle("/users/register", h.CreateUser{
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("POST")
-				s.Handle("/user/activate", h.ActivateUser{
+				s.Handle("/users/activate", h.ActivateUser{
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("GET")
-				s.Handle("/user/forgetpassword", h.ForgetPassword{
+				s.Handle("/users/forgetpassword", h.ForgetPassword{
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("POST")
-				s.Handle("/user/resetpassword", h.ForgetPassword{
+				s.Handle("/users/resetpassword", h.ForgetPassword{
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("POST")
