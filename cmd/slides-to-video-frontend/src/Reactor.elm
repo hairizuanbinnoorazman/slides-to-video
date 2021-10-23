@@ -7,7 +7,7 @@ import Browser.Navigation as Nav
 
 rinit : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 rinit () url key =
-    init {serverEndpoint = "http://localhost:8081", ingressPath = "", token = Nothing} url key
+    init {serverEndpoint = "http://localhost:8880", ingressPath = "", token = Nothing} url key
 
 main : Program () Model Msg
 main =
