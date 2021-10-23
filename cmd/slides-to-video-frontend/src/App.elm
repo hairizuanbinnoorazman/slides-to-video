@@ -1,9 +1,10 @@
-module App exposing (Model, Msg(..), Flags, init, main, subscriptions, update, view)
+module App exposing (Flags, Model, Msg(..), init, main, subscriptions, update, view)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.CDN as CDN
 import Bootstrap.Form as Form
+import Bootstrap.Form.Input as Input
 import Bootstrap.Form.Textarea as Textarea
 import Bootstrap.Grid as Grid
 import Bootstrap.Navbar as Navbar
@@ -94,8 +95,9 @@ urlParser =
         , Url.map Dashboard (Url.s "dashboard" <?> Query.string "token")
         , Url.map Projects (Url.s "projects")
         , Url.map Project (Url.s "projects" </> Url.string)
-        , Url.map UserRegister (Url.s "register") 
+        , Url.map UserRegister (Url.s "register")
         ]
+
 
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
@@ -320,35 +322,31 @@ view model =
                         |> Navbar.view model.navbarState
                     ]
                 ]
-            , Grid.row []
-                [ Grid.col []
-                    [ case model.page of
-                        Index ->
-                            indexPage model.url.host model.url.path
+            , case model.page of
+                Index ->
+                    indexPage model.url.host model.url.path
 
-                        Logout ->
-                            indexPage "logout" "logout"
+                Logout ->
+                    indexPage "logout" "logout"
 
-                        Login ->
-                            let
-                                dashboardURL =
-                                    model.url
-                            in
-                            loginPage model.serverSettings.serverEndpoint { dashboardURL | path = model.serverSettings.ingressPath ++ "/dashboard" }
+                Login ->
+                    let
+                        dashboardURL =
+                            model.url
+                    in
+                    loginPage model.serverSettings.serverEndpoint { dashboardURL | path = model.serverSettings.ingressPath ++ "/dashboard" }
 
-                        Projects ->
-                            projectsPage
+                Projects ->
+                    projectsPage
 
-                        Project projectID ->
-                            singleProjectPage
+                Project projectID ->
+                    singleProjectPage
 
-                        Dashboard token ->
-                            dashboardPage
+                Dashboard token ->
+                    dashboardPage
 
-                        UserRegister ->
-                            indexPage "user register" "user register"
-                    ]
-                ]
+                UserRegister ->
+                    registerPage
             ]
         ]
     }
@@ -380,11 +378,40 @@ indexPage aaa bbb =
 
 loginPage : String -> Url.Url -> Html msg
 loginPage mgrurl sourceURL =
-    div [] [ 
-        a [ href (mgrurl ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ] 
-        , br [] []
-        , a [ href "/register" ] [ text "Register with Email" ] 
-    ]
+    Grid.row []
+        [ Grid.col []
+            [ div []
+                [ a [ href (mgrurl ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ]
+                , br [] []
+                , a [ href "/register" ] [ text "Register with Email" ]
+                ]
+            ]
+        ]
+
+
+registerPage : Html msg
+registerPage =
+    Grid.row []
+        [ Grid.col []
+            [ h2 [] [ text "Register New Account" ]
+            , Form.form []
+                [ Form.group []
+                    [ Form.label [ for "useremail" ] [ text "Email address" ]
+                    , Input.email [ Input.id "useremail" ]
+                    , Form.help [] [ text "We'll never share your email with anyone else." ]
+                    ]
+                , Form.group []
+                    [ Form.label [ for "userpassword" ] [ text "Password" ]
+                    , Input.password [ Input.id "userpassword" ]
+                    ]
+                ]
+            , Form.group []
+                [ Form.label [ for "confirmuserpassword" ] [ text "Confirm Password" ]
+                , Input.password [ Input.id "confirmuserpassword" ]
+                ]
+            , Button.button [ Button.primary ] [ text "Submit" ]
+            ]
+        ]
 
 
 dashboardPage : Html msg
