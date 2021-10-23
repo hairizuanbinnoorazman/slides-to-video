@@ -543,6 +543,6 @@ func (h GetUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, _ := json.Marshal(u)
-	w.Write(resp)
 	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
 }
