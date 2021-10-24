@@ -40,7 +40,7 @@ func (h GoogleLogin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - Unable to create auth url. Err: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -78,10 +78,10 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	code, ok := r.URL.Query()["code"]
 	if !ok {
-		errMsg := fmt.Sprintf("Error - Missing code from url param.")
+		errMsg := "Error - Missing code from url param."
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to receive the input for this request and parse it to json. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -147,7 +147,7 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to receive user information from Google API. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -166,7 +166,7 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to obtain user from datastore. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 	if retrievedUser.ID == "" && retrievedUser.Email == "" {
@@ -189,7 +189,7 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to create token. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -226,7 +226,7 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -240,7 +240,7 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to parse login body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -249,16 +249,16 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to find user. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(404)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	passwordCorrect := u.IsPasswordCorrect(req.Password)
-	if passwordCorrect == false {
+	if !passwordCorrect {
 		errMsg := fmt.Sprintf("Error - unable to find user. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -267,7 +267,7 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to create token. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -299,37 +299,37 @@ func (h ActivateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	token, ok := r.URL.Query()["token"]
 	if !ok {
-		errMsg := fmt.Sprintf("Error - Invalid activation link")
+		errMsg := "Error - Invalid activation link"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	u, err := h.UserStore.GetUserByActivationToken(context.TODO(), token[0])
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to find user")
+		errMsg := "Error - Unable to find user"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(404)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	updateSetters, err := u.Activate(token[0])
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to update user's activation")
+		errMsg := "Error - Unable to update user's activation"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	_, err = h.UserStore.Update(context.TODO(), u.ID, updateSetters...)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to update user's activation")
+		errMsg := "Error - Unable to update user's activation"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -352,7 +352,7 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -367,7 +367,7 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to parse json body. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -376,7 +376,7 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to create new user. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -385,7 +385,7 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to store newly created user. Error: %+v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -408,7 +408,7 @@ func (h ForgetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -421,7 +421,7 @@ func (h ForgetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to parse forget password req body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -430,25 +430,25 @@ func (h ForgetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to find user. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(404)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	updateSetters, err := u.ForgetPassword()
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to update user's activation")
+		errMsg := "Error - Unable to update user's activation"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	_, err = h.UserStore.Update(context.TODO(), u.ID, updateSetters...)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to update user's forget password token")
+		errMsg := "Error - Unable to update user's forget password token"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 }
@@ -469,7 +469,7 @@ func (h ResetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -483,34 +483,34 @@ func (h ResetPassword) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to parse login body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	u, err := h.UserStore.GetUserByForgetPasswordToken(context.TODO(), req.Token)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to find user")
+		errMsg := "Error - Unable to find user"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(404)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	updateSetters, err := u.ChangePasswordFromForget(req.Token, req.Password)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to update user's change password configuration")
+		errMsg := "Error - Unable to update user's change password configuration"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	_, err = h.UserStore.Update(context.TODO(), u.ID, updateSetters...)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to update user's password")
+		errMsg := "Error - Unable to update user's password"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 }
@@ -526,19 +526,19 @@ func (h GetUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	userID := mux.Vars(r)["user_id"]
 	if userID == "" {
-		errMsg := fmt.Sprintf("Missing user id field")
+		errMsg := "Missing user id field"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	u, err := h.UserStore.GetUser(context.TODO(), userID)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - Unable to find user")
+		errMsg := "Error - Unable to find user"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(404)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 

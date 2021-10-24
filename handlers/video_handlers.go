@@ -21,10 +21,10 @@ func (h DownloadVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	filename := mux.Vars(r)["video_id"]
 	if filename == "" {
-		errMsg := fmt.Sprintf("Missing video id field")
+		errMsg := "Missing video id field"
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -33,7 +33,7 @@ func (h DownloadVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - Unable to download file from blob storage. Err: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 

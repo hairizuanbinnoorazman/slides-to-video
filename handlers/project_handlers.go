@@ -30,14 +30,13 @@ func (h CreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to create project in datastore. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	rawItem, _ := json.Marshal(item)
 	w.Write(rawItem)
-	return
 }
 
 type UpdateProject struct {
@@ -55,7 +54,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -72,7 +71,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to marshal value out to project item. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -81,7 +80,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to create the required updaters to update project. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -90,7 +89,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to update project item. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -114,7 +113,7 @@ func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -122,7 +121,6 @@ func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(rawProject)
-	return
 }
 
 type GetAllProjects struct {
@@ -160,22 +158,28 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
-	rawParentJobs, err := json.Marshal(projects)
+	projectResp := getAllProjectsResp{
+		Projects: projects,
+		Offset:   offset,
+		Limit:    limit,
+		Total:    1000,
+	}
+
+	rawProjectResp, err := json.Marshal(projectResp)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(rawParentJobs)
-	return
+	w.Write(rawProjectResp)
 }
 
 type StartVideoConcat struct {
@@ -196,7 +200,7 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -205,7 +209,7 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -214,7 +218,7 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to start async video generation. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 

@@ -227,7 +227,7 @@ def test_list_projects(base_endpoint, create_project):
     assert resp.status_code == 200
 
     project_list = resp.json()
-    assert len(project_list) == 2
+    assert len(project_list["projects"]) == 2
 
 
 def test_add_pdf_slides(base_endpoint, create_project, create_pdfslideimages):

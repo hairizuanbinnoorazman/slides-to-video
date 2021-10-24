@@ -21,5 +21,4 @@ func (h Status) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	raw, _ := json.Marshal(resp{Status: "ok"})
 	w.WriteHeader(http.StatusOK)
 	w.Write(raw)
-	return
 }

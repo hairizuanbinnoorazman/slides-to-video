@@ -28,7 +28,7 @@ func (h CreateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -45,14 +45,13 @@ func (h CreateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to create video segment in datastore. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	rawItem, _ := json.Marshal(item)
 	w.Write(rawItem)
-	return
 }
 
 type UpdateVideoSegment struct {
@@ -71,7 +70,7 @@ func (h UpdateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(400)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -91,7 +90,7 @@ func (h UpdateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - issue with updating; pre-update check. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -100,14 +99,13 @@ func (h UpdateVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to create video segment in datastore. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	rawItem, _ := json.Marshal(item)
 	w.Write(rawItem)
-	return
 }
 
 type GetVideoSegment struct {
@@ -127,14 +125,13 @@ func (h GetVideoSegment) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errMsg := fmt.Sprintf("Error - unable to get video segment in datastore. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	rawItem, _ := json.Marshal(videosegment)
 	w.Write(rawItem)
-	return
 }
 
 type StartVideoSegmentGeneration struct {
@@ -155,7 +152,7 @@ func (h StartVideoSegmentGeneration) ServeHTTP(w http.ResponseWriter, r *http.Re
 		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
@@ -164,7 +161,7 @@ func (h StartVideoSegmentGeneration) ServeHTTP(w http.ResponseWriter, r *http.Re
 		errMsg := fmt.Sprintf("Error - unable to start async video generation. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(errMsg))
+		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
 
