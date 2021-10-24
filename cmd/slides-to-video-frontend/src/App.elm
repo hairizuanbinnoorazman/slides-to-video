@@ -157,11 +157,12 @@ type Msg
     | NavbarMsg Navbar.State
     | GotFiles (List File)
     | TemporaryResp (Result Http.Error String)
+    | EmptyResponse (Result Http.Error ())
+    | LoginResponse (Result Http.Error UserToken)
     | UpdateScriptTextArea String
     | SubmitJob
     | ToggleAlert Alert.Visibility
     | Tick Time.Posix
-    | EmptyResponse (Result Http.Error ())
     | UsernameInput String
     | PasswordInput String
     | PasswordAgainInput String
@@ -172,6 +173,14 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LoginResponse result ->
+            case result of
+                Ok zzz ->
+                    ( { model | userToken = zzz.token }, Cmd.batch [ Ports.storeToken zzz.token, Nav.pushUrl model.key "/" ] )
+
+                Err zzz ->
+                    ( { model | alertVisibility = Alert.shown }, Cmd.none )
+
         SubmitLoginCredentials ->
             let
                 tempUsername =
@@ -404,6 +413,17 @@ view model =
     }
 
 
+type alias UserToken =
+    { token : String
+    }
+
+
+userTokenDecoder : Decoder UserToken
+userTokenDecoder =
+    Decode.succeed UserToken
+        |> Pipeline.required "token" string
+
+
 type alias SingleProject =
     { id : String
     , dateCreated : String
@@ -450,7 +470,7 @@ loginPage model sourceURL =
                     [ Form.label [ for "userpassword" ] [ text "Password" ]
                     , Input.password [ Input.id "userpassword", Input.value model.userDetails.password, Input.onInput PasswordInput ]
                     ]
-                , Button.button [ Button.primary, Button.onClick RegisterUserCredentials ] [ text "Login" ]
+                , Button.button [ Button.primary, Button.onClick SubmitLoginCredentials ] [ text "Login" ]
                 ]
             , a [ href (model.serverSettings.serverEndpoint ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ]
             , br [] []
@@ -571,5 +591,5 @@ loginUser mgrURL userEmail userPassword =
         , headers = []
         , timeout = Nothing
         , tracker = Nothing
-        , expect = Http.expectWhatever EmptyResponse
+        , expect = Http.expectJson LoginResponse userTokenDecoder
         }
