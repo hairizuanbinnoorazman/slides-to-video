@@ -62,7 +62,7 @@ func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, erro
 
 func (m mysql) GetAll(ctx context.Context, UserID string, Limit, After int) ([]Project, error) {
 	var projects []Project
-	result := m.db.Limit(Limit).Offset(After).Find(&projects)
+	result := m.db.Order("date_created desc").Limit(Limit).Offset(After).Find(&projects)
 	if result.Error != nil {
 		return []Project{}, result.Error
 	}
