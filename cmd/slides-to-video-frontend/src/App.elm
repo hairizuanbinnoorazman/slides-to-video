@@ -67,6 +67,7 @@ type alias Model =
     , serverSettings : Flags
     , userToken : String
     , userDetails : UserDetails
+    , projects : ProjectList
     }
 
 
@@ -124,27 +125,27 @@ init flags url key =
                 Dashboard newUserToken ->
                     case newUserToken of
                         Nothing ->
-                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" ""), Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
+                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
 
                         Just userToken ->
-                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" ""), Cmd.batch [ navbarCmd, Ports.storeToken userToken ] )
+                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd, Ports.storeToken userToken ] )
 
                 Login ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" ""), Cmd.batch [ navbarCmd ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd ] )
 
                 UserRegister ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" ""), Cmd.batch [ navbarCmd ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd ] )
 
                 _ ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" ""), Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
 
         Just userToken ->
             case urlToPage url of
                 Project projectID ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" ""), Cmd.batch [ navbarCmd ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd ] )
 
                 _ ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" ""), Cmd.batch [ navbarCmd ] )
+                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd ] )
 
 
 
@@ -159,6 +160,7 @@ type Msg
     | TemporaryResp (Result Http.Error String)
     | EmptyResponse (Result Http.Error ())
     | LoginResponse (Result Http.Error UserToken)
+    | ProjectsResponse (Result Http.Error ProjectList)
     | UpdateScriptTextArea String
     | SubmitJob
     | ToggleAlert Alert.Visibility
@@ -173,6 +175,14 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ProjectsResponse result ->
+            case result of
+                Ok zzz ->
+                    ( { model | projects = zzz }, Cmd.none )
+
+                Err zzz ->
+                    ( model, Cmd.none )
+
         LoginResponse result ->
             case result of
                 Ok zzz ->
@@ -300,7 +310,7 @@ update msg model =
 
                         Projects ->
                             ( { model | url = url, page = urlToPage url }
-                            , Cmd.none
+                            , Cmd.batch [ apiListProjects model.serverSettings.serverEndpoint ]
                             )
 
                         Project projectID ->
@@ -398,7 +408,7 @@ view model =
                     loginPage model { dashboardURL | path = model.serverSettings.ingressPath ++ "/dashboard" }
 
                 Projects ->
-                    projectsPage
+                    projectsPage model
 
                 Project projectID ->
                     singleProjectPage
@@ -441,6 +451,23 @@ singleProjectDecoder =
         |> Pipeline.required "date_modified" string
         |> Pipeline.required "status" string
         |> Pipeline.optional "video_output_id" string ""
+
+
+type alias ProjectList =
+    { projects : List SingleProject
+    , limit : Int
+    , offset : Int
+    , total : Int
+    }
+
+
+projectListDecoder : Decoder ProjectList
+projectListDecoder =
+    Decode.succeed ProjectList
+        |> Pipeline.required "projects" (Decode.list singleProjectDecoder)
+        |> Pipeline.required "limit" int
+        |> Pipeline.required "offset" int
+        |> Pipeline.required "total" int
 
 
 indexPage : String -> String -> Html Msg
@@ -523,9 +550,52 @@ dashboardPage =
     div [] [ text "Dashboard Page" ]
 
 
-projectsPage : Html Msg
-projectsPage =
-    div [] [ text "Projects Page" ]
+singleProjectRow : SingleProject -> Table.Row msg
+singleProjectRow singleProject =
+    Table.tr []
+        [ Table.td [] [ text singleProject.id ]
+        , Table.td [] [ text singleProject.dateCreated ]
+        , Table.td [] [ text singleProject.dateModified ]
+        , Table.td [] [ text singleProject.status ]
+        , Table.td []
+            [ if singleProject.status == "completed" then
+                a [] [ text "Download Link" ]
+
+              else
+                p [] [ text "Not available" ]
+            ]
+        ]
+
+
+projectsPage : Model -> Html Msg
+projectsPage model =
+    Grid.row []
+        [ Grid.col []
+            [ Alert.config
+                |> Alert.danger
+                |> Alert.dismissable ToggleAlert
+                |> Alert.children
+                    [ p [] [ text "Unable to fetch projects list" ]
+                    ]
+                |> Alert.view model.alertVisibility
+            , h2 [] [ text "Projects" ]
+            , if List.length model.projects.projects == 0 then
+                p [] [ text "No projects found" ]
+
+              else
+                Table.simpleTable
+                    ( Table.simpleThead
+                        [ Table.th [] [ text "ID" ]
+                        , Table.th [] [ text "Date Created" ]
+                        , Table.th [] [ text "Last Modified" ]
+                        , Table.th [] [ text "Status" ]
+                        , Table.th [] [ text "Video Download Link" ]
+                        ]
+                    , Table.tbody []
+                        (List.map singleProjectRow model.projects.projects)
+                    )
+            ]
+        ]
 
 
 singleProjectPage : Html Msg
@@ -568,6 +638,23 @@ createUser mgrURL userEmail userPassword =
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectWhatever EmptyResponse
+        }
+
+
+apiListProjects : String -> Cmd Msg
+apiListProjects mgrURL =
+    let
+        url =
+            mgrURL ++ "/api/v1/projects"
+    in
+    Http.request
+        { body = Http.emptyBody
+        , method = "GET"
+        , url = url
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectJson ProjectsResponse projectListDecoder
         }
 
 
