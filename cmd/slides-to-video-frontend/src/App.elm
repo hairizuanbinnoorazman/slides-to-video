@@ -166,11 +166,22 @@ type Msg
     | PasswordInput String
     | PasswordAgainInput String
     | RegisterUserCredentials
+    | SubmitLoginCredentials
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SubmitLoginCredentials ->
+            let
+                tempUsername =
+                    model.userDetails.username
+
+                tempPassword =
+                    model.userDetails.password
+            in
+            ( { model | userDetails = UserDetails "" "" "" }, Cmd.batch [ loginUser model.serverSettings.serverEndpoint tempUsername tempPassword ] )
+
         RegisterUserCredentials ->
             let
                 tempUsername =
@@ -375,7 +386,7 @@ view model =
                         dashboardURL =
                             model.url
                     in
-                    loginPage model.serverSettings.serverEndpoint { dashboardURL | path = model.serverSettings.ingressPath ++ "/dashboard" }
+                    loginPage model { dashboardURL | path = model.serverSettings.ingressPath ++ "/dashboard" }
 
                 Projects ->
                     projectsPage
@@ -417,11 +428,31 @@ indexPage aaa bbb =
     div [] [ text (aaa ++ bbb ++ "This is the Index Page. It is still not rendered out properly yet") ]
 
 
-loginPage : String -> Url.Url -> Html Msg
-loginPage mgrurl sourceURL =
+loginPage : Model -> Url.Url -> Html Msg
+loginPage model sourceURL =
     Grid.row []
         [ Grid.col []
-            [ a [ href (mgrurl ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ]
+            [ Alert.config
+                |> Alert.danger
+                |> Alert.dismissable ToggleAlert
+                |> Alert.children
+                    [ p [] [ text "Unable to login" ]
+                    ]
+                |> Alert.view model.alertVisibility
+            , h2 [] [ text "Login" ]
+            , Form.form []
+                [ Form.group []
+                    [ Form.label [ for "useremail" ] [ text "Email address" ]
+                    , Input.email [ Input.id "useremail", Input.value model.userDetails.username, Input.onInput UsernameInput ]
+                    , Form.help [] [ text "We'll never share your email with anyone else." ]
+                    ]
+                , Form.group []
+                    [ Form.label [ for "userpassword" ] [ text "Password" ]
+                    , Input.password [ Input.id "userpassword", Input.value model.userDetails.password, Input.onInput PasswordInput ]
+                    ]
+                , Button.button [ Button.primary, Button.onClick RegisterUserCredentials ] [ text "Login" ]
+                ]
+            , a [ href (model.serverSettings.serverEndpoint ++ "/api/v1/login?source_url=" ++ Url.toString sourceURL) ] [ text "Google Login" ]
             , br [] []
             , a [ href "/register" ] [ text "Register with Email" ]
             ]
