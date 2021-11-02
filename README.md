@@ -19,29 +19,53 @@ pipenv install
 pytest test_app.py
 ```
 
+To test frontend + develop frontend
+
+```bash
+elm reactor
+# Head to Reactor.elm -> Default values is set 
+
+# Before commiting to git repo - ensure that elm code is formatted well
+make format
+```
+
 ## Features to be developed
 
-- Build out a simple user authentication system that can be used for integration testing purposes
-  - Password based
-  - Passwordless based (Send email links for login)
-- Integrate MailSlurper for integration testing purposes
-  - https://mailslurper.com/
-- User + ACL model integration (App-managed)
-  - Require need to have the capability to limits to amount of projects that can be created per user
-  - Rate limiting of all APIs
+- Projects
+  - Roles
+    - Owner - Can be group/user (For project accounting)
+    - Publisher - Send end result to a video streaming site
+    - Editor - Can edit project, export project
+    - Viewer - Can view project
+  - Add Project Name to make it easier to reference for a person
+  - Query by user
 - Add Frontend for Integration
-  - Retrieve results for list of projects
   - Create new project
   - Process and generate video
   - Create dashboard on per user basis
+- User + ACL model integration (App-managed)
+  - Require need to have the capability to limits to amount of projects that can be created per user
+  - Rate limiting of all APIs
 - API Security
   - Add CORS configuration to API Server
   - Add capability to check presence of authorization -> have flag to disable it for integration testing purposes
+- Build out a simple user authentication system that can be used for integration testing purposes
+  - Passwordless based (Send email links for login)
+- Integrate Email testing for integration testing purposes
+  - https://mailslurper.com/
+  - https://github.com/inbucket
+- Groups API
+  - Multiple Users can be in a group
+  - Roles
+    - Owner (Can invite other members, View Project Count Limit, Create Projects, Delete Projects, Shut down group, Export all project assets, Archive Projects)
+    - Member
+- Projects ACL
+  - Introduce Tagging to allow easier filtering (Maybe next time)
 - Setup monitoring (Prometheus Endpoints)
 - Setup Distributed Tracing between components
 - Setup Profiling Endpoints (switched on via configuration)
 - Add documentation regarding the deployment to local (docker-compose), kubernetes, cloud run
-- List operations for Project/VideoSegments/PDFSlideImages are broken
+- List operations for VideoSegments/PDFSlideImages are broken
 - Delete operations for Project/VideoSegments/PDFSlideImages are broken
 - Support of cassandra as alternative data storage
 - Support of local storage as alternative "blob storage"
