@@ -174,13 +174,21 @@ var (
 				}
 				s := r.PathPrefix("/api/v1").Subrouter()
 				// Project based routes
-				s.Handle("/project", h.CreateProject{
-					Logger:       logger,
-					ProjectStore: projectStore,
+				s.Handle("/project", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.CreateProject{
+						Logger:       logger,
+						ProjectStore: projectStore,
+					},
 				}).Methods("POST")
-				s.Handle("/projects", h.GetAllProjects{
-					Logger:       logger,
-					ProjectStore: projectStore,
+				s.Handle("/projects", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.GetAllProjects{
+						Logger:       logger,
+						ProjectStore: projectStore,
+					},
 				}).Methods("GET")
 				s.Handle("/project/{project_id}", h.RequireJWTAuth{
 					Auth:   auth,

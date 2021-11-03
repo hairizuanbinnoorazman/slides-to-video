@@ -24,9 +24,9 @@ def login():
 
 @pytest.fixture
 def create_project():
-    def create_project(base_endpoint_url):
+    def create_project(base_endpoint_url, token):
         endpoint = base_endpoint_url + "/project"
-        resp = requests.post(endpoint)
+        resp = requests.post(endpoint, headers={"Authorization":token})
         assert resp.status_code == 201
         project = resp.json()
         assert project["id"] != ""
@@ -235,7 +235,7 @@ def await_video_concat_done():
 def test_get_project(base_endpoint, create_user, login, create_project, get_project):
     create_user(base_endpoint, "user1", "TestPassword123")
     token = login(base_endpoint, "user1", "TestPassword123")
-    project = create_project(base_endpoint)
+    project = create_project(base_endpoint, token)
     project = get_project(base_endpoint, project["id"], token)
     assert project["id"] != ""
     assert project["status"] == "created"
@@ -244,9 +244,9 @@ def test_get_project(base_endpoint, create_user, login, create_project, get_proj
 def test_list_projects(base_endpoint, create_user, login, create_project):
     create_user(base_endpoint, "user2", "TestPassword123")
     token = login(base_endpoint, "user2", "TestPassword123")
-    create_project(base_endpoint)
+    create_project(base_endpoint, token)
     endpoint = base_endpoint + "/projects"
-    resp = requests.get(endpoint)
+    resp = requests.get(endpoint, headers={"Authorization":token})
     assert resp.status_code == 200
 
     project_list = resp.json()
@@ -256,7 +256,7 @@ def test_list_projects(base_endpoint, create_user, login, create_project):
 def test_add_pdf_slides(base_endpoint, create_user, login, create_project, create_pdfslideimages):
     create_user(base_endpoint, "user3", "TestPassword123")
     token = login(base_endpoint, "user3", "TestPassword123")
-    project = create_project(base_endpoint)
+    project = create_project(base_endpoint, token)
     pdfslideimages = create_pdfslideimages(base_endpoint, project["id"])
     assert pdfslideimages["status"] == "created"
     assert pdfslideimages["id"] != ""
@@ -265,7 +265,7 @@ def test_add_pdf_slides(base_endpoint, create_user, login, create_project, creat
 def test_project_on_addpdfslides(base_endpoint, create_user, login, create_project, create_pdfslideimages, get_project, await_pdf_slides):
     create_user(base_endpoint, "user4", "TestPassword123")
     token = login(base_endpoint, "user4", "TestPassword123")
-    project = create_project(base_endpoint)
+    project = create_project(base_endpoint, token)
     pdfslideimages = create_pdfslideimages(base_endpoint, project["id"])
     project = get_project(base_endpoint, project["id"], token)
     assert project.get("pdf_slide_images") is not None
@@ -280,7 +280,7 @@ def test_project_on_addpdfslides(base_endpoint, create_user, login, create_proje
 def test_project_onvideosegment(base_endpoint, create_user, login, create_project, get_project, create_videosegment):
     create_user(base_endpoint, "user5", "TestPassword123")
     token = login(base_endpoint, "user5", "TestPassword123")
-    project = create_project(base_endpoint)
+    project = create_project(base_endpoint, token)
     videosegment = create_videosegment(base_endpoint, project["id"], "hahahax", 3)
     updated_project = get_project(base_endpoint, project["id"], token)
     assert updated_project.get("video_segments") is not None
@@ -292,7 +292,7 @@ def test_project_onvideosegment(base_endpoint, create_user, login, create_projec
 def test_update_script(base_endpoint, create_user, login, create_project, get_project, create_pdfslideimages, await_pdf_slides, update_videosegment):
     create_user(base_endpoint, "user6", "TestPassword123")
     token = login(base_endpoint, "user6", "TestPassword123")
-    project = create_project(base_endpoint)
+    project = create_project(base_endpoint, token)
     create_pdfslideimages(base_endpoint, project["id"])
     await_pdf_slides(base_endpoint, project["id"])
     time.sleep(1)
@@ -313,7 +313,7 @@ def test_generate_video(
         videosegment_generate_video, await_video_generation_done):
     create_user(base_endpoint, "user7", "TestPassword123")
     token = login(base_endpoint, "user7", "TestPassword123")
-    project = create_project(base_endpoint)
+    project = create_project(base_endpoint, token)
     create_pdfslideimages(base_endpoint, project["id"])
     await_pdf_slides(base_endpoint, project["id"])
     time.sleep(1)
@@ -334,7 +334,7 @@ def test_full_flow(
         videosegment_concat, await_video_concat_done):
     create_user(base_endpoint, "user8", "TestPassword123")
     token = login(base_endpoint, "user8", "TestPassword123")
-    project = create_project(base_endpoint)
+    project = create_project(base_endpoint, token)
     create_pdfslideimages(base_endpoint, project["id"])
     await_pdf_slides(base_endpoint, project["id"])
     time.sleep(1)
