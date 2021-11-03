@@ -12,6 +12,17 @@ def create_user():
     return create_user
 
 @pytest.fixture
+def login():
+    def login(base_endpoint_url, email, password):
+        endpoint = base_endpoint_url + "/login"
+        resp = requests.post(endpoint, json={"email":email,"password":password})
+        assert resp.status_code == 200
+        userToken = resp.json()
+        assert userToken["token"] != ""
+        return userToken["token"]
+    return login
+
+@pytest.fixture
 def create_project():
     def create_project(base_endpoint_url):
         endpoint = base_endpoint_url + "/project"
@@ -221,8 +232,9 @@ def await_video_concat_done():
     return lol
 
 
-def test_get_project(base_endpoint, create_user, create_project, get_project):
+def test_get_project(base_endpoint, create_user, login, create_project, get_project):
     create_user(base_endpoint, "user1", "TestPassword123")
+    token = login(base_endpoint, "user1", "TestPassword123")
     project = create_project(base_endpoint)
     project = get_project(base_endpoint, project["id"])
     assert project["id"] != ""
