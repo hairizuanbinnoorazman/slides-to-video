@@ -4,6 +4,14 @@ import pytest
 import requests
 
 @pytest.fixture
+def create_user():
+    def create_user(base_endpoint_url, email, password):
+        endpoint = base_endpoint_url + "/users/register"
+        resp = requests.post(endpoint, json={"email":email,"password":password})
+        assert resp.status_code == 201
+    return create_user
+
+@pytest.fixture
 def create_project():
     def create_project(base_endpoint_url):
         endpoint = base_endpoint_url + "/project"
@@ -213,7 +221,8 @@ def await_video_concat_done():
     return lol
 
 
-def test_get_project(base_endpoint, create_project, get_project):
+def test_get_project(base_endpoint, create_user, create_project, get_project):
+    create_user(base_endpoint, "user1", "TestPassword123")
     project = create_project(base_endpoint)
     project = get_project(base_endpoint, project["id"])
     assert project["id"] != ""

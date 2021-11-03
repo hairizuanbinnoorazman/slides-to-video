@@ -389,8 +389,12 @@ func (h CreateUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("User Created"))
+	w.WriteHeader(http.StatusCreated)
+	type successfulResponse struct {
+		Status string `json:"status"`
+	}
+	rawResp, _ := json.Marshal(successfulResponse{Status: "User Created"})
+	w.Write(rawResp)
 }
 
 // ForgetPassword issues a link to user via email provider to reset password
