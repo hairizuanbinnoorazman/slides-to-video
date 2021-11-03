@@ -167,6 +167,11 @@ var (
 					Logger: logger,
 				})
 
+				auth := h.Auth{
+					Secret:     cfg.Server.AuthSecret,
+					Issuer:     cfg.Server.AuthIssuer,
+					ExpiryTime: cfg.Server.AuthExpiryTime,
+				}
 				s := r.PathPrefix("/api/v1").Subrouter()
 				// Project based routes
 				s.Handle("/project", h.CreateProject{
@@ -177,9 +182,13 @@ var (
 					Logger:       logger,
 					ProjectStore: projectStore,
 				}).Methods("GET")
-				s.Handle("/project/{project_id}", h.GetProject{
-					Logger:       logger,
-					ProjectStore: projectStore,
+				s.Handle("/project/{project_id}", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.GetProject{
+						Logger:       logger,
+						ProjectStore: projectStore,
+					},
 				}).Methods("GET")
 				s.Handle("/project/{project_id}", h.UpdateProject{
 					Logger:       logger,
@@ -264,11 +273,6 @@ var (
 					RedirectURI: cfg.Server.RedirectURI,
 					Scope:       cfg.Server.Scope,
 				})
-				auth := h.Auth{
-					Secret:     cfg.Server.AuthSecret,
-					Issuer:     cfg.Server.AuthIssuer,
-					ExpiryTime: cfg.Server.AuthExpiryTime,
-				}
 				s.Handle("/callback/google", h.Authenticate{
 					Logger:       logger,
 					TableName:    cfg.Datastore.GoogleDatastoreConfig.UserTableName,

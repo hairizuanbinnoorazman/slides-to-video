@@ -14,7 +14,7 @@ type RequireJWTAuth struct {
 	NextHandler http.Handler
 }
 
-func (a *RequireJWTAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (a RequireJWTAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.Logger.Info("RequireJWTAuth Exists Check")
 
 	ctx := r.Context()
