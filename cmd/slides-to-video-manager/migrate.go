@@ -60,7 +60,7 @@ var (
 					db.Model(&videosegment.VideoSegment{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "RESTRICT")
 					db.Model(&pdfslideimages.SlideAsset{}).AddForeignKey("pdf_slide_image_id", "pdf_slide_images(id)", "CASCADE", "RESTRICT")
 					db.Model(&acl.ACL{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "RESTRICT")
-					db.Model(&acl.ACL{}).AddForeignKey("user_id", "user(id)", "CASCADE", "RESTRICT")
+					db.Model(&acl.ACL{}).AddForeignKey("user_id", "users(id)", "CASCADE", "RESTRICT")
 					if db.Error != nil {
 						logger.Errorf("unable to migrate project table. %v", db.Error)
 					}
