@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
 
@@ -18,16 +19,30 @@ import (
 type CreateProject struct {
 	Logger       logger.Logger
 	ProjectStore project.Store
+	ACLStore     acl.Store
 }
 
 func (h CreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start Create Parent Item Handler")
 	defer h.Logger.Info("End Create Parent Item Handler")
 
+	ctx := r.Context()
+	userID := ctx.Value(userIDKey).(string)
+
 	item := project.New()
 	err := h.ProjectStore.Create(context.Background(), item)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to create project in datastore. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
+
+	acl := acl.New(item.ID, userID)
+	err = h.ACLStore.Create(context.Background(), acl)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to create acl control in datastore. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(generateErrorResp(errMsg)))
@@ -47,6 +62,9 @@ type UpdateProject struct {
 func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start Update Project API Handler")
 	defer h.Logger.Info("End Update Project API Handler")
+
+	ctx := r.Context()
+	userID := ctx.Value(userIDKey).(string)
 
 	projectID := mux.Vars(r)["project_id"]
 	rawReq, err := ioutil.ReadAll(r.Body)
@@ -84,7 +102,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedProject, err := h.ProjectStore.Update(context.Background(), projectID, "user-id", updaters...)
+	updatedProject, err := h.ProjectStore.Update(context.Background(), projectID, userID, updaters...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to update project item. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -107,8 +125,11 @@ func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Start Get Project API Handler")
 	defer h.Logger.Info("End Get Project API Handler")
 
+	ctx := r.Context()
+	userID := ctx.Value(userIDKey).(string)
+
 	projectID := mux.Vars(r)["project_id"]
-	project, err := h.ProjectStore.Get(context.Background(), projectID, "user-id")
+	project, err := h.ProjectStore.Get(context.Background(), projectID, userID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -133,6 +154,7 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer h.Logger.Info("End View All Parent Jobs API Handler")
 
 	ctx := r.Context()
+	userID := ctx.Value(userIDKey).(string)
 
 	rawOffset := r.URL.Query().Get("offset")
 	offset := 0
@@ -153,7 +175,7 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Limit    int               `json:"limit"`
 	}
 
-	projects, err := h.ProjectStore.GetAll(ctx, "user-id", limit, offset)
+	projects, err := h.ProjectStore.GetAll(ctx, userID, limit, offset)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
