@@ -37,20 +37,20 @@ func (h *Basic) Process(ctx context.Context, job JobDetails) error {
 		h.logger.Errorf("Error validating for struct. Err: %v", err)
 		return err
 	}
-	h.mgrClient.UpdateRunning(ctx, job.ID, job.RunningIdemKey)
+	h.mgrClient.UpdateRunning(ctx, job.AuthToken, job.ID, job.RunningIdemKey)
 
 	videosToBeCombined := ""
 	for _, videoID := range job.VideoIDs {
 		videoContent, err := h.blobStorage.Load(context.TODO(), videoID)
 		if err != nil {
-			h.mgrClient.FailedTask(ctx, job.ID, job.CompleteRecIdemKey)
+			h.mgrClient.FailedTask(ctx, job.AuthToken, job.ID, job.CompleteRecIdemKey)
 			return fmt.Errorf("Error while to download video. Error: %v. VideoID: %v", err, videoID)
 		}
 		defer os.Remove(videoID)
 
 		err = ioutil.WriteFile(videoID, videoContent, 777)
 		if err != nil {
-			h.mgrClient.FailedTask(ctx, job.ID, job.CompleteRecIdemKey)
+			h.mgrClient.FailedTask(ctx, job.AuthToken, job.ID, job.CompleteRecIdemKey)
 			return fmt.Errorf("Error while writing video content for specific video snippet file. Error: %v. VideoID: %v", err, videoID)
 		}
 		videosToBeCombined = videosToBeCombined + fmt.Sprintf("file %s\n", videoID)
@@ -61,14 +61,14 @@ func (h *Basic) Process(ctx context.Context, job JobDetails) error {
 	h.logger.Infof("Videos to be combined: %v", videosToBeCombined)
 	err = ioutil.WriteFile(combinedVideoListFileName, []byte(videosToBeCombined), 777)
 	if err != nil {
-		h.mgrClient.FailedTask(ctx, job.ID, job.CompleteRecIdemKey)
+		h.mgrClient.FailedTask(ctx, job.AuthToken, job.ID, job.CompleteRecIdemKey)
 		return fmt.Errorf("Error while combining videos. Error: %v", err)
 	}
 	defer os.Remove(combinedVideoListFileName)
 
 	err = combineVideo(combinedVideoListFileName, combinedVideoFileName)
 	if err != nil {
-		h.mgrClient.FailedTask(ctx, job.ID, job.CompleteRecIdemKey)
+		h.mgrClient.FailedTask(ctx, job.AuthToken, job.ID, job.CompleteRecIdemKey)
 		return fmt.Errorf("Error while combining videos. Error: %v", err)
 	}
 	defer os.Remove(combinedVideoFileName)
@@ -76,11 +76,11 @@ func (h *Basic) Process(ctx context.Context, job JobDetails) error {
 	videoContent, err := ioutil.ReadFile(combinedVideoFileName)
 	err = h.blobStorage.Save(context.TODO(), combinedVideoFileName, videoContent)
 	if err != nil {
-		h.mgrClient.FailedTask(ctx, job.ID, job.CompleteRecIdemKey)
+		h.mgrClient.FailedTask(ctx, job.AuthToken, job.ID, job.CompleteRecIdemKey)
 		return fmt.Errorf("Error while combining videos. Error: %v", err)
 	}
 
-	h.mgrClient.CompleteTask(ctx, job.ID, job.CompleteRecIdemKey, combinedVideoFileName)
+	h.mgrClient.CompleteTask(ctx, job.AuthToken, job.ID, job.CompleteRecIdemKey, combinedVideoFileName)
 
 	return nil
 }

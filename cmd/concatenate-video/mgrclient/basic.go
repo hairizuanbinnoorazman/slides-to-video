@@ -25,7 +25,7 @@ func NewBasic(l logger.Logger, endpoint string, cl *http.Client) basic {
 	}
 }
 
-func (b basic) UpdateRunning(ctx context.Context, projectID, idemKey string) error {
+func (b basic) UpdateRunning(ctx context.Context, authToken, projectID, idemKey string) error {
 	endpoint := b.baseEndpoint + "/project/" + projectID
 	type updateInput struct {
 		Status            string `json:"status"`
@@ -45,6 +45,8 @@ func (b basic) UpdateRunning(ctx context.Context, projectID, idemKey string) err
 		return err
 	}
 
+	req.Header.Add("Authorization", authToken)
+
 	resp, err := b.client.Do(req)
 	if err != nil {
 		return err
@@ -57,7 +59,7 @@ func (b basic) UpdateRunning(ctx context.Context, projectID, idemKey string) err
 	return nil
 }
 
-func (b basic) FailedTask(ctx context.Context, projectID, idemKey string) error {
+func (b basic) FailedTask(ctx context.Context, authToken, projectID, idemKey string) error {
 	endpoint := b.baseEndpoint + "/project/" + projectID
 	type updateInput struct {
 		Status             string `json:"status"`
@@ -77,6 +79,8 @@ func (b basic) FailedTask(ctx context.Context, projectID, idemKey string) error 
 		return err
 	}
 
+	req.Header.Add("Authorization", authToken)
+
 	resp, err := b.client.Do(req)
 	if err != nil {
 		return err
@@ -89,7 +93,7 @@ func (b basic) FailedTask(ctx context.Context, projectID, idemKey string) error 
 	return nil
 }
 
-func (b basic) CompleteTask(ctx context.Context, projectID, idemKey, videoOutputID string) error {
+func (b basic) CompleteTask(ctx context.Context, authToken, projectID, idemKey, videoOutputID string) error {
 	endpoint := b.baseEndpoint + "/project/" + projectID
 	type updateInput struct {
 		Status             string `json:"status"`
@@ -110,6 +114,8 @@ func (b basic) CompleteTask(ctx context.Context, projectID, idemKey, videoOutput
 	if err != nil {
 		return err
 	}
+
+	req.Header.Add("Authorization", authToken)
 
 	resp, err := b.client.Do(req)
 	if err != nil {
