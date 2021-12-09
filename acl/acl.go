@@ -47,7 +47,7 @@ type ACL struct {
 	DateModified time.Time  `json:"date_modified"`
 }
 
-func NewACL(projectID, userID string) ACL {
+func New(projectID, userID string) ACL {
 	aclID, _ := uuid.NewV4()
 	return ACL{
 		ID:           aclID.String(),
