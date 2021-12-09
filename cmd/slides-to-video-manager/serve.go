@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
 	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/handlers"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/imageimporter"
@@ -91,6 +92,7 @@ var (
 				var pdfSlideImagesStore pdfslideimages.Store
 				var userStore user.Store
 				var videoSegmentsStore videosegment.Store
+				var aclStore acl.Store
 				if cfg.Datastore.Type == googleDatastore {
 					datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 					if err != nil {
@@ -112,6 +114,7 @@ var (
 					pdfSlideImagesStore = pdfslideimages.NewMySQL(logger, db)
 					userStore = user.NewMySQL(logger, db)
 					videoSegmentsStore = videosegment.NewMySQL(logger, db)
+					aclStore = acl.NewMySQL(logger, db)
 				}
 
 				if projectStore == nil || pdfSlideImagesStore == nil || userStore == nil || videoSegmentsStore == nil {
@@ -180,6 +183,7 @@ var (
 					NextHandler: h.CreateProject{
 						Logger:       logger,
 						ProjectStore: projectStore,
+						ACLStore:     aclStore,
 					},
 				}).Methods("POST")
 				s.Handle("/projects", h.RequireJWTAuth{
@@ -198,9 +202,13 @@ var (
 						ProjectStore: projectStore,
 					},
 				}).Methods("GET")
-				s.Handle("/project/{project_id}", h.UpdateProject{
-					Logger:       logger,
-					ProjectStore: projectStore,
+				s.Handle("/project/{project_id}", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.UpdateProject{
+						Logger:       logger,
+						ProjectStore: projectStore,
+					},
 				}).Methods("PUT")
 				s.Handle("/project/{project_id}:concat", h.StartVideoConcat{
 					Logger:        logger,
