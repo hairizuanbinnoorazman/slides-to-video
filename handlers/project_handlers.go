@@ -217,6 +217,7 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	projectID := mux.Vars(r)["project_id"]
 	userID := ctx.Value(userIDKey).(string)
+	authToken := r.Header.Get("Authorization")
 
 	project, err := h.ProjectStore.Get(ctx, projectID, userID)
 	if err != nil {
@@ -236,7 +237,7 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.VideoConcater.Start(context.Background(), projectID, videoSegmentIDs)
+	err = h.VideoConcater.Start(context.Background(), projectID, userID, authToken, videoSegmentIDs)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to start async video generation. Error: %v", err)
 		h.Logger.Error(errMsg)
