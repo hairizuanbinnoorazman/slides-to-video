@@ -53,9 +53,13 @@ func Test_mysql_ops(t *testing.T) {
 	db.AutoMigrate(&pdfslideimages.SlideAsset{})
 	db.AutoMigrate(&videosegment.VideoSegment{})
 	db.AutoMigrate(&Project{})
-	db.Model(&pdfslideimages.PDFSlideImages{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "CASCADE")
+	db.Model(&pdfslideimages.PDFSlideImages{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "RESTRICT")
+	db.Model(&videosegment.VideoSegment{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "RESTRICT")
+	db.Model(&pdfslideimages.SlideAsset{}).AddForeignKey("pdf_slide_image_id", "pdf_slide_images(id)", "CASCADE", "RESTRICT")
+	db.Model(&acl.ACL{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "RESTRICT")
 	a := mysql{
-		db: db,
+		db:     db,
+		logger: logger.LoggerForTests{Tester: t},
 	}
 	p := Project{
 		ID:           "1234",
@@ -66,18 +70,6 @@ func Test_mysql_ops(t *testing.T) {
 		ID:           "1235",
 		DateCreated:  time.Now(),
 		DateModified: time.Now(),
-	}
-
-	acl1 := acl.NewACL("1234", "1111")
-	acl2 := acl.NewACL("1235", "1111")
-	aclDB := acl.NewMySQL(logger.LoggerForTests{Tester: t}, db)
-	err = aclDB.Create(context.TODO(), acl1)
-	if err != nil {
-		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
-	}
-	err = aclDB.Create(context.TODO(), acl2)
-	if err != nil {
-		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
 	}
 
 	pdfItem := pdfslideimages.PDFSlideImages{
@@ -93,6 +85,18 @@ func Test_mysql_ops(t *testing.T) {
 		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
 	}
 	err = a.Create(context.TODO(), p2)
+	if err != nil {
+		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
+	}
+
+	acl1 := acl.NewACL("1234", "1111")
+	acl2 := acl.NewACL("1235", "1111")
+	aclDB := acl.NewMySQL(logger.LoggerForTests{Tester: t}, db)
+	err = aclDB.Create(context.TODO(), acl1)
+	if err != nil {
+		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
+	}
+	err = aclDB.Create(context.TODO(), acl2)
 	if err != nil {
 		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
 	}
@@ -127,7 +131,7 @@ func Test_mysql_ops(t *testing.T) {
 	}
 
 	// Get all records
-	projects, err := a.GetAll(context.TODO(), "", 10, 0)
+	projects, err := a.GetAll(context.TODO(), "1111", 10, 0)
 	if err != nil {
 		t.Fatalf("Unexpected error when retrieving all records. Err: %v", err)
 	}
@@ -136,7 +140,7 @@ func Test_mysql_ops(t *testing.T) {
 	}
 
 	// Update a single record
-	p, err = a.Update(context.TODO(), "1235", "", recreateIdemKeys())
+	p, err = a.Update(context.TODO(), "1235", "1111", recreateIdemKeys())
 	if err != nil {
 		t.Fatalf("Unexpected error when updating record. Err: %v", err)
 	}
@@ -145,7 +149,7 @@ func Test_mysql_ops(t *testing.T) {
 	}
 
 	// Update status
-	p, err = a.Update(context.TODO(), "1235", "", setStatus(running))
+	p, err = a.Update(context.TODO(), "1235", "1111", setStatus(running))
 	if err != nil {
 		t.Fatalf("Unexpected error when updating record. Err: %v", err)
 	}
@@ -163,13 +167,13 @@ func Test_mysql_ops(t *testing.T) {
 	}
 
 	// Delete single record
-	err = a.Delete(context.TODO(), "1234", "")
+	err = a.Delete(context.TODO(), "1234", "1111")
 	if err != nil {
 		t.Fatalf("Unexpected error when deleting record. Err: %v", err)
 	}
 
 	// Get all records
-	projects, err = a.GetAll(context.TODO(), "", 10, 0)
+	projects, err = a.GetAll(context.TODO(), "1111", 10, 0)
 	if err != nil {
 		t.Fatalf("Unexpected error when retrieving all records. Err: %v", err)
 	}

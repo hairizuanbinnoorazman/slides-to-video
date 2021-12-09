@@ -68,8 +68,9 @@ func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, erro
 
 func (m mysql) GetAll(ctx context.Context, UserID string, Limit, After int) ([]Project, error) {
 	var projects []Project
-	result := m.db.Order("date_created desc").Limit(Limit).Offset(After).Find(&projects)
-	// result := m.db.Model(&acl.ACL{}).Where("user_id = ?", UserID).Joins("left join projects on acl.project_id = projects.id").Find(&projects)
+	// result := m.db.Order("date_created desc").Limit(Limit).Offset(After).Find(&projects)
+	result := m.db.Model(&acl.ACL{}).Select("acls.project_id as id, projects.date_created, projects.date_modified, projects.status").Where("user_id = ?", UserID).Joins("left join projects on acls.project_id = projects.id").Order("date_created desc").Limit(Limit).Offset(After).Scan(&projects)
+	m.logger.Error(projects)
 	if result.Error != nil {
 		return []Project{}, result.Error
 	}
@@ -78,7 +79,12 @@ func (m mysql) GetAll(ctx context.Context, UserID string, Limit, After int) ([]P
 
 func (m mysql) Update(ctx context.Context, ID string, UserID string, setters ...func(*Project) error) (Project, error) {
 	var p Project
-	result := m.db.Where("id = ?", ID).First(&p)
+	a := acl.ACL{}
+	result := m.db.Where("user_id = ? and project_id = ?", UserID, ID).First(&a)
+	if result.Error != nil {
+		return p, result.Error
+	}
+	result = m.db.Where("id = ?", ID).First(&p)
 	if result.Error != nil {
 		return Project{}, result.Error
 	}
