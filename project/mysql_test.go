@@ -68,6 +68,18 @@ func Test_mysql_ops(t *testing.T) {
 		DateModified: time.Now(),
 	}
 
+	acl1 := acl.NewACL("1234", "1111")
+	acl2 := acl.NewACL("1235", "1111")
+	aclDB := acl.NewMySQL(logger.LoggerForTests{Tester: t}, db)
+	err = aclDB.Create(context.TODO(), acl1)
+	if err != nil {
+		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
+	}
+	err = aclDB.Create(context.TODO(), acl2)
+	if err != nil {
+		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
+	}
+
 	pdfItem := pdfslideimages.PDFSlideImages{
 		ID:          "1234",
 		ProjectID:   "1234",
@@ -91,7 +103,7 @@ func Test_mysql_ops(t *testing.T) {
 	}
 
 	// Single get of record
-	retrieveProject, err := a.Get(context.TODO(), "1234", "")
+	retrieveProject, err := a.Get(context.TODO(), "1234", "1111")
 	if err != nil {
 		t.Fatalf("Failed to retrieve record from mysql database. Err: %v", err)
 	}
@@ -100,6 +112,18 @@ func Test_mysql_ops(t *testing.T) {
 	}
 	if len(retrieveProject.PDFSlideImages) == 0 {
 		t.Fatalf("Unexpected - pdf slide images are not fetched")
+	}
+
+	// Invalid user id
+	_, err = a.Get(context.TODO(), "1234", "9999")
+	if err == nil {
+		t.Fatalf("Expected that record will not be found - invalid userid passed in")
+	}
+
+	// Invalid project id
+	_, err = a.Get(context.TODO(), "9999", "1111")
+	if err == nil {
+		t.Fatalf("Expected that record will not be found - invalid userid passed in")
 	}
 
 	// Get all records
@@ -130,7 +154,7 @@ func Test_mysql_ops(t *testing.T) {
 	}
 
 	// Grab updated record and check status
-	p, err = a.Get(context.TODO(), "1235", "")
+	p, err = a.Get(context.TODO(), "1235", "1111")
 	if err != nil {
 		t.Fatalf("Unexpected error when getting record. Err: %v", err)
 	}

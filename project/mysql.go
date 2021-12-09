@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
@@ -33,12 +34,12 @@ func (m mysql) Create(ctx context.Context, e Project) error {
 
 func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, error) {
 	p := Project{}
-	// a := acl.ACL{}
-	// result := m.db.Where("user_id = ? and project_id = ?", UserID, ID).First(&a)
-	// if result.Error != nil {
-	// 	return p, result.Error
-	// }
-	result := m.db.Where("id = ?", ID).First(&p)
+	a := acl.ACL{}
+	result := m.db.Where("user_id = ? and project_id = ?", UserID, ID).First(&a)
+	if result.Error != nil {
+		return p, result.Error
+	}
+	result = m.db.Where("id = ?", ID).First(&p)
 	if result.Error != nil {
 		return p, result.Error
 	}
