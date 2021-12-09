@@ -89,8 +89,8 @@ func Test_mysql_ops(t *testing.T) {
 		t.Fatalf("Failed to create record in mysql database. Err: %v", err)
 	}
 
-	acl1 := acl.NewACL("1234", "1111")
-	acl2 := acl.NewACL("1235", "1111")
+	acl1 := acl.New("1234", "1111")
+	acl2 := acl.New("1235", "1111")
 	aclDB := acl.NewMySQL(logger.LoggerForTests{Tester: t}, db)
 	err = aclDB.Create(context.TODO(), acl1)
 	if err != nil {
