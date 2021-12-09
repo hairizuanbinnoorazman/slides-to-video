@@ -21,19 +21,20 @@ func NewBasic(q queue.Queue, s project.Store) basic {
 	}
 }
 
-func (b basic) Start(ctx context.Context, projectID string, videoSegmentList []string) error {
+func (b basic) Start(ctx context.Context, projectID string, userID string, authToken string, videoSegmentList []string) error {
 	if len(videoSegmentList) == 0 {
 		return fmt.Errorf("No video segments to combine to single output video")
 	}
 
 	updaters, _ := project.RegenerateIdemKeys()
-	newProject, err := b.projectStore.Update(ctx, projectID, "", updaters...)
+	newProject, err := b.projectStore.Update(ctx, projectID, userID, updaters...)
 	if err != nil {
 		return err
 	}
 
 	values := map[string]interface{}{
 		"id":                    projectID,
+		"auth_token":            authToken,
 		"video_segments":        videoSegmentList,
 		"idem_key_running":      newProject.SetRunningIdemKey,
 		"idem_key_complete_rec": newProject.CompleteRecIdemKey,
