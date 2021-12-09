@@ -216,8 +216,9 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	projectID := mux.Vars(r)["project_id"]
+	userID := ctx.Value(userIDKey).(string)
 
-	project, err := h.ProjectStore.Get(ctx, projectID, "")
+	project, err := h.ProjectStore.Get(ctx, projectID, userID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
 		h.Logger.Error(errMsg)
