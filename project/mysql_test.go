@@ -6,8 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -26,7 +28,7 @@ func databaseConnProvider(port int) *gorm.DB {
 func Test_mysql_ops(t *testing.T) {
 	// Following command is similar to this docker command:
 	// docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test-database -e MYSQL_USER=user -e MYSQL_PASSWORD=password -d -p 3306:3306 mysql:5.7
-	req, err := testcontainers.GenericContainer(context.TODO(), testcontainers.GenericContainerRequest{
+	req, _ := testcontainers.GenericContainer(context.TODO(), testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image: "mysql:5.7",
 			Name:  "some-mysql",
@@ -46,7 +48,10 @@ func Test_mysql_ops(t *testing.T) {
 	port, err := req.MappedPort(context.TODO(), "3306")
 
 	db := databaseConnProvider(port.Int())
+	db.AutoMigrate(&acl.ACL{})
 	db.AutoMigrate(&pdfslideimages.PDFSlideImages{})
+	db.AutoMigrate(&pdfslideimages.SlideAsset{})
+	db.AutoMigrate(&videosegment.VideoSegment{})
 	db.AutoMigrate(&Project{})
 	db.Model(&pdfslideimages.PDFSlideImages{}).AddForeignKey("project_id", "projects(id)", "CASCADE", "CASCADE")
 	a := mysql{
