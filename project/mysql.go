@@ -33,6 +33,11 @@ func (m mysql) Create(ctx context.Context, e Project) error {
 
 func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, error) {
 	p := Project{}
+	// a := acl.ACL{}
+	// result := m.db.Where("user_id = ? and project_id = ?", UserID, ID).First(&a)
+	// if result.Error != nil {
+	// 	return p, result.Error
+	// }
 	result := m.db.Where("id = ?", ID).First(&p)
 	if result.Error != nil {
 		return p, result.Error
@@ -63,6 +68,7 @@ func (m mysql) Get(ctx context.Context, ID string, UserID string) (Project, erro
 func (m mysql) GetAll(ctx context.Context, UserID string, Limit, After int) ([]Project, error) {
 	var projects []Project
 	result := m.db.Order("date_created desc").Limit(Limit).Offset(After).Find(&projects)
+	// result := m.db.Model(&acl.ACL{}).Where("user_id = ?", UserID).Joins("left join projects on acl.project_id = projects.id").Find(&projects)
 	if result.Error != nil {
 		return []Project{}, result.Error
 	}
