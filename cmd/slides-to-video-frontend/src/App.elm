@@ -17,7 +17,7 @@ import File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Http
+import Http exposing (Error, Header)
 import Json.Decode as Decode exposing (Decoder, decodeString, float, int, list, null, string)
 import Json.Decode.Pipeline as Pipeline
 import Json.Encode as Encode
@@ -158,6 +158,7 @@ type Msg
     | NavbarMsg Navbar.State
     | GotFiles (List File)
     | TemporaryResp (Result Http.Error String)
+    | EmptyRedirectResponse (Result Http.Error ())
     | EmptyResponse (Result Http.Error ())
     | LoginResponse (Result Http.Error UserToken)
     | ProjectsResponse (Result Http.Error ProjectList)
@@ -170,6 +171,7 @@ type Msg
     | PasswordAgainInput String
     | RegisterUserCredentials
     | SubmitLoginCredentials
+    | CreateNewProject
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -234,10 +236,18 @@ update msg model =
         UpdateScriptTextArea scriptText ->
             ( { model | script = scriptText }, Cmd.none )
 
-        EmptyResponse result ->
+        EmptyRedirectResponse result ->
             case result of
                 Ok a ->
                     ( model, Nav.pushUrl model.key "/" )
+
+                Err a ->
+                    ( { model | alertVisibility = Alert.shown }, Cmd.none )
+
+        EmptyResponse result ->
+            case result of
+                Ok a ->
+                    ( model, Cmd.none )
 
                 Err a ->
                     ( { model | alertVisibility = Alert.shown }, Cmd.none )
@@ -263,6 +273,9 @@ update msg model =
 
                 Browser.External href ->
                     ( model, Nav.load href )
+
+        CreateNewProject ->
+            ( model, apiCreateProject model.serverSettings.serverEndpoint model.userToken )
 
         UrlChanged url ->
             case model.userToken of
@@ -310,7 +323,7 @@ update msg model =
 
                         Projects ->
                             ( { model | url = url, page = urlToPage url }
-                            , Cmd.batch [ apiListProjects model.serverSettings.serverEndpoint ]
+                            , Cmd.batch [ apiListProjects model.serverSettings.serverEndpoint model.userToken ]
                             )
 
                         Project projectID ->
@@ -436,6 +449,7 @@ userTokenDecoder =
 
 type alias SingleProject =
     { id : String
+    , name : String
     , dateCreated : String
     , dateModified : String
     , status : String
@@ -447,6 +461,7 @@ singleProjectDecoder : Decoder SingleProject
 singleProjectDecoder =
     Decode.succeed SingleProject
         |> Pipeline.required "id" string
+        |> Pipeline.required "name" string
         |> Pipeline.required "date_created" string
         |> Pipeline.required "date_modified" string
         |> Pipeline.required "status" string
@@ -547,13 +562,13 @@ registerPage model =
 
 dashboardPage : Html Msg
 dashboardPage =
-    div [] [ text "Dashboard Page" ]
+    div [] [ h1 [] [ text "Dashboard Page" ] ]
 
 
 singleProjectRow : SingleProject -> Table.Row msg
 singleProjectRow singleProject =
     Table.tr []
-        [ Table.td [] [ text singleProject.id ]
+        [ Table.td [] [ text singleProject.name ]
         , Table.td [] [ text singleProject.dateCreated ]
         , Table.td [] [ text singleProject.dateModified ]
         , Table.td [] [ text singleProject.status ]
@@ -579,13 +594,14 @@ projectsPage model =
                     ]
                 |> Alert.view model.alertVisibility
             , h2 [] [ text "Projects" ]
+            , Button.button [ Button.primary ] [ text "Create Project" ]
             , if List.length model.projects.projects == 0 then
                 p [] [ text "No projects found" ]
 
               else
                 Table.simpleTable
                     ( Table.simpleThead
-                        [ Table.th [] [ text "ID" ]
+                        [ Table.th [] [ text "Name" ]
                         , Table.th [] [ text "Date Created" ]
                         , Table.th [] [ text "Last Modified" ]
                         , Table.th [] [ text "Status" ]
@@ -637,12 +653,12 @@ createUser mgrURL userEmail userPassword =
         , headers = []
         , timeout = Nothing
         , tracker = Nothing
-        , expect = Http.expectWhatever EmptyResponse
+        , expect = Http.expectWhatever EmptyRedirectResponse
         }
 
 
-apiListProjects : String -> Cmd Msg
-apiListProjects mgrURL =
+apiListProjects : String -> String -> Cmd Msg
+apiListProjects mgrURL apiToken =
     let
         url =
             mgrURL ++ "/api/v1/projects"
@@ -651,10 +667,31 @@ apiListProjects mgrURL =
         { body = Http.emptyBody
         , method = "GET"
         , url = url
-        , headers = []
+        , headers =
+            [ Http.header "Authorization" ("Bearer " ++ apiToken)
+            ]
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson ProjectsResponse projectListDecoder
+        }
+
+
+apiCreateProject : String -> String -> Cmd Msg
+apiCreateProject mgrURL apiToken =
+    let
+        url =
+            mgrURL ++ "/api/v1/project"
+    in
+    Http.request
+        { body = Http.emptyBody
+        , method = "POST"
+        , url = url
+        , headers =
+            [ Http.header "Authorization" ("Bearer " ++ apiToken)
+            ]
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectWhatever EmptyResponse
         }
 
 
