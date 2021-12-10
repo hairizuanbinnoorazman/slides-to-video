@@ -245,12 +245,14 @@ def test_list_projects(base_endpoint, create_user, login, create_project):
     create_user(base_endpoint, "user2", "TestPassword123")
     token = login(base_endpoint, "user2", "TestPassword123")
     create_project(base_endpoint, token)
+    create_project(base_endpoint, token)
+    create_project(base_endpoint, token)
     endpoint = base_endpoint + "/projects"
     resp = requests.get(endpoint, headers={"Authorization":token})
     assert resp.status_code == 200
 
     project_list = resp.json()
-    assert len(project_list["projects"]) == 1
+    assert len(project_list["projects"]) == 3
 
 
 def test_add_pdf_slides(base_endpoint, create_user, login, create_project, create_pdfslideimages):
