@@ -81,6 +81,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		VideoOutputID      string `json:"video_output_id"`
 		SetRunningIdemKey  string `json:"idem_key_running"`
 		CompleteRecIdemKey string `json:"idem_key_complete_rec"`
+		Name               string `json:"name"`
 	}
 
 	req := updateProjectReq{}
@@ -93,7 +94,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updaters, err := project.GetUpdaters(req.SetRunningIdemKey, req.CompleteRecIdemKey, req.Status, req.VideoOutputID)
+	updaters, err := project.GetUpdaters(req.Name, req.SetRunningIdemKey, req.CompleteRecIdemKey, req.Status, req.VideoOutputID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to create the required updaters to update project. Error: %v", err)
 		h.Logger.Error(errMsg)

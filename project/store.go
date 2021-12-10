@@ -16,7 +16,7 @@ type Store interface {
 	Delete(ctx context.Context, ID string, UserID string) error
 }
 
-func GetUpdaters(runningIdemKey, completeRecIdemKey, state, videoOutputID string) ([]func(*Project) error, error) {
+func GetUpdaters(name, runningIdemKey, completeRecIdemKey, state, videoOutputID string) ([]func(*Project) error, error) {
 	var s status
 	switch state {
 	case "running":
@@ -25,19 +25,20 @@ func GetUpdaters(runningIdemKey, completeRecIdemKey, state, videoOutputID string
 		s = completed
 	case "error":
 		s = errorStatus
-	default:
-		return []func(*Project) error{}, fmt.Errorf("Bad status is passed into it")
 	}
 	var setters []func(*Project) error
+	if name != "" {
+		setters = append(setters, setName(name))
+	}
 	if s == running && runningIdemKey == "" {
-		return setters, fmt.Errorf("No IdemKey passed to change the status to running state")
+		return setters, fmt.Errorf("no IdemKey passed to change the status to running state")
 	}
 	if s == errorStatus && completeRecIdemKey == "" || s == completed && completeRecIdemKey == "" {
-		return setters, fmt.Errorf("No CompleteRec IdemKey passed to change status to error/completed")
+		return setters, fmt.Errorf("no CompleteRec IdemKey passed to change status to error/completed")
 	}
 	if s == completed {
 		if videoOutputID == "" || !strings.Contains(videoOutputID, ".mp4") {
-			return setters, fmt.Errorf("Empty video output id/invalid video output id")
+			return setters, fmt.Errorf("empty video output id/invalid video output id")
 		}
 	}
 	if s == running && runningIdemKey != "" {
@@ -52,7 +53,17 @@ func GetUpdaters(runningIdemKey, completeRecIdemKey, state, videoOutputID string
 		setters = append(setters, setStatus(s), clearCompleteRecIdemKey(completeRecIdemKey), setVideoOutputID(videoOutputID))
 		return setters, nil
 	}
-	return setters, fmt.Errorf("Unexpected issue found")
+	if len(setters) > 0 {
+		return setters, nil
+	}
+	return setters, fmt.Errorf("unexpected issue found")
+}
+
+func setName(name string) func(*Project) error {
+	return func(a *Project) error {
+		a.Name = name
+		return nil
+	}
 }
 
 func setVideoOutputID(videoOutputID string) func(*Project) error {

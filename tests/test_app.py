@@ -31,6 +31,7 @@ def create_project():
         project = resp.json()
         assert project["id"] != ""
         assert project["status"] == "created"
+        assert project["name"] != ""
         return project
     return create_project
 
@@ -239,6 +240,18 @@ def test_get_project(base_endpoint, create_user, login, create_project, get_proj
     project = get_project(base_endpoint, project["id"], token)
     assert project["id"] != ""
     assert project["status"] == "created"
+
+
+def test_update_project(base_endpoint, create_user, login, create_project, get_project, update_project):
+    create_user(base_endpoint, "user1-1", "TestPassword123")
+    token = login(base_endpoint, "user1-1", "TestPassword123")
+    project = create_project(base_endpoint, token)
+    project = get_project(base_endpoint, project["id"], token)
+    assert project["name"] != ""
+    project = update_project(base_endpoint, project["id"], {"name": "new-name"} ,token)
+    assert project["id"] != ""
+    assert project["status"] == "created"
+    assert project["name"] == "new-name"
 
 
 def test_list_projects(base_endpoint, create_user, login, create_project):

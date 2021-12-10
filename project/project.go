@@ -26,6 +26,7 @@ var (
 
 type Project struct {
 	ID                 string                          `json:"id" datastore:"-" gorm:"type:varchar(40);primary_key"`
+	Name               string                          `json:"name" gorm:"type:varchar(250)"`
 	DateCreated        time.Time                       `json:"date_created"`
 	DateModified       time.Time                       `json:"date_modified"`
 	Status             status                          `json:"status" gorm:"type:varchar(40)"`
@@ -42,6 +43,7 @@ func New() Project {
 	currentTime := time.Now()
 	return Project{
 		ID:           projectID.String(),
+		Name:         "default",
 		DateCreated:  currentTime,
 		DateModified: currentTime,
 		Status:       created,
