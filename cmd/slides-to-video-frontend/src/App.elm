@@ -462,6 +462,7 @@ type alias SingleProject =
     , dateCreated : String
     , dateModified : String
     , status : String
+    , pdfSlideImages : List PDFSlideImages
     , videoOutputID : String
     }
 
@@ -474,6 +475,7 @@ singleProjectDecoder =
         |> Pipeline.required "date_created" string
         |> Pipeline.required "date_modified" string
         |> Pipeline.required "status" string
+        |> Pipeline.optional "pdfSlideImages" (Decode.list pdfSlideImagesDecoder) []
         |> Pipeline.optional "video_output_id" string ""
 
 
@@ -492,6 +494,40 @@ projectListDecoder =
         |> Pipeline.required "limit" int
         |> Pipeline.required "offset" int
         |> Pipeline.required "total" int
+
+
+type alias SlideAsset =
+    { imageID : String
+    , order : Int
+    }
+
+
+slideAssetDecoder : Decoder SlideAsset
+slideAssetDecoder =
+    Decode.succeed SlideAsset
+        |> Pipeline.required "image_id" string
+        |> Pipeline.required "order" int
+
+
+type alias PDFSlideImages =
+    { id : String
+    , projectID : String
+    , pdfFile : String
+    , dateCreated : String
+    , slideAssets : List SlideAsset
+    , status : String
+    }
+
+
+pdfSlideImagesDecoder : Decoder PDFSlideImages
+pdfSlideImagesDecoder =
+    Decode.succeed PDFSlideImages
+        |> Pipeline.required "id" string
+        |> Pipeline.required "project_id" string
+        |> Pipeline.required "pdf_file" string
+        |> Pipeline.required "date_created" string
+        |> Pipeline.required "slide_assets" (Decode.list slideAssetDecoder)
+        |> Pipeline.required "status" string
 
 
 indexPage : String -> String -> Html Msg
