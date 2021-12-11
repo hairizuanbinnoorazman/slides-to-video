@@ -18,7 +18,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http exposing (Error, Header)
-import Json.Decode as Decode exposing (Decoder, decodeString, float, int, list, null, string)
+import Json.Decode as Decode exposing (Decoder, bool, decodeString, float, int, list, null, string)
 import Json.Decode.Pipeline as Pipeline
 import Json.Encode as Encode
 import Ports
@@ -463,6 +463,7 @@ type alias SingleProject =
     , dateModified : String
     , status : String
     , pdfSlideImages : List PDFSlideImages
+    , videoSegments : List VideoSegment
     , videoOutputID : String
     }
 
@@ -475,7 +476,8 @@ singleProjectDecoder =
         |> Pipeline.required "date_created" string
         |> Pipeline.required "date_modified" string
         |> Pipeline.required "status" string
-        |> Pipeline.optional "pdfSlideImages" (Decode.list pdfSlideImagesDecoder) []
+        |> Pipeline.optional "pdf_slide_images" (Decode.list pdfSlideImagesDecoder) []
+        |> Pipeline.optional "video_segments" (Decode.list videoSegmentDecoder) []
         |> Pipeline.optional "video_output_id" string ""
 
 
@@ -527,6 +529,31 @@ pdfSlideImagesDecoder =
         |> Pipeline.required "pdf_file" string
         |> Pipeline.required "date_created" string
         |> Pipeline.required "slide_assets" (Decode.list slideAssetDecoder)
+        |> Pipeline.required "status" string
+
+
+type alias VideoSegment =
+    { id : String
+    , projectID : String
+    , videoFile : String
+    , dateCreated : String
+    , dateModified : String
+    , order : Int
+    , hidden : Bool
+    , status : String
+    }
+
+
+videoSegmentDecoder : Decoder VideoSegment
+videoSegmentDecoder =
+    Decode.succeed VideoSegment
+        |> Pipeline.required "id" string
+        |> Pipeline.required "project_id" string
+        |> Pipeline.required "video_file" string
+        |> Pipeline.required "date_created" string
+        |> Pipeline.required "date_modified" string
+        |> Pipeline.required "order" int
+        |> Pipeline.required "hidden" bool
         |> Pipeline.required "status" string
 
 
