@@ -172,6 +172,7 @@ type Msg
     | RegisterUserCredentials
     | SubmitLoginCredentials
     | CreateNewProject
+    | CreateProjectResponse (Result Http.Error SingleProject)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -248,6 +249,14 @@ update msg model =
             case result of
                 Ok a ->
                     ( model, Cmd.none )
+
+                Err a ->
+                    ( { model | alertVisibility = Alert.shown }, Cmd.none )
+
+        CreateProjectResponse result ->
+            case result of
+                Ok a ->
+                    ( model, Nav.pushUrl model.key ("/projects/" ++ a.id) )
 
                 Err a ->
                     ( { model | alertVisibility = Alert.shown }, Cmd.none )
@@ -594,7 +603,7 @@ projectsPage model =
                     ]
                 |> Alert.view model.alertVisibility
             , h2 [] [ text "Projects" ]
-            , Button.button [ Button.primary ] [ text "Create Project" ]
+            , Button.button [ Button.primary, Button.onClick CreateNewProject ] [ text "Create Project" ]
             , if List.length model.projects.projects == 0 then
                 p [] [ text "No projects found" ]
 
@@ -616,7 +625,10 @@ projectsPage model =
 
 singleProjectPage : Html Msg
 singleProjectPage =
-    div [] [ text "Single Project Page" ]
+    div []
+        [ h1 [] [ text "Single Project Page" ]
+        , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
+        ]
 
 
 filesDecoder : Decoder (List File)
@@ -691,7 +703,51 @@ apiCreateProject mgrURL apiToken =
             ]
         , timeout = Nothing
         , tracker = Nothing
-        , expect = Http.expectWhatever EmptyResponse
+        , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
+        }
+
+
+apiUpdateProject : String -> String -> String -> String -> Cmd Msg
+apiUpdateProject mgrURL apiToken projectID projectName =
+    let
+        url =
+            mgrURL ++ "/api/v1/project/" ++ projectID
+
+        body =
+            Http.jsonBody <|
+                Encode.object
+                    [ ( "name", Encode.string projectName )
+                    ]
+    in
+    Http.request
+        { body = body
+        , method = "PUT"
+        , url = url
+        , headers =
+            [ Http.header "Authorization" ("Bearer " ++ apiToken)
+            ]
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
+        }
+
+
+apiUploadPDFSlides : String -> String -> String -> List File -> Cmd Msg
+apiUploadPDFSlides mgrURL apiToken projectID files =
+    let
+        url =
+            mgrURL ++ "/api/v1/project/" ++ projectID ++ "/pdfslideimages"
+    in
+    Http.request
+        { body = Http.multipartBody (List.map (Http.filePart "myfile") files)
+        , method = "POST"
+        , url = url
+        , headers =
+            [ Http.header "Authorization" ("Bearer " ++ apiToken)
+            ]
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
         }
 
 
