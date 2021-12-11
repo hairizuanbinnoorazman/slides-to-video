@@ -14,12 +14,15 @@ import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
 import Browser
 import Browser.Navigation as Nav
+import Bytes
+import Bytes.Decode
 import Css.Global exposing (path)
 import File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http exposing (Error, Header)
+import Image
 import Json.Decode as Decode exposing (Decoder, bool, decodeString, float, int, list, null, string)
 import Json.Decode.Pipeline as Pipeline
 import Json.Encode as Encode
@@ -201,6 +204,7 @@ type Msg
     | CreateNewProject
     | CreateProjectResponse (Result Http.Error SingleProject)
     | GetProjectResponse (Result Http.Error SingleProject)
+    | GotImage (Result Http.Error (Maybe Image.Image))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -297,6 +301,14 @@ update msg model =
                 Err zzz ->
                     ( { model | alertVisibility = Alert.shown }, Cmd.none )
 
+        GotImage result ->
+            case result of
+                Ok items ->
+                    ( model, Cmd.none )
+
+                Err zzz ->
+                    ( model, Cmd.none )
+
         GotFiles files ->
             ( { model | files = files }, Cmd.none )
 
@@ -317,7 +329,17 @@ update msg model =
         GetProjectResponse result ->
             case result of
                 Ok p ->
-                    ( { model | singleProject = p }, Cmd.none )
+                    let
+                        moddedImageReq =
+                            moddedAPIGetImageAsset model.serverSettings.serverEndpoint model.userToken p.id
+
+                        imageIDs =
+                            List.map .imageID p.videoSegments
+
+                        imageReqs =
+                            List.map moddedImageReq imageIDs
+                    in
+                    ( { model | singleProject = p }, Cmd.batch imageReqs )
 
                 Err _ ->
                     ( model, Cmd.none )
@@ -373,7 +395,9 @@ update msg model =
 
                         Project projectID ->
                             ( { model | url = url, page = urlToPage url }
-                            , Cmd.batch [ apiGetProject model.serverSettings.serverEndpoint model.userToken projectID ]
+                            , Cmd.batch
+                                [ apiGetProject model.serverSettings.serverEndpoint model.userToken projectID
+                                ]
                             )
 
                         Dashboard token ->
@@ -913,6 +937,55 @@ apiUploadPDFSlides mgrURL apiToken projectID files =
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
+        }
+
+
+type alias FullImageResponse =
+    { imageID : String
+    , image : Maybe Image.Image
+    }
+
+
+decodeBytesToImage : Http.Response Bytes.Bytes -> Result Http.Error (Maybe Image.Image)
+decodeBytesToImage response =
+    case response of
+        Http.GoodStatus_ _ body ->
+            Ok <| Image.decode body
+
+        Http.BadUrl_ url ->
+            Err (Http.BadUrl url)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ metadata _ ->
+            Err (Http.BadStatus metadata.statusCode)
+
+
+moddedAPIGetImageAsset : String -> String -> String -> (String -> Cmd Msg)
+moddedAPIGetImageAsset mgrURL apiToken projectID =
+    apiGetImageAsset mgrURL apiToken projectID
+
+
+apiGetImageAsset : String -> String -> String -> String -> Cmd Msg
+apiGetImageAsset mgrURL apiToken projectID imageID =
+    let
+        url =
+            mgrURL ++ "/api/v1/project/" ++ projectID ++ "/image/" ++ imageID
+    in
+    Http.request
+        { body = Http.emptyBody
+        , method = "GET"
+        , url = url
+        , headers =
+            [ Http.header "Authorization" ("Bearer " ++ apiToken)
+            ]
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectBytesResponse GotImage decodeBytesToImage
         }
 
 
