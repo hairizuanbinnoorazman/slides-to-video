@@ -38,9 +38,7 @@ make format
     - Editor - Can edit project, export project
     - Viewer - Can view project
   - Add Project Name to make it easier to reference for a person
-  - Query by user
 - Add Frontend for Integration
-  - Create new project
   - Process and generate video
   - Create dashboard on per user basis
 - User + ACL model integration (App-managed)
