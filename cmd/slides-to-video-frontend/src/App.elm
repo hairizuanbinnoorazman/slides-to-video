@@ -3,6 +3,8 @@ module App exposing (Flags, Model, Msg(..), init, main, subscriptions, update, v
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.CDN as CDN
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Form.Textarea as Textarea
@@ -68,8 +70,7 @@ type alias Model =
     , userToken : String
     , userDetails : UserDetails
     , projects : ProjectList
-
-    -- , singleProject : SingleProject
+    , singleProject : SingleProject
     }
 
 
@@ -123,6 +124,9 @@ init flags url key =
         emptyUserDetails =
             UserDetails "" "" ""
 
+        emptySingleProject =
+            SingleProject "" "" "" "" "" [] [] ""
+
         initialAppState =
             { key = key
             , url = url
@@ -135,6 +139,7 @@ init flags url key =
             , userToken = ""
             , userDetails = emptyUserDetails
             , projects = emptyProjectList
+            , singleProject = emptySingleProject
             }
     in
     case flags.token of
@@ -195,6 +200,7 @@ type Msg
     | SubmitLoginCredentials
     | CreateNewProject
     | CreateProjectResponse (Result Http.Error SingleProject)
+    | GetProjectResponse (Result Http.Error SingleProject)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -277,10 +283,10 @@ update msg model =
 
         CreateProjectResponse result ->
             case result of
-                Ok a ->
-                    ( model, Nav.pushUrl model.key ("/projects/" ++ a.id) )
+                Ok p ->
+                    ( { model | singleProject = p }, Nav.pushUrl model.key ("/projects/" ++ p.id) )
 
-                Err a ->
+                Err _ ->
                     ( { model | alertVisibility = Alert.shown }, Cmd.none )
 
         TemporaryResp result ->
@@ -307,6 +313,14 @@ update msg model =
 
         CreateNewProject ->
             ( model, apiCreateProject model.serverSettings.serverEndpoint model.userToken )
+
+        GetProjectResponse result ->
+            case result of
+                Ok p ->
+                    ( { model | singleProject = p }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
 
         UrlChanged url ->
             case model.userToken of
@@ -359,7 +373,7 @@ update msg model =
 
                         Project projectID ->
                             ( { model | url = url, page = urlToPage url }
-                            , Cmd.none
+                            , Cmd.batch [ apiGetProject model.serverSettings.serverEndpoint model.userToken projectID ]
                             )
 
                         Dashboard token ->
@@ -455,7 +469,7 @@ view model =
                     projectsPage model
 
                 Project projectID ->
-                    singleProjectPage
+                    singleProjectPage model.singleProject
 
                 Dashboard token ->
                     dashboardPage
@@ -563,6 +577,10 @@ type alias VideoSegment =
     , order : Int
     , hidden : Bool
     , status : String
+    , imageID : String
+    , script : String
+    , audioID : String
+    , videoSrcID : String
     }
 
 
@@ -577,6 +595,10 @@ videoSegmentDecoder =
         |> Pipeline.required "order" int
         |> Pipeline.required "hidden" bool
         |> Pipeline.required "status" string
+        |> Pipeline.optional "image_id" string ""
+        |> Pipeline.optional "script" string ""
+        |> Pipeline.optional "audio_id" string ""
+        |> Pipeline.optional "video_src_id" string ""
 
 
 indexPage : String -> String -> Html Msg
@@ -708,18 +730,51 @@ projectsPage model =
         ]
 
 
-singleProjectPage : Html Msg
-singleProjectPage =
+singleProjectPage : SingleProject -> Html Msg
+singleProjectPage singleProject =
     div []
-        [ h1 [] [ text "Project" ]
-        , Button.button [ Button.primary ] [ text "Save" ]
+        (List.concat
+            [ [ h1 [] [ text "Project" ]
+              , Button.button [ Button.primary ] [ text "Save" ]
+              , if List.length singleProject.pdfSlideImages == 0 then
+                    p [] [ text "Please upload a PDF File containing the slides" ]
 
-        -- , if List.length singleProject.pdfSlideImages == 0 then
-        --     p [] [ text "Please upload a PDF File containing the slides" ]
-        -- else
-        --     p [] [ text "You may replace the PDF File" ]
-        , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
-        ]
+                else
+                    p [] [ text "You may replace the PDF File" ]
+              , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
+              ]
+            , List.map videoSegmentRow singleProject.videoSegments
+            ]
+        )
+
+
+videoSegmentRow : VideoSegment -> Html Msg
+videoSegmentRow videoSegment =
+    Card.config []
+        |> Card.block []
+            [ Block.custom <|
+                Form.form []
+                    [ Form.group []
+                        [ div []
+                            [ p [] [ text ("Possible location of image :: " ++ videoSegment.imageID) ]
+                            , p [] [ text "Possible location of video" ]
+                            ]
+                        , Form.label [] [ text "Enter script for segment" ]
+                        , Textarea.textarea
+                            [ Textarea.id "script"
+                            , Textarea.rows 3
+                            , Textarea.value videoSegment.script
+                            ]
+                        ]
+                    , Form.group []
+                        [ Button.button [ Button.primary ] [ text "Save script" ]
+                        , Button.button [ Button.primary ] [ text "Generate Audio" ]
+                        , Button.button [ Button.primary ] [ text "Move up" ]
+                        , Button.button [ Button.primary ] [ text "Move down" ]
+                        ]
+                    ]
+            ]
+        |> Card.view
 
 
 filesDecoder : Decoder (List File)
@@ -795,6 +850,25 @@ apiCreateProject mgrURL apiToken =
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
+        }
+
+
+apiGetProject : String -> String -> String -> Cmd Msg
+apiGetProject mgrURL apiToken projectID =
+    let
+        url =
+            mgrURL ++ "/api/v1/project/" ++ projectID
+    in
+    Http.request
+        { body = Http.emptyBody
+        , method = "GET"
+        , url = url
+        , headers =
+            [ Http.header "Authorization" ("Bearer " ++ apiToken)
+            ]
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectJson GetProjectResponse singleProjectDecoder
         }
 
 
