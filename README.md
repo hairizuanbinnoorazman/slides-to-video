@@ -31,6 +31,9 @@ make format
 
 ## Features to be developed
 
+- Access Image and Video assets
+  - Image for video segment
+  - Audio for video segment
 - Projects
   - Roles
     - Owner - Can be group/user (For project accounting)
@@ -74,6 +77,11 @@ make format
 - User + ACL model integration (Using Keycloak)
 - Add search capability (Elasticsearch)
 - Add search capability (Bleve)
+
+# Weird Things to take note of
+
+- Downloading of images before showing  
+  https://github.com/justgook/elm-image/issues/9
 
 ## Development workflow
 
