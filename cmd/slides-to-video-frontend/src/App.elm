@@ -684,7 +684,7 @@ dashboardPage =
 singleProjectRow : SingleProject -> Table.Row msg
 singleProjectRow singleProject =
     Table.tr []
-        [ Table.td [] [ text singleProject.name ]
+        [ Table.td [] [ a [ href ("/projects/" ++ singleProject.id) ] [ text singleProject.name ] ]
         , Table.td [] [ text singleProject.dateCreated ]
         , Table.td [] [ text singleProject.dateModified ]
         , Table.td [] [ text singleProject.status ]
