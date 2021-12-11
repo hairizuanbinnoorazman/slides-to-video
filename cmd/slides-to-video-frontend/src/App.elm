@@ -68,6 +68,8 @@ type alias Model =
     , userToken : String
     , userDetails : UserDetails
     , projects : ProjectList
+
+    -- , singleProject : SingleProject
     }
 
 
@@ -689,7 +691,13 @@ projectsPage model =
 singleProjectPage : Html Msg
 singleProjectPage =
     div []
-        [ h1 [] [ text "Single Project Page" ]
+        [ h1 [] [ text "Project" ]
+        , Button.button [ Button.primary ] [ text "Save" ]
+
+        -- , if List.length singleProject.pdfSlideImages == 0 then
+        --     p [] [ text "Please upload a PDF File containing the slides" ]
+        -- else
+        --     p [] [ text "You may replace the PDF File" ]
         , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
         ]
 
