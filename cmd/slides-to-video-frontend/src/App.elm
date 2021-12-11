@@ -116,6 +116,26 @@ init flags url key =
     let
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
+
+        emptyProjectList =
+            ProjectList [] 0 0 0
+
+        emptyUserDetails =
+            UserDetails "" "" ""
+
+        initialAppState =
+            { key = key
+            , url = url
+            , page = urlToPage url
+            , navbarState = navbarState
+            , files = []
+            , script = ""
+            , alertVisibility = Alert.closed
+            , serverSettings = flags
+            , userToken = ""
+            , userDetails = emptyUserDetails
+            , projects = emptyProjectList
+            }
     in
     case flags.token of
         Nothing ->
@@ -127,27 +147,27 @@ init flags url key =
                 Dashboard newUserToken ->
                     case newUserToken of
                         Nothing ->
-                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
+                            ( initialAppState, Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
 
                         Just userToken ->
-                            ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd, Ports.storeToken userToken ] )
+                            ( { initialAppState | userToken = userToken }, Cmd.batch [ navbarCmd, Ports.storeToken userToken ] )
 
                 Login ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd ] )
+                    ( initialAppState, Cmd.batch [ navbarCmd ] )
 
                 UserRegister ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd ] )
+                    ( initialAppState, Cmd.batch [ navbarCmd ] )
 
                 _ ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags "" (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
+                    ( initialAppState, Cmd.batch [ navbarCmd, Nav.pushUrl key (Url.toString loginURL) ] )
 
         Just userToken ->
             case urlToPage url of
                 Project projectID ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd ] )
+                    ( { initialAppState | userToken = userToken }, Cmd.batch [ navbarCmd ] )
 
                 _ ->
-                    ( Model key url (urlToPage url) navbarState [] "" Alert.closed flags userToken (UserDetails "" "" "") (ProjectList [] 0 0 0), Cmd.batch [ navbarCmd ] )
+                    ( { initialAppState | userToken = userToken }, Cmd.batch [ navbarCmd ] )
 
 
 
