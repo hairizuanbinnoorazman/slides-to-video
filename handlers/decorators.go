@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/securecookie"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/services"
 )
 
 type RequireJWTAuth struct {
-	Auth        Auth
+	Auth        services.Auth
 	Logger      logger.Logger
 	NextHandler http.Handler
 }
@@ -24,19 +25,44 @@ func (a RequireJWTAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	copiedReq := r.Clone(ctx)
+	s := securecookie.New(a.Auth.HashKey, a.Auth.BlockKey)
+	value := make(map[string]string)
+	var userID string
+	var err error
 
 	type failedResp struct {
 		Msg string `json:"msg"`
 	}
+	rawErrMsg, _ := json.Marshal(failedResp{Msg: "Invalid authorization token"})
 
-	rawErrMsg, _ := json.Marshal(failedResp{Msg: "Invalid JWT Token Provided"})
+	cookie, cookieErr := r.Cookie(a.Auth.CookieName)
+	if cookieErr == nil {
+		err := s.Decode(a.Auth.CookieName, cookie.Value, &value)
+		if err != nil || value["user_id"] == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write(rawErrMsg)
+			return
+		}
+		userID = value["user_id"]
+	} else {
+		a.Logger.Error(cookieErr)
+	}
 
-	rawAuthorizationToken := copiedReq.Header.Get("Authorization")
-	userID, err := services.ExtractToken(rawAuthorizationToken, a.Auth.Secret)
+	if userID == "" {
+		rawAuthorizationToken := copiedReq.Header.Get("Authorization")
+		userID, err = services.ExtractToken(rawAuthorizationToken, a.Auth.Secret)
+		if err != nil || userID == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write(rawErrMsg)
+			a.Logger.Info("Cookie is empty but header is also empty")
+			return
+		}
+	}
 
-	if err != nil {
+	if userID == "" {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(rawErrMsg)
+		a.Logger.Info("UserID is empty after checking cookie and header")
 		return
 	}
 

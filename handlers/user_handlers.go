@@ -13,16 +13,11 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/services"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/user"
 )
-
-type Auth struct {
-	Secret     string `json:"secret"`
-	ExpiryTime int    `json:"expiry_time"`
-	Issuer     string `json:"issuer"`
-}
 
 type GoogleLogin struct {
 	Logger      logger.Logger
@@ -68,7 +63,7 @@ type Authenticate struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURI  string
-	Auth         Auth
+	Auth         services.Auth
 	UserStore    user.Store
 }
 
@@ -213,7 +208,7 @@ func (h Authenticate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type Login struct {
 	Logger      logger.Logger
 	UserStore   user.Store
-	Auth        Auth
+	Auth        services.Auth
 	RedirectURI string
 }
 
@@ -262,28 +257,51 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := services.NewToken(u.ID, h.Auth.ExpiryTime, h.Auth.Secret, h.Auth.Issuer)
+	// token, err := services.NewToken(u.ID, h.Auth.ExpiryTime, h.Auth.Secret, h.Auth.Issuer)
+	// if err != nil {
+	// 	errMsg := fmt.Sprintf("Error - unable to create token. Error: %v", err)
+	// 	h.Logger.Error(errMsg)
+	// 	w.WriteHeader(500)
+	// 	w.Write([]byte(generateErrorResp(errMsg)))
+	// 	return
+	// }
+
+	// type tokenResponse struct {
+	// 	Token string `json:"token"`
+	// }
+
+	// rawRespTokenResp, _ := json.Marshal(tokenResponse{Token: token})
+
+	value := map[string]string{
+		"user_id": u.ID,
+	}
+	s := securecookie.New(h.Auth.HashKey, h.Auth.BlockKey)
+	encoded, err := s.Encode(h.Auth.CookieName, value)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error - unable to create token. Error: %v", err)
+		errMsg := fmt.Sprintf("Error - unable to set authorization token. Error: %v", err)
 		h.Logger.Error(errMsg)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(generateErrorResp(errMsg)))
 		return
 	}
-
-	type tokenResponse struct {
-		Token string `json:"token"`
+	cookie := &http.Cookie{
+		Name:     h.Auth.CookieName,
+		Value:    encoded,
+		Path:     "/",
+		Secure:   true,
+		HttpOnly: true,
+		Expires:  time.Now().Add(1 * time.Hour),
 	}
+	http.SetCookie(w, cookie)
 
-	rawRespTokenResp, _ := json.Marshal(tokenResponse{Token: token})
-
+	// TODO: Handle case of logging in from another page
 	if h.RedirectURI != "" {
-		http.Redirect(w, r, h.RedirectURI+fmt.Sprintf("?token=%v", token), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, h.RedirectURI+fmt.Sprintf("?token=%v", ""), http.StatusTemporaryRedirect)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(rawRespTokenResp)
+	w.Write([]byte(""))
 }
 
 // ActivateUser - Handles the sign up url

@@ -15,6 +15,7 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/services"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/user"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videogenerator"
@@ -28,6 +29,7 @@ import (
 	stackdriver "github.com/TV4/logrus-stackdriver-formatter"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/option"
@@ -155,9 +157,18 @@ var (
 					os.Exit(1)
 				}
 
+				auth := services.Auth{
+					Secret:     cfg.Server.AuthSecret,
+					Issuer:     cfg.Server.AuthIssuer,
+					ExpiryTime: cfg.Server.AuthExpiryTime,
+					HashKey:    securecookie.GenerateRandomKey(64),
+					BlockKey:   securecookie.GenerateRandomKey(32),
+					CookieName: "slidestovideo",
+				}
+
 				pdfSlideImporter := imageimporter.NewBasicPDFImporter(pdfToImageQueue)
 				videoGenerator := videogenerator.NewBasic(imageToVideoQueue, videoSegmentsStore)
-				videoConcater := videoconcater.NewBasic(concatQueue, projectStore)
+				videoConcater := videoconcater.NewBasic(concatQueue, projectStore, auth)
 
 				r := mux.NewRouter()
 				r.Handle("/status", h.Status{
@@ -170,11 +181,6 @@ var (
 					Logger: logger,
 				})
 
-				auth := h.Auth{
-					Secret:     cfg.Server.AuthSecret,
-					Issuer:     cfg.Server.AuthIssuer,
-					ExpiryTime: cfg.Server.AuthExpiryTime,
-				}
 				s := r.PathPrefix("/api/v1").Subrouter()
 				// Project based routes
 				s.Handle("/project", h.RequireJWTAuth{
