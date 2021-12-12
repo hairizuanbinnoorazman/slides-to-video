@@ -27,7 +27,6 @@ import (
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
 	stackdriver "github.com/TV4/logrus-stackdriver-formatter"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/sirupsen/logrus"
@@ -263,9 +262,13 @@ var (
 					Logger:        logger,
 					StorageClient: slideToVideoStorage,
 				}).Methods("GET")
-				s.Handle("/project/{project_id}/image/{image_id}", h.DownloadImage{
-					Logger:        logger,
-					StorageClient: slideToVideoStorage,
+				s.Handle("/project/{project_id}/image/{image_id}", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.DownloadImage{
+						Logger:        logger,
+						StorageClient: slideToVideoStorage,
+					},
 				}).Methods("GET")
 
 				// User based endpoints
@@ -310,14 +313,15 @@ var (
 					UserStore:    userStore,
 				})
 
-				cors := handlers.CORS(
-					handlers.AllowedHeaders([]string{"content-type", "Authorization"}),
-					handlers.AllowedOrigins([]string{"*"}),
-					handlers.AllowedMethods([]string{"GET", "POST", "PUT"}),
-				)
+				// cors := handlers.CORS(
+				// 	handlers.AllowedHeaders([]string{"Content-Type", "Authorization", "Set-Cookie"}),
+				// 	handlers.AllowedOrigins([]string{"http://localhost:8080"}),
+				// 	handlers.AllowedMethods([]string{"GET", "POST", "PUT", "OPTIONS"}),
+				// 	handlers.AllowCredentials(),
+				// )
 
 				srv := http.Server{
-					Handler:      cors(r),
+					Handler:      r,
 					Addr:         fmt.Sprintf("%v:%v", cfg.Server.Host, cfg.Server.Port),
 					WriteTimeout: 15 * time.Second,
 					ReadTimeout:  15 * time.Second,

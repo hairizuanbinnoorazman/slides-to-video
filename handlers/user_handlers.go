@@ -288,9 +288,9 @@ func (h Login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Name:     h.Auth.CookieName,
 		Value:    encoded,
 		Path:     "/",
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
-		Expires:  time.Now().Add(1 * time.Hour),
+		SameSite: http.SameSiteDefaultMode,
 	}
 	http.SetCookie(w, cookie)
 
