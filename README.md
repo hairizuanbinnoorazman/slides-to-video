@@ -32,7 +32,7 @@ make format
 ## Features to be developed
 
 - Access Image and Video assets
-  - Image for video segment
+  - Image for video segment -> Need to check that the user can actually really access the image (it has cookie protection)
   - Audio for video segment
 - Projects
   - Roles
@@ -40,7 +40,6 @@ make format
     - Publisher - Send end result to a video streaming site
     - Editor - Can edit project, export project
     - Viewer - Can view project
-  - Add Project Name to make it easier to reference for a person
 - Add Frontend for Integration
   - Process and generate video
   - Create dashboard on per user basis
@@ -48,7 +47,6 @@ make format
   - Require need to have the capability to limits to amount of projects that can be created per user
   - Rate limiting of all APIs
 - API Security
-  - Add CORS configuration to API Server
   - Add capability to check presence of authorization -> have flag to disable it for integration testing purposes
 - Build out a simple user authentication system that can be used for integration testing purposes
   - Passwordless based (Send email links for login)
