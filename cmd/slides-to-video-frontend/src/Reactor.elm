@@ -8,7 +8,7 @@ import Url
 
 rinit : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 rinit () url key =
-    init { serverEndpoint = "http://localhost:8880", ingressPath = "", token = Nothing } url key
+    init { serverEndpoint = "http://localhost:8080", ingressPath = "", token = Nothing } url key
 
 
 main : Program () Model Msg
