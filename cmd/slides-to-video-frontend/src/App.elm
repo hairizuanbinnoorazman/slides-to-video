@@ -190,7 +190,8 @@ type Msg
     | TemporaryResp (Result Http.Error String)
     | EmptyRedirectResponse (Result Http.Error ())
     | EmptyResponse (Result Http.Error ())
-    | LoginResponse (Result Http.Error UserToken)
+      -- | LoginResponse (Result Http.Error UserToken)
+    | LoginResponse (Result Http.Error ())
     | ProjectsResponse (Result Http.Error ProjectList)
     | UpdateScriptTextArea String
     | SubmitJob
@@ -221,7 +222,8 @@ update msg model =
         LoginResponse result ->
             case result of
                 Ok zzz ->
-                    ( { model | userToken = zzz.token }, Cmd.batch [ Ports.storeToken zzz.token, Nav.pushUrl model.key "/" ] )
+                    -- ( { model | userToken = zzz.token }, Cmd.batch [ Ports.storeToken zzz.token, Nav.pushUrl model.key "/" ] )
+                    ( { model | userToken = "fake" }, Cmd.batch [ Nav.pushUrl model.key "/" ] )
 
                 Err zzz ->
                     ( { model | alertVisibility = Alert.shown }, Cmd.none )
@@ -329,17 +331,7 @@ update msg model =
         GetProjectResponse result ->
             case result of
                 Ok p ->
-                    let
-                        moddedImageReq =
-                            moddedAPIGetImageAsset model.serverSettings.serverEndpoint model.userToken p.id
-
-                        imageIDs =
-                            List.map .imageID p.videoSegments
-
-                        imageReqs =
-                            List.map moddedImageReq imageIDs
-                    in
-                    ( { model | singleProject = p }, Cmd.batch imageReqs )
+                    ( { model | singleProject = p }, Cmd.none )
 
                 Err _ ->
                     ( model, Cmd.none )
@@ -625,11 +617,6 @@ videoSegmentDecoder =
         |> Pipeline.optional "video_src_id" string ""
 
 
-indexPage : String -> String -> Html Msg
-indexPage aaa bbb =
-    div [] [ text (aaa ++ bbb ++ "This is the Index Page. It is still not rendered out properly yet") ]
-
-
 loginPage : Model -> Url.Url -> Html Msg
 loginPage model sourceURL =
     Grid.row []
@@ -703,6 +690,11 @@ registerPage model =
 dashboardPage : Html Msg
 dashboardPage =
     div [] [ h1 [] [ text "Dashboard Page" ] ]
+
+
+indexPage : String -> String -> Html Msg
+indexPage aaa bbb =
+    div [] [ text (aaa ++ bbb ++ "This is the Index Page. It is still not rendered out properly yet") ]
 
 
 singleProjectRow : SingleProject -> Table.Row msg
@@ -1009,5 +1001,5 @@ loginUser mgrURL userEmail userPassword =
         , headers = []
         , timeout = Nothing
         , tracker = Nothing
-        , expect = Http.expectJson LoginResponse userTokenDecoder
+        , expect = Http.expectWhatever LoginResponse
         }
