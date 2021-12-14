@@ -31,6 +31,10 @@ make format
 
 ## Features to be developed
 
+- Need Job Object
+  - Needed to handle video segment generation and video concat (Long running tasks)
+- Project
+  - How to handle status for when no "long running" process is happening
 - Access Image and Video assets
   - Image for video segment -> Need to check that the user can actually really access the image (it has cookie protection)
   - Audio for video segment
