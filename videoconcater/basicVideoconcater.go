@@ -24,7 +24,7 @@ func NewBasic(q queue.Queue, s project.Store, a services.Auth) basic {
 	}
 }
 
-func (b basic) Start(ctx context.Context, projectID string, userID string, authToken string, videoSegmentList []string) error {
+func (b basic) Start(ctx context.Context, projectID, userID string, videoSegmentList []string) error {
 	if len(videoSegmentList) == 0 {
 		return fmt.Errorf("No video segments to combine to single output video")
 	}
