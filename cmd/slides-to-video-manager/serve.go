@@ -258,9 +258,13 @@ var (
 					VideoGenerator:    videoGenerator,
 				}).Methods("POST")
 				// Asset retriver routes
-				s.Handle("/project/{project_id}/video/{video_id}", h.DownloadVideo{
-					Logger:        logger,
-					StorageClient: slideToVideoStorage,
+				s.Handle("/project/{project_id}/video/{video_id}", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.DownloadVideo{
+						Logger:        logger,
+						StorageClient: slideToVideoStorage,
+					},
 				}).Methods("GET")
 				s.Handle("/project/{project_id}/image/{image_id}", h.RequireJWTAuth{
 					Auth:   auth,
@@ -288,7 +292,7 @@ var (
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("POST")
-				s.Handle("/users/resetpassword", h.ForgetPassword{
+				s.Handle("/users/resetpassword", h.ResetPassword{
 					Logger:    logger,
 					UserStore: userStore,
 				}).Methods("POST")
