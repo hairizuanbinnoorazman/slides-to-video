@@ -2,3 +2,4 @@
 *.yaml
 *.yml
 !skaffold.yaml
+*.DS_Store
