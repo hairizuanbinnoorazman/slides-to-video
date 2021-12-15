@@ -862,8 +862,7 @@ apiListProjects mgrURL =
         { body = Http.emptyBody
         , method = "GET"
         , url = url
-        , headers =
-            []
+        , headers = []
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson ProjectsResponse projectListDecoder
@@ -880,8 +879,7 @@ apiCreateProject mgrURL =
         { body = Http.emptyBody
         , method = "POST"
         , url = url
-        , headers =
-            []
+        , headers = []
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
@@ -898,8 +896,7 @@ apiGetProject mgrURL projectID =
         { body = Http.emptyBody
         , method = "GET"
         , url = url
-        , headers =
-            []
+        , headers = []
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson GetProjectResponse singleProjectDecoder
