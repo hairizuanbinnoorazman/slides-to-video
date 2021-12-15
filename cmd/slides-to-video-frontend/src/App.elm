@@ -340,7 +340,7 @@ update msg model =
                     ( model, Nav.load href )
 
         CreateNewProject ->
-            ( model, apiCreateProject model.serverSettings.serverEndpoint model.userToken )
+            ( model, apiCreateProject model.serverSettings.serverEndpoint )
 
         GetProjectResponse result ->
             case result of
@@ -396,13 +396,13 @@ update msg model =
 
                         Projects ->
                             ( { model | url = url, page = urlToPage url }
-                            , Cmd.batch [ apiListProjects model.serverSettings.serverEndpoint model.userToken ]
+                            , Cmd.batch [ apiListProjects model.serverSettings.serverEndpoint ]
                             )
 
                         Project projectID ->
                             ( { model | url = url, page = urlToPage url }
                             , Cmd.batch
-                                [ apiGetProject model.serverSettings.serverEndpoint model.userToken projectID
+                                [ apiGetProject model.serverSettings.serverEndpoint projectID
                                 ]
                             )
 
@@ -852,8 +852,8 @@ createUser mgrURL userEmail userPassword =
         }
 
 
-apiListProjects : String -> String -> Cmd Msg
-apiListProjects mgrURL apiToken =
+apiListProjects : String -> Cmd Msg
+apiListProjects mgrURL =
     let
         url =
             mgrURL ++ "/api/v1/projects"
@@ -863,16 +863,15 @@ apiListProjects mgrURL apiToken =
         , method = "GET"
         , url = url
         , headers =
-            [ Http.header "Authorization" ("Bearer " ++ apiToken)
-            ]
+            []
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson ProjectsResponse projectListDecoder
         }
 
 
-apiCreateProject : String -> String -> Cmd Msg
-apiCreateProject mgrURL apiToken =
+apiCreateProject : String -> Cmd Msg
+apiCreateProject mgrURL =
     let
         url =
             mgrURL ++ "/api/v1/project"
@@ -882,16 +881,15 @@ apiCreateProject mgrURL apiToken =
         , method = "POST"
         , url = url
         , headers =
-            [ Http.header "Authorization" ("Bearer " ++ apiToken)
-            ]
+            []
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
         }
 
 
-apiGetProject : String -> String -> String -> Cmd Msg
-apiGetProject mgrURL apiToken projectID =
+apiGetProject : String -> String -> Cmd Msg
+apiGetProject mgrURL projectID =
     let
         url =
             mgrURL ++ "/api/v1/project/" ++ projectID
@@ -901,8 +899,7 @@ apiGetProject mgrURL apiToken projectID =
         , method = "GET"
         , url = url
         , headers =
-            [ Http.header "Authorization" ("Bearer " ++ apiToken)
-            ]
+            []
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson GetProjectResponse singleProjectDecoder
