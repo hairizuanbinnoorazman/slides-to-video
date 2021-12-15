@@ -190,7 +190,6 @@ type Msg
     | TemporaryResp (Result Http.Error String)
     | EmptyRedirectResponse (Result Http.Error ())
     | EmptyResponse (Result Http.Error ())
-      -- | LoginResponse (Result Http.Error UserToken)
     | LoginResponse (Result Http.Error ())
     | ProjectsResponse (Result Http.Error ProjectList)
     | UpdateScriptTextArea String
