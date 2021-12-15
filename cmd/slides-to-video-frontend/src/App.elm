@@ -207,11 +207,26 @@ type Msg
     | GotImage (Result Http.Error (Maybe Image.Image))
     | ProjectNameInput String
     | SubmitRenameProject
+    | ScriptInput String String
+    | SubmitScriptInput String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SubmitScriptInput videoSegmentID ->
+            ( model, Cmd.none )
+
+        ScriptInput videoSegmentID script ->
+            let
+                updatedVideoSegments =
+                    List.map (updateVideoSegmentScript videoSegmentID script) model.singleProject.videoSegments
+
+                copiedSingleProject =
+                    model.singleProject
+            in
+            ( { model | singleProject = { copiedSingleProject | videoSegments = updatedVideoSegments } }, Cmd.none )
+
         ProjectsResponse result ->
             case result of
                 Ok zzz ->
@@ -534,6 +549,15 @@ type alias SingleProject =
     }
 
 
+updateVideoSegmentScript : String -> String -> VideoSegment -> VideoSegment
+updateVideoSegmentScript videoSegmentID script videoSegment =
+    if videoSegment.id == videoSegmentID then
+        { videoSegment | script = script }
+
+    else
+        videoSegment
+
+
 singleProjectDecoder : Decoder SingleProject
 singleProjectDecoder =
     Decode.succeed SingleProject
@@ -801,10 +825,11 @@ videoSegmentRow serveImageURL videoSegment =
                             [ Textarea.id "script"
                             , Textarea.rows 3
                             , Textarea.value videoSegment.script
+                            , Textarea.onInput (ScriptInput videoSegment.id)
                             ]
                         ]
                     , Form.group []
-                        [ Button.button [ Button.primary ] [ text "Save script" ]
+                        [ Button.button [ Button.primary, Button.onClick (SubmitScriptInput videoSegment.id) ] [ text "Save script" ]
                         , Button.button [ Button.primary ] [ text "Generate Audio" ]
                         , Button.button [ Button.primary ] [ text "Move up" ]
                         , Button.button [ Button.primary ] [ text "Move down" ]
