@@ -174,6 +174,16 @@ def videosegment_concat():
 
 
 @pytest.fixture
+def projectvideo_generate():
+    def lol(base_endpoint_url, project_id):
+        endpoint = base_endpoint_url + "/project/" + \
+            project_id + ":generate-video"
+        resp = requests.post(endpoint, cookies=sess.cookies.get_dict())
+        assert resp.status_code == 200
+    return lol
+
+
+@pytest.fixture
 def await_pdf_slides():
     def lol(base_endpoint_url, project_id):
         loop = 10
@@ -366,4 +376,24 @@ def test_full_flow(
         videosegment_generate_video(base_endpoint, project["id"], z["id"])
     await_video_generation_done(base_endpoint, project["id"])
     videosegment_concat(base_endpoint, project["id"])
+    await_video_concat_done(base_endpoint, project["id"])
+
+
+def test_full_frontend_flow(
+        base_endpoint, create_user, login, 
+        create_project, get_project,
+        create_pdfslideimages, await_pdf_slides,
+        update_videosegment, projectvideo_generate, await_video_concat_done):
+    create_user(base_endpoint, "user9", "TestPassword123")
+    login(base_endpoint, "user9", "TestPassword123")
+    project = create_project(base_endpoint)
+    create_pdfslideimages(base_endpoint, project["id"])
+    await_pdf_slides(base_endpoint, project["id"])
+    time.sleep(1)
+    project = get_project(base_endpoint, project["id"])
+    assert len(project["video_segments"]) == 2
+    for v in project["video_segments"]:
+        update_videosegment(base_endpoint, project["id"], v["id"], {
+                            "script": "this is a test to check that this works"})
+    projectvideo_generate(base_endpoint, project["id"])
     await_video_concat_done(base_endpoint, project["id"])
