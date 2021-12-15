@@ -484,7 +484,7 @@ view model =
                     projectsPage model
 
                 Project projectID ->
-                    singleProjectPage model.singleProject
+                    singleProjectPage model.serverSettings.ingressPath model.singleProject
 
                 Dashboard token ->
                     dashboardPage
@@ -745,8 +745,12 @@ projectsPage model =
         ]
 
 
-singleProjectPage : SingleProject -> Html Msg
-singleProjectPage singleProject =
+singleProjectPage : String -> SingleProject -> Html Msg
+singleProjectPage managerURL singleProject =
+    let
+        imageServeURL =
+            managerURL ++ "/api/v1/project/" ++ singleProject.id ++ "/image/"
+    in
     div []
         (List.concat
             [ [ h1 [] [ text "Project" ]
@@ -758,21 +762,20 @@ singleProjectPage singleProject =
                     p [] [ text "You may replace the PDF File" ]
               , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
               ]
-            , List.map videoSegmentRow singleProject.videoSegments
+            , List.map (videoSegmentRow imageServeURL) singleProject.videoSegments
             ]
         )
 
 
-videoSegmentRow : VideoSegment -> Html Msg
-videoSegmentRow videoSegment =
+videoSegmentRow : String -> VideoSegment -> Html Msg
+videoSegmentRow serveImageURL videoSegment =
     Card.config []
         |> Card.block []
             [ Block.custom <|
                 Form.form []
                     [ Form.group []
                         [ div []
-                            [ p [] [ text ("Possible location of image :: " ++ videoSegment.imageID) ]
-                            , p [] [ text "Possible location of video" ]
+                            [ img [ src (serveImageURL ++ videoSegment.imageID), height 200 ] []
                             ]
                         , Form.label [] [ text "Enter script for segment" ]
                         , Textarea.textarea
