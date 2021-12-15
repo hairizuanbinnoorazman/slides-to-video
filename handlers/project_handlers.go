@@ -10,8 +10,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/job"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videogenerator"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 )
@@ -248,6 +251,93 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	resp := map[string]string{
 		"status": "successfully sent",
+	}
+	rawResp, _ := json.Marshal(resp)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(rawResp)
+}
+
+type StartProjectGenerateVideo struct {
+	Logger             logger.Logger
+	JobStore           job.Store
+	ProjectStore       project.Store
+	VideoSegmentsStore videosegment.Store
+	VideoGenerator     videogenerator.VideoGenerator
+}
+
+func (h StartProjectGenerateVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Info("Start StartProjectGenerateVideo API Handler")
+	defer h.Logger.Info("End StartProjectGenerateVideo API Handler")
+
+	ctx := r.Context()
+	projectID := mux.Vars(r)["project_id"]
+	userID := ctx.Value(userIDKey).(string)
+
+	singleProject, err := h.ProjectStore.Get(context.TODO(), projectID, userID)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to retrieve project details. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
+
+	var updateVideoSegmentErr error
+	for _, v := range singleProject.VideoSegments {
+		updateVideoSegmentErr = nil
+		updaters, _ := videosegment.ResetStatus()
+		_, updateVideoSegmentErr = h.VideoSegmentsStore.Update(context.TODO(), projectID, v.ID, updaters...)
+		if updateVideoSegmentErr != nil {
+			errMsg := fmt.Sprintf("Error - unable to update video segment. ProjectID: %v :: VideoSegmentID: %v :: Error: %v", err)
+			h.Logger.Error(errMsg)
+		}
+	}
+	if updateVideoSegmentErr != nil {
+		errMsg := fmt.Sprintf("Error - unable to reset video segment error. Error: %v", updateVideoSegmentErr)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
+
+	singleProject, err = h.ProjectStore.Get(context.TODO(), projectID, userID)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to retrieve project details. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
+
+	var generateVideoErr error
+	for _, v := range singleProject.VideoSegments {
+		generateVideoErr = h.VideoGenerator.Start(context.TODO(), v)
+		if generateVideoErr != nil {
+			errMsg := fmt.Sprintf("Error - unable to generate video segment. ProjectID: %v :: VideoSegmentID: %v :: Error: %v", err)
+			h.Logger.Error(errMsg)
+		}
+	}
+	if generateVideoErr != nil {
+		errMsg := fmt.Sprintf("Error - unable to reset video segment error. Error: %v", generateVideoErr)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
+
+	newJob := job.New(projectID, userID)
+	err = h.JobStore.Create(context.TODO(), newJob)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error - unable to set job to generate video. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
+
+	resp := map[string]string{
+		"status": "successfully set job",
 	}
 	rawResp, _ := json.Marshal(resp)
 

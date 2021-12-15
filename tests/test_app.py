@@ -229,8 +229,9 @@ def await_video_concat_done():
             resp = requests.get(endpoint, cookies=sess.cookies.get_dict())
             project = resp.json()
             print("Awaiting for video concat to be completed")
-            if project["status"] == "completed":
-                return
+            if project.get("video_output_id") is not None:
+                if project["video_output_id"] != "":
+                    return
             current_loop = current_loop + 1
         assert False, "Awaiting for video generation to be completed"
     return lol

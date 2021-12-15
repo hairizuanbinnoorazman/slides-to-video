@@ -11,17 +11,15 @@ import (
 )
 
 type status string
-type permissions string
 
 var (
-	created     status = "created"
-	running     status = "running"
-	completed   status = "completed"
-	errorStatus status = "error"
-
-	owner  status = "owner"
-	editor status = "editor"
-	reader status = "reader"
+	created             status = "created"
+	running             status = "running"
+	completed           status = "completed"
+	errorStatus         status = "error"
+	splittingPDF        status = "splitting pdf"
+	generatingSegment   status = "generating segment"
+	concatenatingVideos status = "concatenating videos"
 )
 
 type Project struct {

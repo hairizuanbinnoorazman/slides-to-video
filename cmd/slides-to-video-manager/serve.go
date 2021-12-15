@@ -12,6 +12,7 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
 	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/handlers"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/imageimporter"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/job"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
@@ -94,6 +95,7 @@ var (
 				var userStore user.Store
 				var videoSegmentsStore videosegment.Store
 				var aclStore acl.Store
+				var jobStore job.Store
 				if cfg.Datastore.Type == googleDatastore {
 					datastoreClient, err := datastore.NewClient(context.Background(), cfg.Datastore.GoogleDatastoreConfig.ProjectID, svcAcctOptions...)
 					if err != nil {
@@ -116,6 +118,7 @@ var (
 					userStore = user.NewMySQL(logger, db)
 					videoSegmentsStore = videosegment.NewMySQL(logger, db)
 					aclStore = acl.NewMySQL(logger, db)
+					jobStore = job.NewMySQL(logger, db)
 				}
 
 				if projectStore == nil || pdfSlideImagesStore == nil || userStore == nil || videoSegmentsStore == nil {
@@ -168,6 +171,13 @@ var (
 				pdfSlideImporter := imageimporter.NewBasicPDFImporter(pdfToImageQueue)
 				videoGenerator := videogenerator.NewBasic(imageToVideoQueue, videoSegmentsStore)
 				videoConcater := videoconcater.NewBasic(concatQueue, projectStore, auth)
+
+				jobProcessor, err := job.NewProcessor(logger, jobStore, projectStore, videoConcater)
+				if err != nil {
+					logger.Errorf("Unable to start job processor. Err - %v", err)
+					os.Exit(1)
+				}
+				go jobProcessor.Start()
 
 				r := mux.NewRouter()
 				r.Handle("/status", h.Status{
@@ -222,6 +232,17 @@ var (
 						Logger:        logger,
 						ProjectStore:  projectStore,
 						VideoConcater: videoConcater,
+					},
+				}).Methods("POST")
+				s.Handle("/project/{project_id}:generate-video", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.StartProjectGenerateVideo{
+						Logger:             logger,
+						JobStore:           jobStore,
+						ProjectStore:       projectStore,
+						VideoSegmentsStore: videoSegmentsStore,
+						VideoGenerator:     videoGenerator,
 					},
 				}).Methods("POST")
 				s.Handle("/project/{project_id}/pdfslideimages", h.CreatePDFSlideImages{

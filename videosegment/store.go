@@ -66,6 +66,13 @@ func RegenerateIdemKeys() ([]func(*VideoSegment) error, error) {
 	return setters, nil
 }
 
+func ResetStatus() ([]func(*VideoSegment) error, error) {
+	var setters []func(*VideoSegment) error
+	setters = append(setters, setStatus(unset))
+	setters = append(setters, setVideoFile(""))
+	return setters, nil
+}
+
 func recreateIdemKeys() func(*VideoSegment) error {
 	return func(a *VideoSegment) error {
 		idemKey1, _ := uuid.NewV4()
