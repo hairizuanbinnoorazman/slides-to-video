@@ -205,6 +205,8 @@ type Msg
     | CreateProjectResponse (Result Http.Error SingleProject)
     | GetProjectResponse (Result Http.Error SingleProject)
     | GotImage (Result Http.Error (Maybe Image.Image))
+    | ProjectNameInput String
+    | SubmitRenameProject
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -315,6 +317,19 @@ update msg model =
 
         NavbarMsg state ->
             ( { model | navbarState = state }, Cmd.none )
+
+        ProjectNameInput projectName ->
+            let
+                copiedProject =
+                    model.singleProject
+
+                renamedProject =
+                    { copiedProject | name = projectName }
+            in
+            ( { model | singleProject = renamedProject }, Cmd.none )
+
+        SubmitRenameProject ->
+            ( model, Cmd.batch [ apiUpdateProject model.serverSettings.ingressPath model.singleProject.id model.singleProject.name ] )
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -484,7 +499,7 @@ view model =
                     projectsPage model
 
                 Project projectID ->
-                    singleProjectPage model.serverSettings.ingressPath model.singleProject
+                    singleProjectPage model
 
                 Dashboard token ->
                     dashboardPage
@@ -745,24 +760,28 @@ projectsPage model =
         ]
 
 
-singleProjectPage : String -> SingleProject -> Html Msg
-singleProjectPage managerURL singleProject =
+singleProjectPage : Model -> Html Msg
+singleProjectPage model =
     let
         imageServeURL =
-            managerURL ++ "/api/v1/project/" ++ singleProject.id ++ "/image/"
+            model.serverSettings.ingressPath ++ "/api/v1/project/" ++ model.singleProject.id ++ "/image/"
     in
     div []
         (List.concat
             [ [ h1 [] [ text "Project" ]
-              , Button.button [ Button.primary ] [ text "Save" ]
-              , if List.length singleProject.pdfSlideImages == 0 then
+              , Form.group []
+                    [ Form.label [ for "projectname" ] [ text "Project Name" ]
+                    , Input.text [ Input.id "projectname", Input.value model.singleProject.name, Input.onInput ProjectNameInput ]
+                    , Button.button [ Button.primary, Button.onClick SubmitRenameProject ] [ text "Rename project" ]
+                    ]
+              , if List.length model.singleProject.pdfSlideImages == 0 then
                     p [] [ text "Please upload a PDF File containing the slides" ]
 
                 else
                     p [] [ text "You may replace the PDF File" ]
               , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
               ]
-            , List.map (videoSegmentRow imageServeURL) singleProject.videoSegments
+            , List.map (videoSegmentRow imageServeURL) model.singleProject.videoSegments
             ]
         )
 
@@ -890,8 +909,8 @@ apiGetProject mgrURL apiToken projectID =
         }
 
 
-apiUpdateProject : String -> String -> String -> String -> Cmd Msg
-apiUpdateProject mgrURL apiToken projectID projectName =
+apiUpdateProject : String -> String -> String -> Cmd Msg
+apiUpdateProject mgrURL projectID projectName =
     let
         url =
             mgrURL ++ "/api/v1/project/" ++ projectID
@@ -906,9 +925,7 @@ apiUpdateProject mgrURL apiToken projectID projectName =
         { body = body
         , method = "PUT"
         , url = url
-        , headers =
-            [ Http.header "Authorization" ("Bearer " ++ apiToken)
-            ]
+        , headers = []
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
