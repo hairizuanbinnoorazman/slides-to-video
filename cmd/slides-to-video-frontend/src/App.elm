@@ -209,13 +209,31 @@ type Msg
     | SubmitRenameProject
     | ScriptInput String String
     | SubmitScriptInput String
+    | UpdateVideoSegmentResponse (Result Http.Error VideoSegment)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        UpdateVideoSegmentResponse result ->
+            case result of
+                Ok zzz ->
+                    ( model, Cmd.none )
+
+                Err zzz ->
+                    ( model, Cmd.none )
+
         SubmitScriptInput videoSegmentID ->
-            ( model, Cmd.none )
+            let
+                videoSegment =
+                    List.head (List.filter (isVideoSegment videoSegmentID) model.singleProject.videoSegments)
+            in
+            case videoSegment of
+                Nothing ->
+                    ( model, Cmd.batch [] )
+
+                Just vs ->
+                    ( model, Cmd.batch [ apiUpdateVideoSegmentScript model.serverSettings.serverEndpoint model.singleProject.id vs.id vs.script ] )
 
         ScriptInput videoSegmentID script ->
             let
@@ -344,7 +362,7 @@ update msg model =
             ( { model | singleProject = renamedProject }, Cmd.none )
 
         SubmitRenameProject ->
-            ( model, Cmd.batch [ apiUpdateProject model.serverSettings.ingressPath model.singleProject.id model.singleProject.name ] )
+            ( model, Cmd.batch [ apiUpdateProject model.serverSettings.serverEndpoint model.singleProject.id model.singleProject.name ] )
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -556,6 +574,15 @@ updateVideoSegmentScript videoSegmentID script videoSegment =
 
     else
         videoSegment
+
+
+isVideoSegment : String -> VideoSegment -> Bool
+isVideoSegment videoSegmentID videoSegment =
+    if videoSegment.id == videoSegmentID then
+        True
+
+    else
+        False
 
 
 singleProjectDecoder : Decoder SingleProject
@@ -788,7 +815,7 @@ singleProjectPage : Model -> Html Msg
 singleProjectPage model =
     let
         imageServeURL =
-            model.serverSettings.ingressPath ++ "/api/v1/project/" ++ model.singleProject.id ++ "/image/"
+            model.serverSettings.serverEndpoint ++ "/api/v1/project/" ++ model.singleProject.id ++ "/image/"
     in
     div []
         (List.concat
@@ -948,6 +975,29 @@ apiUpdateProject mgrURL projectID projectName =
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
+        }
+
+
+apiUpdateVideoSegmentScript : String -> String -> String -> String -> Cmd Msg
+apiUpdateVideoSegmentScript mgrURL projectID videoSegmentID script =
+    let
+        url =
+            mgrURL ++ "/api/v1/project/" ++ projectID ++ "/videosegment/" ++ videoSegmentID
+
+        body =
+            Http.jsonBody <|
+                Encode.object
+                    [ ( "script", Encode.string script )
+                    ]
+    in
+    Http.request
+        { body = body
+        , method = "PUT"
+        , url = url
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectJson UpdateVideoSegmentResponse videoSegmentDecoder
         }
 
 
