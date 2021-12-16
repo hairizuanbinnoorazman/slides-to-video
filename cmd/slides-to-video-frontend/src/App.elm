@@ -188,7 +188,7 @@ type Msg
     | NavbarMsg Navbar.State
     | GotFiles (List File)
     | TemporaryResp (Result Http.Error String)
-    | EmptyRedirectResponse (Result Http.Error ())
+    | CreateUserResponse (Result Http.Error ())
     | EmptyResponse (Result Http.Error ())
     | LoginResponse (Result Http.Error ())
     | ProjectsResponse (Result Http.Error ProjectList)
@@ -313,10 +313,10 @@ update msg model =
         UpdateScriptTextArea scriptText ->
             ( { model | script = scriptText }, Cmd.none )
 
-        EmptyRedirectResponse result ->
+        CreateUserResponse result ->
             case result of
                 Ok a ->
-                    ( model, Nav.pushUrl model.key "/" )
+                    ( { model | alertVisibility = Alert.shown }, Nav.pushUrl model.key "/" )
 
                 Err a ->
                     ( { model | alertVisibility = Alert.shown }, Cmd.none )
@@ -751,7 +751,7 @@ registerPage model =
             , if model.userDetails.password == model.userDetails.passwordAgain then
                 div []
                     [ p [ style "color" "green" ] [ text "OK" ]
-                    , Button.button [ Button.primary, Button.onClick RegisterUserCredentials ] [ text "Submit" ]
+                    , Button.button [ Button.primary, Button.onClick RegisterUserCredentials ] [ text "Register Account" ]
                     ]
 
               else
@@ -842,7 +842,7 @@ singleProjectPage model =
                     div []
                         [ p [] [ text "Please upload a PDF File containing the slides" ]
                         , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
-                        , Button.button [ Button.primary, Button.onClick SubmitUploadPDFSlides ] []
+                        , Button.button [ Button.primary, Button.onClick SubmitUploadPDFSlides ] [ text "Upload PDF Slides" ]
                         ]
 
                 else
@@ -916,7 +916,7 @@ createUser mgrURL userEmail userPassword =
         , headers = []
         , timeout = Nothing
         , tracker = Nothing
-        , expect = Http.expectWhatever EmptyRedirectResponse
+        , expect = Http.expectWhatever CreateUserResponse
         }
 
 
