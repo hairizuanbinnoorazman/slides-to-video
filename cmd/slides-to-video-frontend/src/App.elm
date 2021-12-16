@@ -306,6 +306,13 @@ update msg model =
 
         Tick time ->
             case model.page of
+                Project projectID ->
+                    if List.length model.singleProject.pdfSlideImages > 0 && List.length model.singleProject.videoSegments == 0 then
+                        ( model, Cmd.batch [ apiGetProject model.serverSettings.serverEndpoint projectID ] )
+
+                    else
+                        ( model, Cmd.none )
+
                 _ ->
                     ( model, Cmd.none )
 
@@ -501,7 +508,7 @@ errorToString error =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every 10000 Tick
+    Time.every 5000 Tick
 
 
 
@@ -841,8 +848,9 @@ singleProjectPage model =
         (List.concat
             [ [ h1 [] [ text "Project" ]
               , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Generate Video" ]
-              , if model.singleProject.id == "" then 
+              , if model.singleProject.id == "" then
                     Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Download Generated Video" ]
+
                 else
                     Button.button [ Button.primary, Button.disabled True ] [ text "Generated Video Unavailable" ]
               , Form.group []
