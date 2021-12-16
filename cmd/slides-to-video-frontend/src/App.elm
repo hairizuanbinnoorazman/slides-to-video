@@ -848,8 +848,8 @@ singleProjectPage model =
         (List.concat
             [ [ h1 [] [ text "Project" ]
               , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Generate Video" ]
-              , if model.singleProject.id == "" then
-                    Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Download Generated Video" ]
+              , if model.singleProject.videoOutputID /= "" then
+                    Button.button [ Button.primary, Button.onClick (DownloadGeneratedVideo model.serverSettings.serverEndpoint model.singleProject.id model.singleProject.videoOutputID ) ] [ text "Download Generated Video" ]
 
                 else
                     Button.button [ Button.primary, Button.disabled True ] [ text "Generated Video Unavailable" ]
