@@ -816,10 +816,15 @@ singleProjectPage model =
     let
         imageServeURL =
             model.serverSettings.serverEndpoint ++ "/api/v1/project/" ++ model.singleProject.id ++ "/image/"
+
+        videoServeURL =
+            model.serverSettings.serverEndpoint ++ "/api/v1/project/" ++ model.singleProject.id ++ "/video/"
     in
     div []
         (List.concat
             [ [ h1 [] [ text "Project" ]
+              , a [ href (videoServeURL ++ model.singleProject.videoOutputID) ] [ text "Download Generated Video" ]
+              , Button.button [ Button.primary ] [ text "Generate Video" ]
               , Form.group []
                     [ Form.label [ for "projectname" ] [ text "Project Name" ]
                     , Input.text [ Input.id "projectname", Input.value model.singleProject.name, Input.onInput ProjectNameInput ]
