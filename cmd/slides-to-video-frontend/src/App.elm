@@ -386,7 +386,14 @@ update msg model =
         GetProjectResponse result ->
             case result of
                 Ok p ->
-                    ( { model | singleProject = p }, Cmd.none )
+                    let
+                        vs =
+                            p.videoSegments
+
+                        tempVs =
+                            List.sortBy .order vs
+                    in
+                    ( { model | singleProject = { p | videoSegments = tempVs } }, Cmd.none )
 
                 Err _ ->
                     ( model, Cmd.none )
