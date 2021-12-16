@@ -28,7 +28,7 @@ func (h DownloadVideo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := h.StorageClient.Load(context.Background(), "videos/"+filename)
+	content, err := h.StorageClient.Load(context.Background(), filename)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - Unable to download file from blob storage. Err: %v", err)
 		h.Logger.Error(errMsg)
