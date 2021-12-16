@@ -18,6 +18,7 @@ import Bytes
 import Bytes.Decode
 import Css.Global exposing (path)
 import File exposing (File)
+import File.Download as Download
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -212,11 +213,15 @@ type Msg
     | SubmitGenerateVideo
     | SubmitUploadPDFSlides
     | UploadPDFSlidesResponse (Result Http.Error PDFSlideImages)
+    | DownloadGeneratedVideo String String String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        DownloadGeneratedVideo mgrURL projectID videoOutputID ->
+            ( model, Cmd.batch [ downloadProjectVideo mgrURL projectID videoOutputID ] )
+
         UploadPDFSlidesResponse result ->
             ( model, Cmd.none )
 
@@ -840,6 +845,7 @@ singleProjectPage model =
             [ [ h1 [] [ text "Project" ]
               , a [ href (videoServeURL ++ model.singleProject.videoOutputID) ] [ text "Download Generated Video" ]
               , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Generate Video" ]
+              , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Download Generated Video" ]
               , Form.group []
                     [ Form.label [ for "projectname" ] [ text "Project Name" ]
                     , Input.text [ Input.id "projectname", Input.value model.singleProject.name, Input.onInput ProjectNameInput ]
@@ -858,6 +864,15 @@ singleProjectPage model =
             , List.map (videoSegmentRow imageServeURL) model.singleProject.videoSegments
             ]
         )
+
+
+downloadProjectVideo : String -> String -> String -> Cmd Msg
+downloadProjectVideo mgrURL projectID videoOutputID =
+    let
+        videoServeURL =
+            mgrURL ++ "/api/v1/project/" ++ projectID ++ "/video/" ++ videoOutputID
+    in
+    Download.url videoServeURL
 
 
 videoSegmentRow : String -> VideoSegment -> Html Msg
