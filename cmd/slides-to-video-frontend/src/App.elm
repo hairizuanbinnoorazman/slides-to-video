@@ -193,7 +193,6 @@ type Msg
     | LoginResponse (Result Http.Error ())
     | ProjectsResponse (Result Http.Error ProjectList)
     | UpdateScriptTextArea String
-    | SubmitJob
     | ToggleAlert Alert.Visibility
     | Tick Time.Posix
     | UsernameInput String
@@ -210,11 +209,20 @@ type Msg
     | ScriptInput String String
     | SubmitScriptInput String
     | UpdateVideoSegmentResponse (Result Http.Error VideoSegment)
+    | SubmitGenerateVideo
+    | SubmitUploadPDFSlides
+    | UploadPDFSlidesResponse (Result Http.Error PDFSlideImages)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        UploadPDFSlidesResponse result ->
+            ( model, Cmd.none )
+
+        SubmitGenerateVideo ->
+            ( model, Cmd.none )
+
         UpdateVideoSegmentResponse result ->
             case result of
                 Ok zzz ->
@@ -299,8 +307,8 @@ update msg model =
         ToggleAlert alertVisibility ->
             ( { model | alertVisibility = alertVisibility }, Cmd.none )
 
-        SubmitJob ->
-            ( model, Cmd.batch [ uploadFile model.serverSettings.serverEndpoint model.files ] )
+        SubmitUploadPDFSlides ->
+            ( model, Cmd.batch [ apiUploadPDFSlides model.serverSettings.serverEndpoint model.singleProject.id model.files ] )
 
         UpdateScriptTextArea scriptText ->
             ( { model | script = scriptText }, Cmd.none )
@@ -824,18 +832,21 @@ singleProjectPage model =
         (List.concat
             [ [ h1 [] [ text "Project" ]
               , a [ href (videoServeURL ++ model.singleProject.videoOutputID) ] [ text "Download Generated Video" ]
-              , Button.button [ Button.primary ] [ text "Generate Video" ]
+              , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Generate Video" ]
               , Form.group []
                     [ Form.label [ for "projectname" ] [ text "Project Name" ]
                     , Input.text [ Input.id "projectname", Input.value model.singleProject.name, Input.onInput ProjectNameInput ]
                     , Button.button [ Button.primary, Button.onClick SubmitRenameProject ] [ text "Rename project" ]
                     ]
               , if List.length model.singleProject.pdfSlideImages == 0 then
-                    p [] [ text "Please upload a PDF File containing the slides" ]
+                    div []
+                        [ p [] [ text "Please upload a PDF File containing the slides" ]
+                        , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
+                        , Button.button [ Button.primary, Button.onClick SubmitUploadPDFSlides ] []
+                        ]
 
                 else
-                    p [] [ text "You may replace the PDF File" ]
-              , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
+                    p [] [ text "File already uploaded" ]
               ]
             , List.map (videoSegmentRow imageServeURL) model.singleProject.videoSegments
             ]
@@ -876,10 +887,10 @@ filesDecoder =
     Decode.at [ "target", "files" ] (Decode.list File.decoder)
 
 
-uploadFile : String -> List File -> Cmd Msg
-uploadFile mgrURL files =
+uploadFile : String -> String -> List File -> Cmd Msg
+uploadFile mgrURL projectID files =
     Http.post
-        { url = mgrURL ++ "/api/v1/job"
+        { url = mgrURL ++ "/api/v1/project/" ++ projectID ++ "/pdfslideimages"
         , expect = Http.expectString TemporaryResp
         , body = Http.multipartBody (List.map (Http.filePart "myfile") files)
         }
@@ -1006,8 +1017,8 @@ apiUpdateVideoSegmentScript mgrURL projectID videoSegmentID script =
         }
 
 
-apiUploadPDFSlides : String -> String -> String -> List File -> Cmd Msg
-apiUploadPDFSlides mgrURL apiToken projectID files =
+apiUploadPDFSlides : String -> String -> List File -> Cmd Msg
+apiUploadPDFSlides mgrURL projectID files =
     let
         url =
             mgrURL ++ "/api/v1/project/" ++ projectID ++ "/pdfslideimages"
@@ -1016,12 +1027,10 @@ apiUploadPDFSlides mgrURL apiToken projectID files =
         { body = Http.multipartBody (List.map (Http.filePart "myfile") files)
         , method = "POST"
         , url = url
-        , headers =
-            [ Http.header "Authorization" ("Bearer " ++ apiToken)
-            ]
+        , headers = []
         , timeout = Nothing
         , tracker = Nothing
-        , expect = Http.expectJson CreateProjectResponse singleProjectDecoder
+        , expect = Http.expectJson UploadPDFSlidesResponse pdfSlideImagesDecoder
         }
 
 
