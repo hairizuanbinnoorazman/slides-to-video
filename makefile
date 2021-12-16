@@ -33,12 +33,14 @@ build-images:
 	docker build -t $(image_repo)pdf-splitter:$(image_version) ./cmd/pdf-splitter
 	docker build -t $(image_repo)image-to-video:$(image_version) ./cmd/image-to-video
 	docker build -t $(image_repo)concatenate-video:$(image_version) ./cmd/concatenate-video
+	docker build -t $(image_repo)frontend:$(image_version) ./cmd/slides-to-video-frontend
 
 push-images:
 	docker push $(image_repo)slides-to-video-manager:$(image_version)
 	docker push $(image_repo)pdf-splitter:$(image_version)
 	docker push $(image_repo)image-to-video:$(image_version)
 	docker push $(image_repo)concatenate-video:$(image_version)
+	docker push $(image_repo)frontend:$(image_version)
 
 build-all: build-bin build-images
 

@@ -1,18 +1,10 @@
 version: '3.3'
 
 services:
-  # frontend:
-  #   image: slides-to-video-frontend
-  #   ports:
-  #     - 8870:8080
-  #   volumes:
-  #     - ../../cmd/slides-to-video-frontend/configuration:/root/configuration
-  #   command:
-  #     - "app"
-  #     - "server"
-  #     - "-c"
-  #     - "/root/configuration/config.yaml"
-  #   restart: always
+  frontend:
+    image: frontend
+    ports:
+      - 8081:8080
   manager:
     image: slides-to-video-manager
     ports:
