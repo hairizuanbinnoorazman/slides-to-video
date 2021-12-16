@@ -221,7 +221,7 @@ update msg model =
             ( model, Cmd.none )
 
         SubmitGenerateVideo ->
-            ( model, Cmd.none )
+            ( model, Cmd.batch [ apiProjectGenerateVideo model.serverSettings.serverEndpoint model.singleProject.id ] )
 
         UpdateVideoSegmentResponse result ->
             case result of
@@ -1031,6 +1031,23 @@ apiUploadPDFSlides mgrURL projectID files =
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectJson UploadPDFSlidesResponse pdfSlideImagesDecoder
+        }
+
+
+apiProjectGenerateVideo : String -> String -> Cmd Msg
+apiProjectGenerateVideo mgrURL projectID =
+    let
+        url =
+            mgrURL ++ "/api/v1/project/" ++ projectID ++ ":generate-video"
+    in
+    Http.request
+        { body = Http.emptyBody
+        , method = "POST"
+        , url = url
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectWhatever EmptyResponse
         }
 
 
