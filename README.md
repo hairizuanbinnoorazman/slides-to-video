@@ -31,8 +31,6 @@ make format
 
 ## Features to be developed
 
-- Need Job Object
-  - Needed to handle video segment generation and video concat (Long running tasks)
 - Project
   - How to handle status for when no "long running" process is happening
 - Access Image and Video assets
@@ -84,6 +82,8 @@ make format
 
 - Downloading of images before showing  
   https://github.com/justgook/elm-image/issues/9
+- Handling repeated items elm  
+  https://stackoverflow.com/questions/48734554/view-with-multiple-textareas-how-to-identify-which-was-modified
 
 ## Development workflow
 
