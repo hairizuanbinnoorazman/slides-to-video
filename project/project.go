@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -49,12 +50,17 @@ func New() Project {
 }
 
 func (p *Project) GetVideoSegmentList() ([]string, error) {
+	videoSegments := p.VideoSegments
+	sort.Sort(videosegment.ByOrder(videoSegments))
 	items := []string{}
-	for _, v := range p.VideoSegments {
+	for _, v := range videoSegments {
 		if v.VideoFile == "" {
 			return []string{}, fmt.Errorf("unable to concatenate due to missing video file record")
 		}
 		items = append(items, v.VideoFile)
+	}
+	if len(items) == 0 {
+		return items, fmt.Errorf("no video segments available for current project")
 	}
 	return items, nil
 }
