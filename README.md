@@ -31,20 +31,25 @@ make format
 
 ## Features to be developed
 
-- Project
-  - How to handle status for when no "long running" process is happening
+- Setup docker compose with frontend
+  - Require transpiling as well as uglify of elm codebase
+- Provide a user page with some details
+  - Create dashboard on per user basis
+  - Maximum no of projects available for user
+  - Current usage of number of projects for user
+- Videos located in the wrong folder in minio S3 -> should be configurable
 - Access Image and Video assets
   - Image for video segment -> Need to check that the user can actually really access the image (it has cookie protection)
   - Audio for video segment
 - Projects
+  - How to handle status for when no "long running" process is happening
+  - Count of number of projects by user?
+  - If there is a long running pdf concater - do not enable the capability to generate?
   - Roles
     - Owner - Can be group/user (For project accounting)
     - Publisher - Send end result to a video streaming site
     - Editor - Can edit project, export project
     - Viewer - Can view project
-- Add Frontend for Integration
-  - Process and generate video
-  - Create dashboard on per user basis
 - User + ACL model integration (App-managed)
   - Require need to have the capability to limits to amount of projects that can be created per user
   - Rate limiting of all APIs
