@@ -307,7 +307,7 @@ update msg model =
         Tick time ->
             case model.page of
                 Project projectID ->
-                    if List.length model.singleProject.pdfSlideImages > 0 && List.length model.singleProject.videoSegments == 0 then
+                    if List.length model.singleProject.videoSegments == 0 then
                         ( model, Cmd.batch [ apiGetProject model.serverSettings.serverEndpoint projectID ] )
 
                     else
@@ -849,7 +849,7 @@ singleProjectPage model =
             [ [ h1 [] [ text "Project" ]
               , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Generate Video" ]
               , if model.singleProject.videoOutputID /= "" then
-                    Button.button [ Button.primary, Button.onClick (DownloadGeneratedVideo model.serverSettings.serverEndpoint model.singleProject.id model.singleProject.videoOutputID ) ] [ text "Download Generated Video" ]
+                    Button.button [ Button.primary, Button.onClick (DownloadGeneratedVideo model.serverSettings.serverEndpoint model.singleProject.id model.singleProject.videoOutputID) ] [ text "Download Generated Video" ]
 
                 else
                     Button.button [ Button.primary, Button.disabled True ] [ text "Generated Video Unavailable" ]
