@@ -836,9 +836,6 @@ singleProjectPage model =
     let
         imageServeURL =
             model.serverSettings.serverEndpoint ++ "/api/v1/project/" ++ model.singleProject.id ++ "/image/"
-
-        videoServeURL =
-            model.serverSettings.serverEndpoint ++ "/api/v1/project/" ++ model.singleProject.id ++ "/video/"
     in
     div []
         (List.concat
