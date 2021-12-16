@@ -843,9 +843,11 @@ singleProjectPage model =
     div []
         (List.concat
             [ [ h1 [] [ text "Project" ]
-              , a [ href (videoServeURL ++ model.singleProject.videoOutputID) ] [ text "Download Generated Video" ]
               , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Generate Video" ]
-              , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Download Generated Video" ]
+              , if model.singleProject.id == "" then 
+                    Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Download Generated Video" ]
+                else
+                    Button.button [ Button.primary, Button.disabled True ] [ text "Generated Video Unavailable" ]
               , Form.group []
                     [ Form.label [ for "projectname" ] [ text "Project Name" ]
                     , Input.text [ Input.id "projectname", Input.value model.singleProject.name, Input.onInput ProjectNameInput ]
