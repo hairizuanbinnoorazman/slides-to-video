@@ -31,8 +31,9 @@ make format
 
 ## Features to be developed
 
-- Setup docker compose with frontend
-  - Require transpiling as well as uglify of elm codebase
+- Introduce proper unit testing for all db related components
+  - Need to ensure that records are pushed/pulled from storage accordingly
+  - Need to ensure for all object types that have both google cloud datastore and mysql
 - Provide a user page with some details
   - Create dashboard on per user basis
   - Maximum no of projects available for user
