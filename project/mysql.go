@@ -108,3 +108,12 @@ func (m mysql) Delete(ctx context.Context, ID string, UserID string) error {
 	}
 	return nil
 }
+
+func (m mysql) Count(ctx context.Context, UserID string) (int, error) {
+	var count int64
+	result := m.db.Model(&acl.ACL{}).Where("user_id = ?", UserID).Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return int(count), nil
+}

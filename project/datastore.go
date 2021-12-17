@@ -119,3 +119,14 @@ func (g *googleDatastore) Delete(ctx context.Context, ID, userID string) error {
 	}
 	return nil
 }
+
+func (g *googleDatastore) Count(ctx context.Context, UserID string) (int, error) {
+	projects := []Project{}
+	query := datastore.NewQuery(g.entityName)
+	query = query.KeysOnly()
+	keys, err := g.client.GetAll(ctx, query, &projects)
+	if err != nil {
+		return 0, fmt.Errorf("unable to retrieve all results. err: %v", err)
+	}
+	return len(keys), nil
+}

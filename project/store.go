@@ -12,6 +12,7 @@ type Store interface {
 	Create(ctx context.Context, e Project) error
 	Get(ctx context.Context, ID string, UserID string) (Project, error)
 	GetAll(ctx context.Context, UserID string, Limit, After int) ([]Project, error)
+	Count(ctx context.Context, UserID string) (int, error)
 	Update(ctx context.Context, ID string, UserID string, setters ...func(*Project) error) (Project, error)
 	Delete(ctx context.Context, ID string, UserID string) error
 }

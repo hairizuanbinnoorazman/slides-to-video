@@ -118,6 +118,15 @@ func Test_mysql_ops(t *testing.T) {
 		t.Fatalf("Unexpected - pdf slide images are not fetched")
 	}
 
+	// Get number of records
+	projectCount, err := a.Count(context.TODO(), "1111")
+	if err != nil {
+		t.Fatalf("Failed to retrieve record from mysql database. Err: %v", err)
+	}
+	if projectCount != 2 {
+		t.Fatalf("Unexpectd project count. Expected %v Actual %v", 2, projectCount)
+	}
+
 	// Invalid user id
 	_, err = a.Get(context.TODO(), "1234", "9999")
 	if err == nil {
