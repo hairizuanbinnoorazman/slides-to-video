@@ -216,6 +216,7 @@ var (
 					NextHandler: h.GetProject{
 						Logger:       logger,
 						ProjectStore: projectStore,
+						ACLStore:     aclStore,
 					},
 				}).Methods("GET")
 				s.Handle("/project/{project_id}", h.RequireJWTAuth{
@@ -224,6 +225,7 @@ var (
 					NextHandler: h.UpdateProject{
 						Logger:       logger,
 						ProjectStore: projectStore,
+						ACLStore:     aclStore,
 					},
 				}).Methods("PUT")
 				s.Handle("/project/{project_id}:concat", h.RequireJWTAuth{
@@ -233,6 +235,7 @@ var (
 						Logger:        logger,
 						ProjectStore:  projectStore,
 						VideoConcater: videoConcater,
+						ACLStore:      aclStore,
 					},
 				}).Methods("POST")
 				s.Handle("/project/{project_id}:generate-video", h.RequireJWTAuth{
@@ -242,6 +245,7 @@ var (
 						Logger:             logger,
 						JobStore:           jobStore,
 						ProjectStore:       projectStore,
+						ACLStore:           aclStore,
 						VideoSegmentsStore: videoSegmentsStore,
 						VideoGenerator:     videoGenerator,
 					},

@@ -60,6 +60,7 @@ func (h CreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type UpdateProject struct {
 	Logger       logger.Logger
 	ProjectStore project.Store
+	ACLStore     acl.Store
 }
 
 func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +74,15 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rawReq, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to read json body. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
+
+	obtainedACL, err := h.ACLStore.Get(ctx, projectID, userID)
+	if err != nil || !obtainedACL.IsAuthorized(acl.Editor) {
+		errMsg := fmt.Sprintf("Error - unable to confirm acl for project. Error: %v", err)
 		h.Logger.Error(errMsg)
 		w.WriteHeader(500)
 		w.Write([]byte(generateErrorResp(errMsg)))
@@ -123,6 +133,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type GetProject struct {
 	Logger       logger.Logger
 	ProjectStore project.Store
+	ACLStore     acl.Store
 }
 
 func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +144,16 @@ func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	userID := ctx.Value(userIDKey).(string)
 
 	projectID := mux.Vars(r)["project_id"]
+
+	obtainedACL, err := h.ACLStore.Get(ctx, projectID, userID)
+	if err != nil || !obtainedACL.IsAuthorized(acl.Reader) {
+		errMsg := fmt.Sprintf("Error - unable to confirm acl for project. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
+
 	project, err := h.ProjectStore.Get(context.Background(), projectID, userID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
@@ -211,6 +232,7 @@ func (h GetAllProjects) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type StartVideoConcat struct {
 	Logger        logger.Logger
 	ProjectStore  project.Store
+	ACLStore      acl.Store
 	VideoConcater videoconcater.VideoConcater
 }
 
@@ -221,6 +243,15 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	projectID := mux.Vars(r)["project_id"]
 	userID := ctx.Value(userIDKey).(string)
+
+	obtainedACL, err := h.ACLStore.Get(ctx, projectID, userID)
+	if err != nil || !obtainedACL.IsAuthorized(acl.Editor) {
+		errMsg := fmt.Sprintf("Error - unable to confirm acl for project. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
 
 	project, err := h.ProjectStore.Get(ctx, projectID, userID)
 	if err != nil {
@@ -262,6 +293,7 @@ type StartProjectGenerateVideo struct {
 	Logger             logger.Logger
 	JobStore           job.Store
 	ProjectStore       project.Store
+	ACLStore           acl.Store
 	VideoSegmentsStore videosegment.Store
 	VideoGenerator     videogenerator.VideoGenerator
 }
@@ -273,6 +305,15 @@ func (h StartProjectGenerateVideo) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 	projectID := mux.Vars(r)["project_id"]
 	userID := ctx.Value(userIDKey).(string)
+
+	obtainedACL, err := h.ACLStore.Get(ctx, projectID, userID)
+	if err != nil || !obtainedACL.IsAuthorized(acl.Editor) {
+		errMsg := fmt.Sprintf("Error - unable to confirm acl for project. Error: %v", err)
+		h.Logger.Error(errMsg)
+		w.WriteHeader(500)
+		w.Write([]byte(generateErrorResp(errMsg)))
+		return
+	}
 
 	singleProject, err := h.ProjectStore.Get(context.TODO(), projectID, userID)
 	if err != nil {
