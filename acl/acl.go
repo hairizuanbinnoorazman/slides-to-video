@@ -40,8 +40,8 @@ var Owner permission = "owner"
 // ACL - manage permission model of handling project resources
 type ACL struct {
 	ID           string     `json:"id"`
-	ProjectID    string     `json:"project_id" datastore:"-"`
-	UserID       string     `json:"user_id" datastore:"-"`
+	ProjectID    string     `json:"project_id"`
+	UserID       string     `json:"user_id"`
 	Permission   permission `json:"permission"`
 	DateCreated  time.Time  `json:"date_created"`
 	DateModified time.Time  `json:"date_modified"`

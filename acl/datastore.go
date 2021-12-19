@@ -42,7 +42,10 @@ func (g *googleDatastore) Get(ctx context.Context, ProjectID, UserID string) (AC
 		return ACL{}, err
 	}
 	if len(acls) == 0 || len(acls) > 1 {
-		return ACL{}, fmt.Errorf("bad query to get acl for project id and user id combination")
+		return ACL{}, fmt.Errorf("no records found")
+	}
+	if len(acls) > 1 {
+		return ACL{}, fmt.Errorf("bad query to get acl for project id and user id combination. expected only 1 combination")
 	}
 	return acls[0], nil
 }
