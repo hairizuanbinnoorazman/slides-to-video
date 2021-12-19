@@ -37,6 +37,21 @@ var Publisher permission = "publisher"
 // Owner permission to resource - applied on project level
 var Owner permission = "owner"
 
+func (p permission) Int() int {
+	switch p {
+	case Anonymous:
+		return 0
+	case Reader:
+		return 1
+	case Editor:
+		return 2
+	case Owner:
+		return 3
+	default:
+		return -1
+	}
+}
+
 // ACL - manage permission model of handling project resources
 type ACL struct {
 	ID           string     `json:"id"`
@@ -57,4 +72,14 @@ func New(projectID, userID string) ACL {
 		DateCreated:  time.Now(),
 		DateModified: time.Now(),
 	}
+}
+
+func (a ACL) IsAuthorized(p permission) bool {
+	if a.Permission == Owner {
+		return true
+	}
+	if a.Permission.Int() >= p.Int() {
+		return true
+	}
+	return false
 }
