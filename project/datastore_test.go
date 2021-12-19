@@ -1,4 +1,4 @@
-package project_test
+package project
 
 import (
 	"context"
@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
 	"github.com/testcontainers/testcontainers-go"
 )
 
@@ -38,26 +40,9 @@ func Test_datastore_ops(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to connect to datastore. Err :: %v", err)
 	}
-	projectStore := project.NewGoogleDatastore(xClient, "project", "pdfslideimages", "videosegments")
+	projectStore := NewGoogleDatastore(logger.LoggerForTests{Tester: t}, xClient, "project", "pdfslideimages", "videosegments")
+	pdfDB := pdfslideimages.NewGoogleDatastore(logger.LoggerForTests{Tester: t}, xClient, "project", "pdfslideimages")
+	aclDB, _ := acl.NewGoogleDatastore(logger.LoggerForTests{Tester: t}, xClient, "acl")
 
-	p := project.Project{
-		ID:           "1234",
-		DateCreated:  time.Now(),
-		DateModified: time.Now(),
-	}
-	p2 := project.Project{
-		ID:           "1235",
-		DateCreated:  time.Now(),
-		DateModified: time.Now(),
-	}
-
-	err = projectStore.Create(context.TODO(), p)
-	if err != nil {
-		t.Fatalf("Unable to create project record in datastore. Record :: %+v, Err :: %v", p, err)
-	}
-	err = projectStore.Create(context.TODO(), p2)
-	if err != nil {
-		t.Fatalf("Unable to create project record in datastore. Record :: %+v, Err :: %v", p2, err)
-	}
-
+	common_ops(t, projectStore, pdfDB, aclDB)
 }
