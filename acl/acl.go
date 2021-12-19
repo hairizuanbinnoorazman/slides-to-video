@@ -74,11 +74,11 @@ func New(projectID, userID string) ACL {
 	}
 }
 
-func (a ACL) IsAuthorized(p permission) bool {
+func (a ACL) IsAuthorized(minPermission permission) bool {
 	if a.Permission == Owner {
 		return true
 	}
-	if a.Permission.Int() >= p.Int() {
+	if a.Permission.Int() >= minPermission.Int() {
 		return true
 	}
 	return false
