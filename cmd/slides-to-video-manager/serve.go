@@ -102,10 +102,11 @@ var (
 						logger.Errorf("Unable to create datastore client. %v", err)
 						os.Exit(1)
 					}
-					projectStore = project.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
-					pdfSlideImagesStore = pdfslideimages.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName)
+					projectStore = project.NewGoogleDatastore(logger, datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
+					pdfSlideImagesStore = pdfslideimages.NewGoogleDatastore(logger, datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.PDFSlidesTableName)
 					userStore = user.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.UserTableName)
 					videoSegmentsStore = videosegment.NewGoogleDatastore(datastoreClient, cfg.Datastore.GoogleDatastoreConfig.ProjectTableName, cfg.Datastore.GoogleDatastoreConfig.VideoSegmentsTableName)
+					aclStore, _ = acl.NewGoogleDatastore(logger, datastoreClient, "acl")
 				} else if cfg.Datastore.Type == mysqlDatastore {
 					connectionString := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=True", cfg.Datastore.MySQLConfig.User, cfg.Datastore.MySQLConfig.Password, cfg.Datastore.MySQLConfig.Host, cfg.Datastore.MySQLConfig.Port, cfg.Datastore.MySQLConfig.DBName)
 					db, err := gorm.Open("mysql", connectionString)

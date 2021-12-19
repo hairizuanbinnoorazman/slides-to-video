@@ -5,16 +5,19 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/datastore"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 )
 
 type googleDatastore struct {
+	logger            logger.Logger
 	projectEntityName string
 	entityName        string
 	client            *datastore.Client
 }
 
-func NewGoogleDatastore(ds *datastore.Client, projectEntity, en string) *googleDatastore {
+func NewGoogleDatastore(logger logger.Logger, ds *datastore.Client, projectEntity, en string) *googleDatastore {
 	datastore := googleDatastore{
+		logger:            logger,
 		client:            ds,
 		entityName:        en,
 		projectEntityName: projectEntity,

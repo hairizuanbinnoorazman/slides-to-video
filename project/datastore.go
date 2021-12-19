@@ -6,19 +6,24 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videosegment"
 )
 
 type googleDatastore struct {
+	logger                   logger.Logger
 	entityName               string
 	pdfSlideImagesEntityName string
 	videoSegmentEntityName   string
+	aclEntityName            string
 	client                   *datastore.Client
 }
 
-func NewGoogleDatastore(ds *datastore.Client, en, pdfslideimagesEn, videoSegmentEn string) *googleDatastore {
+func NewGoogleDatastore(logger logger.Logger, ds *datastore.Client, en, pdfslideimagesEn, videoSegmentEn string) *googleDatastore {
 	datastore := googleDatastore{
+		logger:                   logger,
 		client:                   ds,
 		entityName:               en,
 		pdfSlideImagesEntityName: pdfslideimagesEn,
@@ -98,17 +103,22 @@ func (g *googleDatastore) Update(ctx context.Context, ID, userID string, setters
 }
 
 func (g *googleDatastore) GetAll(ctx context.Context, userID string, limit, after int) ([]Project, error) {
-	emailDetails := []Project{}
-	query := datastore.NewQuery(g.entityName)
+	acls := []acl.ACL{}
+	query := datastore.NewQuery(g.aclEntityName)
 	query = query.Limit(limit)
-	keys, err := g.client.GetAll(ctx, query, &emailDetails)
+	query = query.Offset(after)
+	query = query.Filter("UserID =", userID)
+	keys, err := g.client.GetAll(ctx, query, &acls)
 	if err != nil {
 		return []Project{}, fmt.Errorf("unable to retrieve all results. err: %v", err)
 	}
-	for i, key := range keys {
-		emailDetails[i].ID = key.Name
+
+	projects := []Project{}
+	err = g.client.GetMulti(ctx, keys, &projects)
+	if err != nil {
+		return []Project{}, fmt.Errorf("unable to retrieve all results. err: %v", err)
 	}
-	return emailDetails, nil
+	return projects, nil
 }
 
 func (g *googleDatastore) Delete(ctx context.Context, ID, userID string) error {
