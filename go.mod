@@ -34,6 +34,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.1.0 // indirect
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.3
+	github.com/gorilla/securecookie v1.1.1
 	github.com/imdario/mergo v0.3.11
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/gorm v1.9.15
@@ -51,8 +52,8 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
-	github.com/nats-io/nats-server/v2 v2.2.0 // indirect
-	github.com/nats-io/nats.go v1.10.1-0.20210228004050-ed743748acac
+	github.com/nats-io/nats-server/v2 v2.7.2 // indirect
+	github.com/nats-io/nats.go v1.13.1-0.20220121202836-972a071d373d
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -65,11 +66,11 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/testcontainers/testcontainers-go v0.12.0
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20210314154223-e6e6c4f2bb5b
-	golang.org/x/net v0.0.0-20211108170745-6635138e15ea // indirect
+	golang.org/x/crypto v0.0.0-20220210151621-f4118a5b28e2
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211109184856-51b60fd695b3 // indirect
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/api v0.57.0
 	google.golang.org/appengine v1.6.7 // indirect
@@ -83,6 +84,8 @@ require (
 )
 
 require (
-	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/klauspost/compress v1.14.2 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
+	github.com/minio/highwayhash v1.0.2 // indirect
+	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 )
