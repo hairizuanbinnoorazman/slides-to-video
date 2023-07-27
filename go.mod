@@ -10,12 +10,12 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	cloud.google.com/go/texttospeech v1.0.0
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/Microsoft/go-winio v0.4.17-0.20210211115548-6eac466e5fa3 // indirect
-	github.com/Microsoft/hcsshim v0.8.16 // indirect
+	github.com/Microsoft/go-winio v0.5.2 // indirect
+	github.com/Microsoft/hcsshim v0.8.25 // indirect
 	github.com/TV4/logrus-stackdriver-formatter v0.1.0
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
-	github.com/containerd/cgroups v0.0.0-20210114181951-8a68de567b68 // indirect
-	github.com/containerd/containerd v1.5.0-beta.4 // indirect
+	github.com/containerd/cgroups v1.0.3 // indirect
+	github.com/containerd/containerd v1.5.18 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v20.10.11+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -35,7 +35,7 @@ require (
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/securecookie v1.1.1
-	github.com/imdario/mergo v0.3.11
+	github.com/imdario/mergo v0.3.12
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/gorm v1.9.15
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.1 // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/xid v1.2.1 // indirect
