@@ -55,7 +55,7 @@ func common_ops(t *testing.T, projectStore Store, pdfDB pdfslideimages.Store, ac
 	}
 
 	// Single get of record
-	retrieveProject, err := projectStore.Get(context.TODO(), "1234", "1111")
+	retrieveProject, err := projectStore.Get(context.TODO(), "1234")
 	if err != nil {
 		t.Fatalf("Failed to retrieve record from mysql database. Err: %v", err)
 	}
@@ -75,14 +75,8 @@ func common_ops(t *testing.T, projectStore Store, pdfDB pdfslideimages.Store, ac
 		t.Fatalf("Unexpectd project count. Expected %v Actual %v", 2, projectCount)
 	}
 
-	// Invalid user id
-	_, err = projectStore.Get(context.TODO(), "1234", "9999")
-	if err == nil {
-		t.Fatalf("Expected that record will not be found - invalid userid passed in")
-	}
-
 	// Invalid project id
-	_, err = projectStore.Get(context.TODO(), "9999", "1111")
+	_, err = projectStore.Get(context.TODO(), "9999")
 	if err == nil {
 		t.Fatalf("Expected that record will not be found - invalid userid passed in")
 	}
@@ -97,7 +91,7 @@ func common_ops(t *testing.T, projectStore Store, pdfDB pdfslideimages.Store, ac
 	}
 
 	// Update a single record
-	p, err = projectStore.Update(context.TODO(), "1235", "1111", recreateIdemKeys())
+	p, err = projectStore.Update(context.TODO(), "1235", recreateIdemKeys())
 	if err != nil {
 		t.Fatalf("Unexpected error when updating record. Err: %v", err)
 	}
@@ -106,7 +100,7 @@ func common_ops(t *testing.T, projectStore Store, pdfDB pdfslideimages.Store, ac
 	}
 
 	// Update status
-	p, err = projectStore.Update(context.TODO(), "1235", "1111", setStatus(running))
+	p, err = projectStore.Update(context.TODO(), "1235", setStatus(running))
 	if err != nil {
 		t.Fatalf("Unexpected error when updating record. Err: %v", err)
 	}
@@ -115,7 +109,7 @@ func common_ops(t *testing.T, projectStore Store, pdfDB pdfslideimages.Store, ac
 	}
 
 	// Grab updated record and check status
-	p, err = projectStore.Get(context.TODO(), "1235", "1111")
+	p, err = projectStore.Get(context.TODO(), "1235")
 	if err != nil {
 		t.Fatalf("Unexpected error when getting record. Err: %v", err)
 	}
@@ -124,7 +118,7 @@ func common_ops(t *testing.T, projectStore Store, pdfDB pdfslideimages.Store, ac
 	}
 
 	// Delete single record
-	err = projectStore.Delete(context.TODO(), "1234", "1111")
+	err = projectStore.Delete(context.TODO(), "1234")
 	if err != nil {
 		t.Fatalf("Unexpected error when deleting record. Err: %v", err)
 	}

@@ -41,7 +41,7 @@ func (g *googleDatastore) Create(ctx context.Context, e Project) error {
 	return nil
 }
 
-func (g *googleDatastore) Get(ctx context.Context, ID, userID string) (Project, error) {
+func (g *googleDatastore) Get(ctx context.Context, ID string) (Project, error) {
 	key := datastore.NameKey(g.entityName, ID, nil)
 	project := Project{}
 	if err := g.client.Get(ctx, key, &project); err != nil {
@@ -75,7 +75,7 @@ func (g *googleDatastore) Get(ctx context.Context, ID, userID string) (Project, 
 	return project, nil
 }
 
-func (g *googleDatastore) Update(ctx context.Context, ID, userID string, setters ...func(*Project) error) (Project, error) {
+func (g *googleDatastore) Update(ctx context.Context, ID string, setters ...func(*Project) error) (Project, error) {
 	key := datastore.NameKey(g.entityName, ID, nil)
 	project := Project{}
 	_, err := g.client.RunInTransaction(context.Background(), func(tx *datastore.Transaction) error {
@@ -121,7 +121,7 @@ func (g *googleDatastore) GetAll(ctx context.Context, userID string, limit, afte
 	return projects, nil
 }
 
-func (g *googleDatastore) Delete(ctx context.Context, ID, userID string) error {
+func (g *googleDatastore) Delete(ctx context.Context, ID string) error {
 	key := datastore.NameKey(g.entityName, ID, nil)
 	err := g.client.Delete(ctx, key)
 	if err != nil {
