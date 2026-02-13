@@ -116,7 +116,7 @@ func (h UpdateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedProject, err := h.ProjectStore.Update(context.Background(), projectID, userID, updaters...)
+	updatedProject, err := h.ProjectStore.Update(context.Background(), projectID, updaters...)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to update project item. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -154,7 +154,7 @@ func (h GetProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := h.ProjectStore.Get(context.Background(), projectID, userID)
+	project, err := h.ProjectStore.Get(context.Background(), projectID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to view all parent jobs. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -253,7 +253,7 @@ func (h StartVideoConcat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := h.ProjectStore.Get(ctx, projectID, userID)
+	project, err := h.ProjectStore.Get(ctx, projectID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve the project entity. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -315,7 +315,7 @@ func (h StartProjectGenerateVideo) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	singleProject, err := h.ProjectStore.Get(context.TODO(), projectID, userID)
+	singleProject, err := h.ProjectStore.Get(context.TODO(), projectID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve project details. Error: %v", err)
 		h.Logger.Error(errMsg)
@@ -342,7 +342,7 @@ func (h StartProjectGenerateVideo) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	singleProject, err = h.ProjectStore.Get(context.TODO(), projectID, userID)
+	singleProject, err = h.ProjectStore.Get(context.TODO(), projectID)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error - unable to retrieve project details. Error: %v", err)
 		h.Logger.Error(errMsg)

@@ -30,7 +30,7 @@ func (b basic) Start(ctx context.Context, projectID, userID string, videoSegment
 	}
 
 	updaters, _ := project.RegenerateIdemKeys()
-	newProject, err := b.projectStore.Update(ctx, projectID, userID, updaters...)
+	newProject, err := b.projectStore.Update(ctx, projectID, updaters...)
 	if err != nil {
 		return err
 	}
