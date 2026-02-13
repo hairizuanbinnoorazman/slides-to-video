@@ -107,7 +107,7 @@ func (p Processor) processTriggerVideoConcat(j Job) {
 		p.jobsStore.Delete(context.TODO(), j.ID)
 	}
 
-	project, err := p.projectStore.Get(context.TODO(), j.ProjectID, j.UserID)
+	project, err := p.projectStore.Get(context.TODO(), j.ProjectID)
 	if err != nil {
 		p.logger.Errorf("unable to get project details. will retry. ProjectID - %v :: Error - %v", j.ProjectID, err)
 		return
