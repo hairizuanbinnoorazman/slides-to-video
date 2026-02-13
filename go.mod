@@ -1,6 +1,6 @@
 module github.com/hairizuanbinnoorazman/slides-to-video-manager
 
-go 1.23.0
+go 1.24.0
 
 require (
 	cloud.google.com/go v0.110.10 // indirect
@@ -60,12 +60,12 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/testcontainers/testcontainers-go v0.12.0
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.40.0
-	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/crypto v0.45.0
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/api v0.149.0
 	google.golang.org/genproto v0.0.0-20231211222908-989df2bf70f3
 	google.golang.org/grpc v1.59.0 // indirect
