@@ -10,7 +10,7 @@ import (
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
-	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/handlers"
+	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/slides-to-video-manager/handlers"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/imageimporter"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/job"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
