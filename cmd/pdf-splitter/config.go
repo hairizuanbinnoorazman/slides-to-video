@@ -9,6 +9,7 @@ var natsQueue = "nats"
 var googlePubsubQueue = "google_pubsub"
 var gcsBlobStorage = "gcs"
 var minioBlobStorage = "minio"
+var localBlobStorage = "local"
 
 type config struct {
 	Server      serverConfig `yaml:"server"`

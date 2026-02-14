@@ -57,6 +57,8 @@ push-all-versioned:
 	$(eval image_repo := gcr.io/$(shell gcloud config list --format yaml | yq r - core.project))
 	make image_version=$(image_version) image_repo=$(image_repo) push-images
 
+.PHONY: stack-up stack-down stack-up-monitoring stack-down-monitoring stack-up-local stack-down-local stack-up-minio stack-down-minio reup reup-local reup-minio
+
 stack-up:
 	cd deployment/docker-compose && docker compose up
 

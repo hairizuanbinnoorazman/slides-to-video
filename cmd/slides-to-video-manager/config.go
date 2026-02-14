@@ -14,6 +14,7 @@ var googlePubsubQueue = "google_pubsub"
 var channelsQueue = "channels"
 var gcsBlobStorage = "gcs"
 var minioBlobStorage = "minio"
+var localBlobStorage = "local"
 
 type datastoreConfig struct {
 	Type                  string                 `yaml:"type"`
@@ -108,7 +109,7 @@ type minioConfig struct {
 }
 
 type localBlobConfig struct {
-	Folder              string `yaml:"folder"`
+	BasePath            string `yaml:"basePath"`
 	PDFFolder           string `yaml:"pdfFolder"`
 	ImagesFolder        string `yaml:"imagesFolder"`
 	VideoSnippetsFolder string `yaml:"videoSnippetsFolder"`
@@ -237,9 +238,9 @@ func ConfigStructLevelValidation(sl validator.StructLevel) {
 		if cfg.BlobStorage.Minio.VideoFolder == "" {
 			sl.ReportError(cfg.BlobStorage.Minio, "minio.VideoFolder", "VideoFolder", "required", "Minio VideoFolder is required when using Minio blob storage")
 		}
-	} else if cfg.BlobStorage.Type == "local" {
-		if cfg.BlobStorage.Local.Folder == "" {
-			sl.ReportError(cfg.BlobStorage.Local, "local.Folder", "Folder", "required", "Local Folder is required when using local blob storage")
+	} else if cfg.BlobStorage.Type == localBlobStorage {
+		if cfg.BlobStorage.Local.BasePath == "" {
+			sl.ReportError(cfg.BlobStorage.Local, "local.BasePath", "BasePath", "required", "Local BasePath is required when using local blob storage")
 		}
 		if cfg.BlobStorage.Local.PDFFolder == "" {
 			sl.ReportError(cfg.BlobStorage.Local, "local.PDFFolder", "PDFFolder", "required", "Local PDFFolder is required when using local blob storage")
