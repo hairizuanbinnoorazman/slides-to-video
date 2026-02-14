@@ -16,7 +16,7 @@ make stack-up
 
 This starts the application in **all-in-one mode** with:
 - Single manager service with embedded workers
-- MySQL database for storage
+- MariaDB 12.2.2 database for storage
 - Local file storage at `/data/storage`
 - Workers communicate via in-memory channels queue
 
@@ -57,7 +57,7 @@ make format
 
 - Introduce proper unit testing for all db related components
   - Need to ensure that records are pushed/pulled from storage accordingly
-  - Need to ensure for all object types that have both google cloud datastore and mysql
+  - Need to ensure for all object types that have both google cloud datastore and mariadb
 - Provide a user page with some details
   - Create dashboard on per user basis
   - Maximum no of projects available for user

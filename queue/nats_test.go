@@ -12,7 +12,7 @@ import (
 
 func Test_nats_ops(t *testing.T) {
 	// Following command is similar to this docker command:
-	// docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test-database -e MYSQL_USER=user -e MYSQL_PASSWORD=password -d -p 3306:3306 mysql:5.7
+	// docker run --name some-nats -d -p 4222:4222 nats:2.1.9
 	req, err := testcontainers.GenericContainer(context.TODO(), testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image:        "nats:2.1.9",

@@ -62,7 +62,7 @@ The slides-to-video application supports two deployment architectures:
 └─────────────────────────────────────────┘
         │
         ▼
-  MySQL + Minio
+  MariaDB + Minio
 ```
 
 **Configuration (Hardcoded Defaults):**
@@ -314,7 +314,7 @@ export QUEUE_TYPE=channels
 # Build all binaries
 make build-bin
 
-# Start infrastructure (MySQL, Minio, NATS)
+# Start infrastructure (MariaDB, Minio, NATS)
 docker-compose -f docker-compose-infra.yaml up -d
 
 # Start manager

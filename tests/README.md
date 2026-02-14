@@ -6,7 +6,7 @@ The tests will need to target and run tests across the variety of platforms belo
 
 - "Local" setup with docker-compose. This would be priority 0 - meant for use for local development
   - Storage: Minio
-  - DB: MySQL
+  - DB: MariaDB 12.2.2
   - Queue: Nats
 - Google Serverless Platform. Cloud Run
   - Storage: GCS
@@ -14,7 +14,7 @@ The tests will need to target and run tests across the variety of platforms belo
   - Queue: Google Pubsub
 - Kubernetes
   - Storage: Minio, GCS
-  - DB: MySQL, Postgreql, Cloud SQL, Datastore, Cassandra
+  - DB: MariaDB, Postgreql, Cloud SQL, Datastore, Cassandra
   - Queue: Nats, Google Pubsub, RabbitMQ, Kafka
 
 Types of test to be run:

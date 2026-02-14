@@ -98,7 +98,7 @@ The application consists of five main services (deployable together or separatel
    - Alternative **slides-to-video-frontend-alt**: Go-based template UI
 
 ### Supporting Infrastructure
-- **MySQL** (port 3306): Primary data store for local dev
+- **MariaDB 12.2.2** (port 3306): Primary data store for local dev
 - **Local File Storage** (/data/storage): Default blob storage for local dev (Docker volume)
 - **Minio** (port 9999): S3-compatible blob storage for local dev
 - **NATS** (port 4222): Message queue for distributed mode
@@ -110,7 +110,7 @@ The application consists of five main services (deployable together or separatel
 - **Google Cloud Storage**: Production blob storage (requires GCS credentials)
 
 ### Production Alternatives
-- Google Cloud Datastore replaces MySQL
+- Google Cloud Datastore replaces MariaDB
 - Google Cloud Storage replaces Local Storage or Minio
 - Google Pub/Sub replaces NATS
 - Channels queue for single-process deployments
@@ -161,7 +161,7 @@ Each worker service has its own package under cmd/:
 ### Storage Layer Pattern
 Each domain model package contains store interfaces and implementations:
 - `store.go`: Interface definition
-- `mysql.go`: MySQL implementation
+- `mysql.go`: MariaDB implementation
 - `datastore.go`: Google Cloud Datastore implementation
 - Tests use common test suites to verify both implementations
 
@@ -184,7 +184,7 @@ app server -c /path/to/config.yaml
 ```
 
 Configuration controls:
-- Storage backend selection (MySQL vs Datastore, Minio vs GCS)
+- Storage backend selection (MariaDB vs Datastore, Minio vs GCS)
 - Queue backend selection (NATS vs Pub/Sub)
 - Service URLs for inter-service communication
 - Credentials and secrets
@@ -193,7 +193,7 @@ Configuration controls:
 
 When adding new domain models:
 1. Create package with struct definition
-2. Implement Store interface with both MySQL and Datastore backends
+2. Implement Store interface with both MariaDB and Datastore backends
 3. Add handlers in handlers/ package
 4. Add routes in cmd/slides-to-video-manager/serve.go
 5. Add client methods in client/ package if workers need access
@@ -242,8 +242,8 @@ The tests/ directory contains pytest-based integration tests that:
 
 ### Unit Tests
 Go packages use testcontainers for database-dependent tests:
-- Spins up MySQL container for test isolation
-- Tests both MySQL and Datastore implementations
+- Spins up MariaDB container for test isolation
+- Tests both MariaDB and Datastore implementations
 - Located alongside source files (*_test.go)
 
 ### Test Requirements
@@ -258,7 +258,7 @@ Services communicate via service names, use local file storage (default) or Mini
 
 ### Kubernetes (Helm)
 Helm charts in deployment/helm/slides-to-video/ support:
-- StatefulSet for MySQL
+- StatefulSet for MariaDB
 - Deployments for each service
 - ConfigMaps for configuration
 - Secrets for credentials
@@ -275,7 +275,7 @@ Services deployed as independent Cloud Run services:
 - **Google Cloud Text-to-Speech API**: Required for audio narration in image-to-video worker
 - **gorilla/mux**: HTTP routing
 - **spf13/cobra**: CLI framework
-- **jinzhu/gorm**: ORM for MySQL
+- **jinzhu/gorm**: ORM for MariaDB
 - **cloud.google.com/go/datastore**: Google Datastore client
 - **minio-go**: Minio/S3 client
 
