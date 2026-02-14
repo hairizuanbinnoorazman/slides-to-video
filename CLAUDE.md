@@ -65,7 +65,7 @@ make deploy-all
 
 ## Architecture
 
-The application consists of five main services that communicate via queues:
+The application consists of five main services (deployable together or separately) that communicate via queues:
 
 1. **slides-to-video-manager** (port 8880): Main API server
    - Handles HTTP requests for project CRUD operations
@@ -95,12 +95,32 @@ The application consists of five main services that communicate via queues:
 ### Supporting Infrastructure
 - **MySQL** (port 3306): Primary data store for local dev
 - **Minio** (port 9999): S3-compatible blob storage for local dev
-- **NATS** (port 4222): Message queue for local dev
+- **NATS** (port 4222): Message queue for distributed mode
+- **Channels**: In-memory Go channels for all-in-one mode
 
 ### Production Alternatives
 - Google Cloud Datastore replaces MySQL
 - Google Cloud Storage replaces Minio
 - Google Pub/Sub replaces NATS
+- Channels queue for single-process deployments
+
+### Deployment Modes
+
+The application supports flexible deployment:
+
+1. **All-in-One Mode** (single process)
+   - Manager runs with embedded workers in the same process
+   - Uses in-memory channels for queue communication
+   - Simpler deployment, lower resource overhead
+   - Config: `config-all-in-one.yaml`
+
+2. **Distributed Mode** (separate services)
+   - Each service runs independently
+   - Uses NATS (local) or Pub/Sub (cloud) for messaging
+   - Better scalability and isolation
+   - Config: `config-distributed.yaml`
+
+See docs/SERVICE-CONSOLIDATION.md for detailed architecture and migration guidance.
 
 ## Code Organization
 
@@ -175,6 +195,31 @@ docker exec -it <manager-container> app migrate -c /path/to/config.yaml
 ```
 
 Note: Migration strategy is basic - planned migration to golang-migrate for production.
+
+## Development Workflow Requirements
+
+After making code changes, verify:
+
+1. **Tests pass** (if code was modified)
+   ```bash
+   # Run unit tests for modified packages
+   cd <package>/ && go test -v
+
+   # Run integration tests
+   cd tests/ && pipenv run pytest
+   ```
+
+2. **Binaries compile**
+   ```bash
+   make build-bin
+   ```
+
+3. **Docker images build**
+   ```bash
+   make build-images
+   ```
+
+These checks ensure changes don't break the build or deployment pipeline.
 
 ## Testing Strategy
 
