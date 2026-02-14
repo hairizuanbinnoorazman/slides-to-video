@@ -48,14 +48,11 @@ queue:
     videoConcatTopic: "concatenate-video"
 
 blobStorage:
-  type: "minio"
-  minio:
-    bucket: "videos"
+  type: "local"
+  local:
+    folder: "/data/storage"
     pdfFolder: "pdf"
     imagesFolder: "images"
     videoSnippetsFolder: "video-snippets"
     videoFolder: "videos"
-    endpoint: "s3:9000"
-    accessKeyId: "s3_user"
-    secretAccessKey: "s3_password"
 

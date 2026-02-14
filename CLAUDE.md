@@ -16,7 +16,7 @@ make build-bin
 # Build all Docker images
 make build-images
 
-# Start the full stack (manager, workers, MySQL, Minio S3, NATS queue)
+# Start the full stack with local file storage (default - recommended)
 make stack-up
 
 # Stop the stack
@@ -24,6 +24,11 @@ make stack-down
 
 # Rebuild everything and restart
 make reup
+
+# Alternative: Use Minio S3-compatible storage
+make stack-up-minio
+make stack-down-minio
+make reup-minio
 ```
 
 ### Running Tests
@@ -94,13 +99,19 @@ The application consists of five main services (deployable together or separatel
 
 ### Supporting Infrastructure
 - **MySQL** (port 3306): Primary data store for local dev
+- **Local File Storage** (/data/storage): Default blob storage for local dev (Docker volume)
 - **Minio** (port 9999): S3-compatible blob storage for local dev
 - **NATS** (port 4222): Message queue for distributed mode
 - **Channels**: In-memory Go channels for all-in-one mode
 
+### Storage Alternatives
+- **Local Storage** (default): Files stored directly on filesystem in Docker volume
+- **Minio** (port 9999): S3-compatible blob storage (use `make stack-up-minio`)
+- **Google Cloud Storage**: Production blob storage (requires GCS credentials)
+
 ### Production Alternatives
 - Google Cloud Datastore replaces MySQL
-- Google Cloud Storage replaces Minio
+- Google Cloud Storage replaces Local Storage or Minio
 - Google Pub/Sub replaces NATS
 - Channels queue for single-process deployments
 
@@ -243,7 +254,7 @@ Go packages use testcontainers for database-dependent tests:
 ## Deployment Notes
 
 ### Local Development (docker-compose)
-Services communicate via service names, use Minio for storage, NATS for queuing.
+Services communicate via service names, use local file storage (default) or Minio for blob storage, NATS for queuing.
 
 ### Kubernetes (Helm)
 Helm charts in deployment/helm/slides-to-video/ support:
