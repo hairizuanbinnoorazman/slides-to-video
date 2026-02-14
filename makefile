@@ -22,13 +22,16 @@ rebuild-frontend:
 	docker build -t frontend ./cmd/slides-to-video-frontend
 	docker run -p 8081:8080 --name=frontend -e SERVER_ENDPOINT=http://localhost:8880 frontend
 
-build-bin: 
+build-bin:
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/slides-to-video-manager/app ./cmd/slides-to-video-manager
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/pdf-splitter/app ./cmd/pdf-splitter
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/image-to-video/app ./cmd/image-to-video
 	GOOS=linux GOARCH=amd64 go build -o ./cmd/concatenate-video/app ./cmd/concatenate-video
 
-build-images: 
+build-frontend-js:
+	cd ./cmd/slides-to-video-frontend && $(MAKE) gen
+
+build-images: build-bin build-frontend-js
 	docker build -t $(image_repo)slides-to-video-manager:$(image_version) ./cmd/slides-to-video-manager
 	docker build -t $(image_repo)pdf-splitter:$(image_version) ./cmd/pdf-splitter
 	docker build -t $(image_repo)image-to-video:$(image_version) ./cmd/image-to-video
