@@ -92,6 +92,12 @@ var (
 						logger.Errorf("Unable to create storage client %v", err)
 						os.Exit(1)
 					}
+				} else if cfg.BlobStorage.Type == "local" {
+					slideToVideoStorage, err = blobstorage.NewLocalStorage(logger, cfg.BlobStorage.Local.Folder)
+					if err != nil {
+						logger.Errorf("Unable to create local storage client %v", err)
+						os.Exit(1)
+					}
 				}
 
 				if slideToVideoStorage == nil {
@@ -230,6 +236,9 @@ var (
 						} else if cfg.BlobStorage.Type == minioBlobStorage {
 							pdfFolder = cfg.BlobStorage.Minio.PDFFolder
 							imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
+						} else if cfg.BlobStorage.Type == "local" {
+							pdfFolder = cfg.BlobStorage.Local.PDFFolder
+							imagesFolder = cfg.BlobStorage.Local.ImagesFolder
 						}
 
 						pdfProcessor := pdfsplitter.NewBasic(logger, slideToVideoStorage, pdfMgrClient, pdfFolder, imagesFolder)
@@ -265,6 +274,9 @@ var (
 						} else if cfg.BlobStorage.Type == minioBlobStorage {
 							imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
 							videoSnippetsFolder = cfg.BlobStorage.Minio.VideoSnippetsFolder
+						} else if cfg.BlobStorage.Type == "local" {
+							imagesFolder = cfg.BlobStorage.Local.ImagesFolder
+							videoSnippetsFolder = cfg.BlobStorage.Local.VideoSnippetsFolder
 						}
 
 						textToSpeechEngine := img2vidconverter.NewGoogleTextToSpeech(logger, text2speechClient)
@@ -293,6 +305,9 @@ var (
 						} else if cfg.BlobStorage.Type == minioBlobStorage {
 							videoSnippetsFolder = cfg.BlobStorage.Minio.VideoSnippetsFolder
 							videoFolder = cfg.BlobStorage.Minio.VideoFolder
+						} else if cfg.BlobStorage.Type == "local" {
+							videoSnippetsFolder = cfg.BlobStorage.Local.VideoSnippetsFolder
+							videoFolder = cfg.BlobStorage.Local.VideoFolder
 						}
 
 						concatProcessor := concatworker.NewBasic(logger, slideToVideoStorage, concatMgrClient, videoSnippetsFolder, videoFolder)

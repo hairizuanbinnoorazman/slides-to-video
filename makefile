@@ -69,4 +69,12 @@ stack-up-monitoring:
 stack-down-monitoring:
 	cd deployment/docker-compose && docker compose -f docker-compose.yaml -f with-monitoring.yaml down
 
+stack-up-local:
+	cd deployment/docker-compose && docker compose -f docker-compose-local.yaml up
+
+stack-down-local:
+	cd deployment/docker-compose && docker compose -f docker-compose-local.yaml down
+
 reup: stack-down build-all stack-up
+
+reup-local: stack-down-local build-all stack-up-local
