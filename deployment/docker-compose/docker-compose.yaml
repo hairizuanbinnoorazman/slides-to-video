@@ -37,7 +37,7 @@ services:
       - "/root/configuration/config.yaml"
     restart: on-failure
   db:
-    image: mysql:5.7
+    image: mariadb:12.2.2
     ports:
       - 3306:3306
     environment:

@@ -27,11 +27,11 @@ func databaseConnProvider(port int) *gorm.DB {
 
 func Test_mysql_ops(t *testing.T) {
 	// Following command is similar to this docker command:
-	// docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test-database -e MYSQL_USER=user -e MYSQL_PASSWORD=password -d -p 3306:3306 mysql:5.7
+	// docker run --name some-mariadb -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test-database -e MYSQL_USER=user -e MYSQL_PASSWORD=password -d -p 3306:3306 mariadb:12.2.2
 	req, _ := testcontainers.GenericContainer(context.TODO(), testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image: "mysql:5.7",
-			Name:  "some-mysql",
+			Image: "mariadb:12.2.2",
+			Name:  "some-mariadb",
 			Env: map[string]string{
 				"MYSQL_ROOT_PASSWORD": "root",
 				"MYSQL_DATABASE":      "test-database",
