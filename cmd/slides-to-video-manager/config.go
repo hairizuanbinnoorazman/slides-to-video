@@ -155,6 +155,18 @@ func envVarOrDefaultInt(envVar string, defaultVal int) int {
 	return defaultVal
 }
 
+func envVarOrDefaultBool(envVar string, defaultVal bool) bool {
+	overrideVal, exists := os.LookupEnv(envVar)
+	if exists {
+		b, err := strconv.ParseBool(overrideVal)
+		if err != nil {
+			return defaultVal
+		}
+		return b
+	}
+	return defaultVal
+}
+
 func ConfigStructLevelValidation(sl validator.StructLevel) {
 	cfg := sl.Current().Interface().(config)
 

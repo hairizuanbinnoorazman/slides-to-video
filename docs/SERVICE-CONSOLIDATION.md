@@ -2,15 +2,21 @@
 
 ## Overview
 
-The slides-to-video application now supports two deployment architectures:
+The slides-to-video application supports two deployment architectures:
 
-1. **All-in-One Mode**: Single process with embedded workers using Go channels
+1. **All-in-One Mode (Default)**: Single process with embedded workers using Go channels
 2. **Distributed Mode**: Separate services communicating via NATS or Google Pub/Sub
 
-This provides flexibility for different deployment scenarios:
-- **Development**: All-in-one mode simplifies local development
-- **Small Deployments**: All-in-one mode reduces operational complexity
-- **Production**: Distributed mode enables horizontal scaling and fault isolation
+**All-in-one mode is the default and recommended configuration** for most deployments. It provides:
+- Simpler setup and operation
+- Lower resource overhead
+- Faster local development
+- Reduced operational complexity
+
+**Distributed mode** is available for specific production scenarios requiring:
+- Independent horizontal scaling of workers
+- Fault isolation between components
+- Multi-machine distributed processing
 
 ## What Changed
 
@@ -34,7 +40,7 @@ This provides flexibility for different deployment scenarios:
 
 ### Architecture Modes
 
-#### Mode 1: All-in-One (Channels Queue)
+#### Mode 1: All-in-One (Channels Queue) - DEFAULT
 
 ```text
 ┌─────────────────────────────────────────┐
@@ -59,7 +65,9 @@ This provides flexibility for different deployment scenarios:
   MySQL + Minio
 ```
 
-**Configuration:**
+**Configuration (Hardcoded Defaults):**
+
+The manager uses these defaults automatically - no configuration file required!
 ```yaml
 workers:
   enabled: true
@@ -82,23 +90,29 @@ queue:
     videoConcatTopic: "concatenate-video"
 ```
 
-**Use Cases:**
+**Use Cases (Recommended for Most Deployments):**
 - Local development
 - Single-server deployments
 - Cost-sensitive environments
 - Testing and CI/CD pipelines
+- Small to medium production workloads
+- Default deployment mode
 
 **Pros:**
 - Simple deployment (single binary)
 - No external queue infrastructure required
 - Lower latency (no network calls)
 - Lower resource usage
+- Easier to debug and monitor
+- Default configuration works out-of-the-box
 
 **Cons:**
 - Cannot scale workers independently
 - Manager crash affects all workers
 - No distributed processing
 - Limited by single machine resources
+
+**Note:** For most use cases, these limitations are not significant. Consider distributed mode only if you specifically need independent worker scaling or multi-machine distribution.
 
 #### Mode 2: Distributed (NATS/Pub/Sub)
 
@@ -130,11 +144,11 @@ queue:
     videoConcatTopic: "concatenate-video"
 ```
 
-**Use Cases:**
-- Production deployments
-- High-availability requirements
-- Need for horizontal scaling
-- Fault isolation between components
+**Use Cases (Advanced Deployments Only):**
+- Large-scale production deployments with high throughput
+- Specific need for independent worker horizontal scaling
+- Multi-machine distributed processing requirements
+- Strict fault isolation requirements between components
 
 **Pros:**
 - Scale workers independently
@@ -143,10 +157,13 @@ queue:
 - Distributed processing across machines
 
 **Cons:**
-- More complex deployment
+- More complex deployment and operations
 - Requires NATS/Pub/Sub infrastructure
 - Higher latency (network calls)
 - Higher resource usage
+- More complex debugging and monitoring
+
+**Recommendation:** Only use this mode if you have a specific requirement that all-in-one mode cannot satisfy.
 
 #### Mode 3: Hybrid
 
@@ -271,14 +288,24 @@ blobStorage:
 
 ## Running the Application
 
-### All-in-One Mode
+### All-in-One Mode (Default)
 
 ```bash
-# Build the manager
+# Build and start the stack
 make build-bin
+make build-images
+make stack-up
 
-# Run with all-in-one configuration
+# Or run manager directly (uses hardcoded defaults)
+./bin/slides-to-video-manager server
+
+# Optional: Override defaults with config file
 ./bin/slides-to-video-manager server -c cmd/slides-to-video-manager/configuration/config-all-in-one.yaml
+
+# Optional: Override with environment variables
+export WORKERS_ENABLED=true
+export QUEUE_TYPE=channels
+./bin/slides-to-video-manager server
 ```
 
 ### Distributed Mode

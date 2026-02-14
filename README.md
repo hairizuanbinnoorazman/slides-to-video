@@ -10,6 +10,14 @@ make build-images
 make stack-up
 ```
 
+This starts the application in **all-in-one mode** (default):
+- Single manager service with embedded workers
+- MySQL database for storage
+- Minio for blob storage
+- Workers communicate via in-memory channels queue
+
+For distributed mode (separate worker services), see the distributed configuration examples in `cmd/slides-to-video-manager/configuration/`.
+
 To test that all endpoints is working:
 
 ```bash
