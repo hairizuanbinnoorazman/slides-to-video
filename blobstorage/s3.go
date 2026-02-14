@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 )
@@ -54,12 +55,15 @@ func (s S3Storage) Save(ctx context.Context, fileName string, content []byte) er
 		return fmt.Errorf("S3 client not initialized")
 	}
 
-	_, err := s.Client.PutObject(ctx, &s3.PutObjectInput{
+	// Use s3manager.Uploader to automatically handle multipart uploads for large files (>5GB)
+	uploader := manager.NewUploader(s.Client)
+	_, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.BucketName),
 		Key:    aws.String(fileName),
 		Body:   bytes.NewReader(content),
 	})
 	if err != nil {
+		s.Logger.Errorf("Unable to save file to S3. Bucket: %s, Key: %s, Error: %v", s.BucketName, fileName, err)
 		return fmt.Errorf("unable to save file to S3. Bucket: %s, Key: %s, Error: %v", s.BucketName, fileName, err)
 	}
 
