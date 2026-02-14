@@ -15,9 +15,9 @@ var (
 	cfgFile string
 
 	// Includes default configuration
-	// Initial configuration is set to utilize Google Datastore and Google Pubsub for now
+	// Default configuration is set for all-in-one mode with embedded workers
+	// Uses MySQL for datastore, Minio for storage, and channels queue for embedded workers
 	// Immediately replaces value with environment variables on startup
-	// TODO: Utilize Inmemory queue and inmemory datastores in the future
 	cfg = config{
 		Server: serverConfig{
 			Host:           envVarOrDefault("SERVER_HOST", "0.0.0.0"),
@@ -31,8 +31,23 @@ var (
 			AuthIssuer:     envVarOrDefault("SERVER_AUTHISSUER", "issuer"),
 			AuthExpiryTime: envVarOrDefaultInt("SERVER_AUTHEXPIRYTIME", 3600),
 		},
+		Workers: workersConfig{
+			Enabled: envVarOrDefaultBool("WORKERS_ENABLED", true),
+			PDFSplitter: workerInstanceConfig{
+				Enabled:     envVarOrDefaultBool("WORKERS_PDFSPLITTER_ENABLED", true),
+				Concurrency: envVarOrDefaultInt("WORKERS_PDFSPLITTER_CONCURRENCY", 1),
+			},
+			ImageToVideo: workerInstanceConfig{
+				Enabled:     envVarOrDefaultBool("WORKERS_IMAGETOVIDEO_ENABLED", true),
+				Concurrency: envVarOrDefaultInt("WORKERS_IMAGETOVIDEO_CONCURRENCY", 2),
+			},
+			ConcatenateVideo: workerInstanceConfig{
+				Enabled:     envVarOrDefaultBool("WORKERS_CONCATENATEVIDEO_ENABLED", true),
+				Concurrency: envVarOrDefaultInt("WORKERS_CONCATENATEVIDEO_CONCURRENCY", 1),
+			},
+		},
 		Datastore: datastoreConfig{
-			Type: envVarOrDefault("DATASTORE_TYPE", "google_datastore"),
+			Type: envVarOrDefault("DATASTORE_TYPE", "mysql"),
 			GoogleDatastoreConfig: &googleDatastoreConfig{
 				ProjectID:              envVarOrDefault("DATASTORE_GOOGLEDATASTORE_PROJECTID", ""),
 				UserTableName:          envVarOrDefault("DATASTORE_GOOGLEDATASTORE_USERTABLENAME", "UserTable"),
@@ -43,33 +58,42 @@ var (
 			MySQLConfig: &mysqlConfig{
 				User:     envVarOrDefault("DATASTORE_MYSQL_USER", "user"),
 				Password: envVarOrDefault("DATASTORE_MYSQL_PASSWORD", "password"),
-				Host:     envVarOrDefault("DATASTORE_MYSQL_HOST", "mysql"),
+				Host:     envVarOrDefault("DATASTORE_MYSQL_HOST", "db"),
 				Port:     envVarOrDefaultInt("DATASTORE_MYSQL_PORT", 3306),
-				DBName:   envVarOrDefault("DATASTORE_MYSQL_DBNAME", "slides_to_video_mgr"),
+				DBName:   envVarOrDefault("DATASTORE_MYSQL_DBNAME", "some-database"),
 			},
 		},
 		Queue: queueConfig{
-			Type: envVarOrDefault("QUEUE_TYPE", "google_pubsub"),
+			Type: envVarOrDefault("QUEUE_TYPE", "channels"),
 			GooglePubsub: googlePubsubConfig{
 				ProjectID:         envVarOrDefault("QUEUE_GOOGLEPUBSUB_PROJECTID", ""),
 				PDFToImageTopic:   envVarOrDefault("QUEUE_GOOGLEPUBSUB_PDFTOIMAGEJOBTOPIC", "pdf-splitter"),
 				ImageToVideoTopic: envVarOrDefault("QUEUE_GOOGLEPUBSUB_IMAGETOVIDEOTOPIC", "image-to-video"),
 				VideoConcatTopic:  envVarOrDefault("QUEUE_GOOGLEPUBSUB_VIDEOCONCATTOPIC", "concatenate-video"),
 			},
+			Channels: channelsConfig{
+				BufferSize:        envVarOrDefaultInt("QUEUE_CHANNELS_BUFFERSIZE", 100),
+				PDFToImageTopic:   envVarOrDefault("QUEUE_CHANNELS_PDFTOIMAGETOPIC", "pdf-splitter"),
+				ImageToVideoTopic: envVarOrDefault("QUEUE_CHANNELS_IMAGETOVIDEOTOPIC", "image-to-video"),
+				VideoConcatTopic:  envVarOrDefault("QUEUE_CHANNELS_VIDEOCONCATTOPIC", "concatenate-video"),
+			},
 		},
 		BlobStorage: blobConfig{
-			Type: envVarOrDefault("BLOBSTORAGE_TYPE", "gcs"),
+			Type: envVarOrDefault("BLOBSTORAGE_TYPE", "minio"),
 			GCS: gcsConfig{
 				ProjectID: envVarOrDefault("BLOBSTORAGE_GCS_PROJECTID", ""),
 				Bucket:    envVarOrDefault("BLOBSTORAGE_GCS_BUCKET", ""),
 				PDFFolder: envVarOrDefault("BLOBSTORAGE_GCS_PDFFOLDER", "pdf"),
 			},
 			Minio: minioConfig{
-				Bucket:          envVarOrDefault("BLOBSTORAGE_MINIO_BUCKET", ""),
-				Endpoint:        envVarOrDefault("BLOBSTORAGE_MINIO_ENDPOINT", ""),
-				AccessKeyID:     envVarOrDefault("BLOBSTORAGE_MINIO_ACCESSKEYID", ""),
-				SecretAccessKey: envVarOrDefault("BLOBSTORAGE_MINIO_SECRETACCESSKEY", ""),
-				PDFFolder:       envVarOrDefault("BLOBSTORAGE_MINIO_PDFFOLDER", "pdf"),
+				Bucket:              envVarOrDefault("BLOBSTORAGE_MINIO_BUCKET", "videos"),
+				Endpoint:            envVarOrDefault("BLOBSTORAGE_MINIO_ENDPOINT", "s3:9000"),
+				AccessKeyID:         envVarOrDefault("BLOBSTORAGE_MINIO_ACCESSKEYID", "s3_user"),
+				SecretAccessKey:     envVarOrDefault("BLOBSTORAGE_MINIO_SECRETACCESSKEY", "s3_password"),
+				PDFFolder:           envVarOrDefault("BLOBSTORAGE_MINIO_PDFFOLDER", "pdf"),
+				ImagesFolder:        envVarOrDefault("BLOBSTORAGE_MINIO_IMAGESFOLDER", "images"),
+				VideoSnippetsFolder: envVarOrDefault("BLOBSTORAGE_MINIO_VIDEOSNIPPETSFOLDER", "video-snippets"),
+				VideoFolder:         envVarOrDefault("BLOBSTORAGE_MINIO_VIDEOFOLDER", "videos"),
 			},
 		},
 	}

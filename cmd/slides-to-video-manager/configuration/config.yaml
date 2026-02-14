@@ -1,3 +1,7 @@
+# Default all-in-one mode configuration
+# Note: Most of these values match the hardcoded defaults in root.go
+# This file is provided as a reference and for overriding specific values
+
 server:
   host: "0.0.0.0"
   port: 8080
@@ -11,8 +15,20 @@ server:
   authSecret: ""
   issuer: ""
   expiryTime: 3600
+
+# Embedded workers configuration (all-in-one mode)
 workers:
-  enabled: false
+  enabled: true
+  pdfSplitter:
+    enabled: true
+    concurrency: 1
+  imageToVideo:
+    enabled: true
+    concurrency: 2
+  concatenateVideo:
+    enabled: true
+    concurrency: 1
+
 datastore:
   type: "mysql"
   mysql:
@@ -21,13 +37,16 @@ datastore:
     host: "db"
     port: 3306
     dbName: "some-database"
+
+# Channels queue for in-memory communication (all-in-one mode)
 queue:
-  type: "nats"
-  nats:
-    endpoint: "nats://queue:4222"
+  type: "channels"
+  channels:
+    bufferSize: 100
     pdfToImageTopic: "pdf-splitter"
     imageToVideoTopic: "image-to-video"
     videoConcatTopic: "concatenate-video"
+
 blobStorage:
   type: "minio"
   minio:
