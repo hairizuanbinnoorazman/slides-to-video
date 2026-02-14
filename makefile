@@ -31,7 +31,7 @@ build-bin:
 build-frontend-js:
 	cd ./cmd/slides-to-video-frontend && $(MAKE) gen
 
-build-images: build-frontend-js 
+build-images: build-bin build-frontend-js
 	docker build -t $(image_repo)slides-to-video-manager:$(image_version) ./cmd/slides-to-video-manager
 	docker build -t $(image_repo)pdf-splitter:$(image_version) ./cmd/pdf-splitter
 	docker build -t $(image_repo)image-to-video:$(image_version) ./cmd/image-to-video
