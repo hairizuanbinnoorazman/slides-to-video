@@ -68,6 +68,7 @@ type channelsConfig struct {
 type serverConfig struct {
 	Host           string `yaml:"host"`
 	Port           int    `yaml:"port"`
+	Scheme         string `yaml:"scheme"` // "http" or "https"
 	Trace          bool   `yaml:"trace"`
 	SvcAcctFile    string `yaml:"svcAccFile"`
 	ClientID       string `yaml:"clientID"`
@@ -157,12 +158,88 @@ func envVarOrDefaultInt(envVar string, defaultVal int) int {
 func ConfigStructLevelValidation(sl validator.StructLevel) {
 	cfg := sl.Current().Interface().(config)
 
+	// Validate datastore configuration
 	if cfg.Datastore.Type == mysqlDatastore {
-		if cfg.Datastore.GoogleDatastoreConfig != nil {
-			sl.ReportError(cfg.Datastore.GoogleDatastoreConfig, "googleDatastore", "GoogleDatastoreConfig", "", "")
+		if cfg.Datastore.MySQLConfig == nil {
+			sl.ReportError(cfg.Datastore.MySQLConfig, "mysql", "MySQLConfig", "required", "MySQL configuration is required when using MySQL datastore")
+		} else if cfg.Datastore.MySQLConfig.DBName == "" || cfg.Datastore.MySQLConfig.Host == "" || cfg.Datastore.MySQLConfig.Password == "" || cfg.Datastore.MySQLConfig.User == "" || cfg.Datastore.MySQLConfig.Port == 0 {
+			sl.ReportError(cfg.Datastore.MySQLConfig, "mysql", "MySQLConfig", "required", "MySQL configuration fields (DBName, Host, Password, User, Port) must all be set")
 		}
-		if cfg.Datastore.MySQLConfig.DBName == "" || cfg.Datastore.MySQLConfig.Host == "" || cfg.Datastore.MySQLConfig.Password == "" || cfg.Datastore.MySQLConfig.User == "" || cfg.Datastore.MySQLConfig.Port == 0 {
-			sl.ReportError(cfg.Datastore.GoogleDatastoreConfig, "mysql", "MySQLConfig", "", "")
+	}
+
+	// Validate worker concurrency when workers are enabled
+	if cfg.Workers.Enabled {
+		if cfg.Workers.PDFSplitter.Enabled && cfg.Workers.PDFSplitter.Concurrency <= 0 {
+			sl.ReportError(cfg.Workers.PDFSplitter, "pdfSplitter", "Concurrency", "concurrency_positive", "PDF splitter worker is enabled but concurrency is not set or is <= 0")
+		}
+		if cfg.Workers.ImageToVideo.Enabled && cfg.Workers.ImageToVideo.Concurrency <= 0 {
+			sl.ReportError(cfg.Workers.ImageToVideo, "imageToVideo", "Concurrency", "concurrency_positive", "Image-to-video worker is enabled but concurrency is not set or is <= 0")
+		}
+		if cfg.Workers.ConcatenateVideo.Enabled && cfg.Workers.ConcatenateVideo.Concurrency <= 0 {
+			sl.ReportError(cfg.Workers.ConcatenateVideo, "concatenateVideo", "Concurrency", "concurrency_positive", "Concatenate-video worker is enabled but concurrency is not set or is <= 0")
+		}
+	}
+
+	// Validate blob storage folder fields for the selected backend
+	if cfg.BlobStorage.Type == gcsBlobStorage {
+		if cfg.BlobStorage.GCS.ProjectID == "" {
+			sl.ReportError(cfg.BlobStorage.GCS, "gcs.ProjectID", "ProjectID", "required", "GCS ProjectID is required when using GCS blob storage")
+		}
+		if cfg.BlobStorage.GCS.Bucket == "" {
+			sl.ReportError(cfg.BlobStorage.GCS, "gcs.Bucket", "Bucket", "required", "GCS Bucket is required when using GCS blob storage")
+		}
+		if cfg.BlobStorage.GCS.PDFFolder == "" {
+			sl.ReportError(cfg.BlobStorage.GCS, "gcs.PDFFolder", "PDFFolder", "required", "GCS PDFFolder is required when using GCS blob storage")
+		}
+		if cfg.BlobStorage.GCS.ImagesFolder == "" {
+			sl.ReportError(cfg.BlobStorage.GCS, "gcs.ImagesFolder", "ImagesFolder", "required", "GCS ImagesFolder is required when using GCS blob storage")
+		}
+		if cfg.BlobStorage.GCS.VideoSnippetsFolder == "" {
+			sl.ReportError(cfg.BlobStorage.GCS, "gcs.VideoSnippetsFolder", "VideoSnippetsFolder", "required", "GCS VideoSnippetsFolder is required when using GCS blob storage")
+		}
+		if cfg.BlobStorage.GCS.VideoFolder == "" {
+			sl.ReportError(cfg.BlobStorage.GCS, "gcs.VideoFolder", "VideoFolder", "required", "GCS VideoFolder is required when using GCS blob storage")
+		}
+	} else if cfg.BlobStorage.Type == minioBlobStorage {
+		if cfg.BlobStorage.Minio.Bucket == "" {
+			sl.ReportError(cfg.BlobStorage.Minio, "minio.Bucket", "Bucket", "required", "Minio Bucket is required when using Minio blob storage")
+		}
+		if cfg.BlobStorage.Minio.Endpoint == "" {
+			sl.ReportError(cfg.BlobStorage.Minio, "minio.Endpoint", "Endpoint", "required", "Minio Endpoint is required when using Minio blob storage")
+		}
+		if cfg.BlobStorage.Minio.AccessKeyID == "" {
+			sl.ReportError(cfg.BlobStorage.Minio, "minio.AccessKeyID", "AccessKeyID", "required", "Minio AccessKeyID is required when using Minio blob storage")
+		}
+		if cfg.BlobStorage.Minio.SecretAccessKey == "" {
+			sl.ReportError(cfg.BlobStorage.Minio, "minio.SecretAccessKey", "SecretAccessKey", "required", "Minio SecretAccessKey is required when using Minio blob storage")
+		}
+		if cfg.BlobStorage.Minio.PDFFolder == "" {
+			sl.ReportError(cfg.BlobStorage.Minio, "minio.PDFFolder", "PDFFolder", "required", "Minio PDFFolder is required when using Minio blob storage")
+		}
+		if cfg.BlobStorage.Minio.ImagesFolder == "" {
+			sl.ReportError(cfg.BlobStorage.Minio, "minio.ImagesFolder", "ImagesFolder", "required", "Minio ImagesFolder is required when using Minio blob storage")
+		}
+		if cfg.BlobStorage.Minio.VideoSnippetsFolder == "" {
+			sl.ReportError(cfg.BlobStorage.Minio, "minio.VideoSnippetsFolder", "VideoSnippetsFolder", "required", "Minio VideoSnippetsFolder is required when using Minio blob storage")
+		}
+		if cfg.BlobStorage.Minio.VideoFolder == "" {
+			sl.ReportError(cfg.BlobStorage.Minio, "minio.VideoFolder", "VideoFolder", "required", "Minio VideoFolder is required when using Minio blob storage")
+		}
+	} else if cfg.BlobStorage.Type == "local" {
+		if cfg.BlobStorage.Local.Folder == "" {
+			sl.ReportError(cfg.BlobStorage.Local, "local.Folder", "Folder", "required", "Local Folder is required when using local blob storage")
+		}
+		if cfg.BlobStorage.Local.PDFFolder == "" {
+			sl.ReportError(cfg.BlobStorage.Local, "local.PDFFolder", "PDFFolder", "required", "Local PDFFolder is required when using local blob storage")
+		}
+		if cfg.BlobStorage.Local.ImagesFolder == "" {
+			sl.ReportError(cfg.BlobStorage.Local, "local.ImagesFolder", "ImagesFolder", "required", "Local ImagesFolder is required when using local blob storage")
+		}
+		if cfg.BlobStorage.Local.VideoSnippetsFolder == "" {
+			sl.ReportError(cfg.BlobStorage.Local, "local.VideoSnippetsFolder", "VideoSnippetsFolder", "required", "Local VideoSnippetsFolder is required when using local blob storage")
+		}
+		if cfg.BlobStorage.Local.VideoFolder == "" {
+			sl.ReportError(cfg.BlobStorage.Local, "local.VideoFolder", "VideoFolder", "required", "Local VideoFolder is required when using local blob storage")
 		}
 	}
 }

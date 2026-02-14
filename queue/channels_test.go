@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -68,18 +69,34 @@ func TestChannels_Close(t *testing.T) {
 	// Close the channel
 	ch.Close()
 
-	// Give a small delay to ensure context cancellation propagates
-	time.Sleep(10 * time.Millisecond)
+	// Wait deterministically for context cancellation to propagate
+	// Use a short timeout with retries to check for the expected error
+	maxRetries := 10
+	retryDelay := 5 * time.Millisecond
 
 	// Try to add after close - should fail
-	err = ch.Add(ctx, []byte("test2"))
-	if err == nil {
+	var addErr error
+	for i := 0; i < maxRetries; i++ {
+		addErr = ch.Add(ctx, []byte("test2"))
+		if addErr != nil {
+			break
+		}
+		time.Sleep(retryDelay)
+	}
+	if addErr == nil {
 		t.Error("Expected error when adding to closed channel")
 	}
 
 	// Try to pop after close - should fail
-	_, err = ch.Pop(ctx)
-	if err == nil {
+	var popErr error
+	for i := 0; i < maxRetries; i++ {
+		_, popErr = ch.Pop(ctx)
+		if popErr != nil {
+			break
+		}
+		time.Sleep(retryDelay)
+	}
+	if popErr == nil {
 		t.Error("Expected error when popping from closed channel")
 	}
 }
@@ -132,7 +149,7 @@ func TestChannels_MultipleMessages(t *testing.T) {
 
 	// Add multiple messages
 	for i := 0; i < messageCount; i++ {
-		msg := []byte("message-" + string(rune(i)))
+		msg := []byte("message-" + strconv.Itoa(i))
 		err := ch.Add(ctx, msg)
 		if err != nil {
 			t.Errorf("Add failed at %d: %v", i, err)

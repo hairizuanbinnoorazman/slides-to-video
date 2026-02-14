@@ -36,7 +36,7 @@ This provides flexibility for different deployment scenarios:
 
 #### Mode 1: All-in-One (Channels Queue)
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │      slides-to-video-manager            │
 │                                          │
@@ -102,7 +102,7 @@ queue:
 
 #### Mode 2: Distributed (NATS/Pub/Sub)
 
-```
+```text
 ┌────────────────┐      ┌──────────┐
 │ Manager        │─────▶│  NATS /  │
 └────────────────┘      │  Pub/Sub │

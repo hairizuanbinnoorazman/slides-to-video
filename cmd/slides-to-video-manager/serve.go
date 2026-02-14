@@ -61,6 +61,7 @@ var (
 				defer logger.Info("Application Ended")
 
 				validate := validator.New()
+				validate.RegisterStructValidation(ConfigStructLevelValidation, config{})
 				err := validate.Struct(cfg)
 				if err != nil {
 					logger.Errorf("Error with loading configuration. %v", err)
@@ -205,9 +206,16 @@ var (
 					logger.Info("Workers enabled, initializing worker processors")
 
 					// Manager URL for embedded workers to call back
-					mgrURL := fmt.Sprintf("http://%v:%v/api/v1", cfg.Server.Host, cfg.Server.Port)
-					if cfg.Server.Port == 443 {
-						mgrURL = fmt.Sprintf("https://%v/api/v1", cfg.Server.Host)
+					scheme := cfg.Server.Scheme
+					if scheme == "" {
+						scheme = "http"
+					}
+					var mgrURL string
+					if (scheme == "http" && cfg.Server.Port == 80) || (scheme == "https" && cfg.Server.Port == 443) {
+						// Omit port for standard ports
+						mgrURL = fmt.Sprintf("%s://%v/api/v1", scheme, cfg.Server.Host)
+					} else {
+						mgrURL = fmt.Sprintf("%s://%v:%v/api/v1", scheme, cfg.Server.Host, cfg.Server.Port)
 					}
 
 					// PDF Splitter Worker
@@ -248,6 +256,7 @@ var (
 							logger.Errorf("Unable to create text to speech client: %v", err)
 							os.Exit(1)
 						}
+						defer text2speechClient.Close()
 
 						var imagesFolder, videoSnippetsFolder string
 						if cfg.BlobStorage.Type == gcsBlobStorage {

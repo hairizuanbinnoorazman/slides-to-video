@@ -10,12 +10,12 @@ import (
 )
 
 func NewImage2VideoWorker(logger logger.Logger, q queue.Queue, processor image2videoconverter.Image2VideoConverter) Worker {
-	processorFunc := func(msg []byte) error {
+	processorFunc := func(ctx context.Context, msg []byte) error {
 		job := image2videoconverter.JobDetails{}
 		if err := json.Unmarshal(msg, &job); err != nil {
 			return err
 		}
-		return processor.Process(context.Background(), job)
+		return processor.Process(ctx, job)
 	}
 
 	return &QueueWorker{

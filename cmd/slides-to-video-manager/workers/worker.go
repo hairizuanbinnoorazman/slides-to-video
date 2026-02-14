@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
@@ -15,7 +16,7 @@ type Worker interface {
 type QueueWorker struct {
 	Logger        logger.Logger
 	Queue         queue.Queue
-	ProcessorFunc func([]byte) error
+	ProcessorFunc func(context.Context, []byte) error
 	WorkerName    string
 }
 
@@ -30,11 +31,16 @@ func (w *QueueWorker) Start(ctx context.Context) error {
 			msg, err := w.Queue.Pop(ctx)
 			if err != nil {
 				w.Logger.Errorf("[%s] Error popping from queue: %v", w.WorkerName, err)
+				// Check if error is due to context cancellation
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || ctx.Err() != nil {
+					// Don't sleep on cancellation, allow loop to observe ctx.Done()
+					continue
+				}
 				time.Sleep(10 * time.Second)
 				continue
 			}
 
-			if err := w.ProcessorFunc(msg); err != nil {
+			if err := w.ProcessorFunc(ctx, msg); err != nil {
 				w.Logger.Errorf("[%s] Error processing message: %v", w.WorkerName, err)
 			}
 		}

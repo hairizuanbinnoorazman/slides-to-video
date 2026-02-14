@@ -33,7 +33,7 @@ func (c *Channels) Add(ctx context.Context, message []byte) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	case c.channel <- message:
-		c.Logger.Infof("Message added to channel topic: %s", c.Topic)
+		c.Logger.Debugf("Message added to channel topic: %s", c.Topic)
 		return nil
 	}
 }

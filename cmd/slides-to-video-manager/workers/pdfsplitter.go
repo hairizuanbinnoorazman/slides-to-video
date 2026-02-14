@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/pdfsplitter"
@@ -9,7 +10,7 @@ import (
 )
 
 func NewPDFSplitterWorker(logger logger.Logger, q queue.Queue, processor pdfsplitter.PDFSplitter) Worker {
-	processorFunc := func(msg []byte) error {
+	processorFunc := func(ctx context.Context, msg []byte) error {
 		job := pdfsplitter.PdfSplitJob{}
 		if err := json.Unmarshal(msg, &job); err != nil {
 			return err
