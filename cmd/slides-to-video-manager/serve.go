@@ -10,7 +10,14 @@ import (
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/acl"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/blobstorage"
+	concatmgrclient "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/concatenate-video/mgrclient"
+	concatworker "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/concatenate-video/videoconcater"
+	img2vidconverter "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/image-to-video/image2videoconverter"
+	img2vidmgrclient "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/image-to-video/mgrclient"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/pdfsplitter"
+	pdfmgrclient "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/pdf-splitter/mgrclient"
 	h "github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/slides-to-video-manager/handlers"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/slides-to-video-manager/workers"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/imageimporter"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/job"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
@@ -27,6 +34,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
+	texttospeech "cloud.google.com/go/texttospeech/apiv1"
 	stackdriver "github.com/TV4/logrus-stackdriver-formatter"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
@@ -153,6 +161,14 @@ var (
 					if err != nil {
 						logger.Errorf("Unable to create Nats client. %v", err)
 					}
+				} else if cfg.Queue.Type == channelsQueue {
+					bufferSize := cfg.Queue.Channels.BufferSize
+					if bufferSize == 0 {
+						bufferSize = 100
+					}
+					pdfToImageQueue = queue.NewChannels(logger, cfg.Queue.Channels.PDFToImageTopic, bufferSize)
+					imageToVideoQueue = queue.NewChannels(logger, cfg.Queue.Channels.ImageToVideoTopic, bufferSize)
+					concatQueue = queue.NewChannels(logger, cfg.Queue.Channels.VideoConcatTopic, bufferSize)
 				}
 
 				if pdfToImageQueue == nil || imageToVideoQueue == nil || concatQueue == nil {
@@ -179,6 +195,121 @@ var (
 					os.Exit(1)
 				}
 				go jobProcessor.Start()
+
+				// Initialize and start workers if enabled
+				var workerList []workers.Worker
+				workersCtx, cancelWorkers := context.WithCancel(context.Background())
+				defer cancelWorkers()
+
+				if cfg.Workers.Enabled {
+					logger.Info("Workers enabled, initializing worker processors")
+
+					// Manager URL for embedded workers to call back
+					mgrURL := fmt.Sprintf("http://%v:%v/api/v1", cfg.Server.Host, cfg.Server.Port)
+					if cfg.Server.Port == 443 {
+						mgrURL = fmt.Sprintf("https://%v/api/v1", cfg.Server.Host)
+					}
+
+					// PDF Splitter Worker
+					if cfg.Workers.PDFSplitter.Enabled {
+						logger.Info("Initializing PDF splitter workers")
+						pdfMgrClient := pdfmgrclient.NewBasic(logger, mgrURL, http.DefaultClient)
+
+						var pdfFolder, imagesFolder string
+						if cfg.BlobStorage.Type == gcsBlobStorage {
+							pdfFolder = cfg.BlobStorage.GCS.PDFFolder
+							imagesFolder = cfg.BlobStorage.GCS.ImagesFolder
+						} else if cfg.BlobStorage.Type == minioBlobStorage {
+							pdfFolder = cfg.BlobStorage.Minio.PDFFolder
+							imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
+						}
+
+						pdfProcessor := pdfsplitter.NewBasic(logger, slideToVideoStorage, pdfMgrClient, pdfFolder, imagesFolder)
+
+						concurrency := cfg.Workers.PDFSplitter.Concurrency
+						if concurrency == 0 {
+							concurrency = 1
+						}
+						for i := 0; i < concurrency; i++ {
+							worker := workers.NewPDFSplitterWorker(logger, pdfToImageQueue, &pdfProcessor)
+							workerList = append(workerList, worker)
+						}
+						logger.Infof("Created %d PDF splitter worker(s)", concurrency)
+					}
+
+					// Image-to-Video Worker
+					if cfg.Workers.ImageToVideo.Enabled {
+						logger.Info("Initializing image-to-video workers")
+						img2vidMgrClient := img2vidmgrclient.NewBasic(logger, mgrURL, http.DefaultClient)
+
+						// Initialize text-to-speech client
+						text2speechClient, err := texttospeech.NewClient(context.Background(), svcAcctOptions...)
+						if err != nil {
+							logger.Errorf("Unable to create text to speech client: %v", err)
+							os.Exit(1)
+						}
+
+						var imagesFolder, videoSnippetsFolder string
+						if cfg.BlobStorage.Type == gcsBlobStorage {
+							imagesFolder = cfg.BlobStorage.GCS.ImagesFolder
+							videoSnippetsFolder = cfg.BlobStorage.GCS.VideoSnippetsFolder
+						} else if cfg.BlobStorage.Type == minioBlobStorage {
+							imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
+							videoSnippetsFolder = cfg.BlobStorage.Minio.VideoSnippetsFolder
+						}
+
+						textToSpeechEngine := img2vidconverter.NewGoogleTextToSpeech(logger, text2speechClient)
+						img2vidProcessor := img2vidconverter.NewBasic(logger, slideToVideoStorage, img2vidMgrClient, imagesFolder, videoSnippetsFolder, &textToSpeechEngine)
+
+						concurrency := cfg.Workers.ImageToVideo.Concurrency
+						if concurrency == 0 {
+							concurrency = 1
+						}
+						for i := 0; i < concurrency; i++ {
+							worker := workers.NewImage2VideoWorker(logger, imageToVideoQueue, &img2vidProcessor)
+							workerList = append(workerList, worker)
+						}
+						logger.Infof("Created %d image-to-video worker(s)", concurrency)
+					}
+
+					// Concatenate Video Worker
+					if cfg.Workers.ConcatenateVideo.Enabled {
+						logger.Info("Initializing concatenate-video workers")
+						concatMgrClient := concatmgrclient.NewBasic(logger, mgrURL, http.DefaultClient)
+
+						var videoSnippetsFolder, videoFolder string
+						if cfg.BlobStorage.Type == gcsBlobStorage {
+							videoSnippetsFolder = cfg.BlobStorage.GCS.VideoSnippetsFolder
+							videoFolder = cfg.BlobStorage.GCS.VideoFolder
+						} else if cfg.BlobStorage.Type == minioBlobStorage {
+							videoSnippetsFolder = cfg.BlobStorage.Minio.VideoSnippetsFolder
+							videoFolder = cfg.BlobStorage.Minio.VideoFolder
+						}
+
+						concatProcessor := concatworker.NewBasic(logger, slideToVideoStorage, concatMgrClient, videoSnippetsFolder, videoFolder)
+
+						concurrency := cfg.Workers.ConcatenateVideo.Concurrency
+						if concurrency == 0 {
+							concurrency = 1
+						}
+						for i := 0; i < concurrency; i++ {
+							worker := workers.NewVideoConcaterWorker(logger, concatQueue, &concatProcessor)
+							workerList = append(workerList, worker)
+						}
+						logger.Infof("Created %d concatenate-video worker(s)", concurrency)
+					}
+
+					// Start all workers in goroutines
+					for idx, w := range workerList {
+						go func(worker workers.Worker, workerIdx int) {
+							logger.Infof("Starting worker #%d", workerIdx)
+							if err := worker.Start(workersCtx); err != nil && err != context.Canceled {
+								logger.Errorf("Worker #%d stopped with error: %v", workerIdx, err)
+							}
+						}(w, idx)
+					}
+					logger.Infof("Started %d total worker(s)", len(workerList))
+				}
 
 				r := mux.NewRouter()
 				r.Handle("/status", h.Status{

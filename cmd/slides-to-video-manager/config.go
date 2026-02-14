@@ -11,6 +11,7 @@ var mysqlDatastore = "mysql"
 var googleDatastore = "google_datastore"
 var natsQueue = "nats"
 var googlePubsubQueue = "google_pubsub"
+var channelsQueue = "channels"
 var gcsBlobStorage = "gcs"
 var minioBlobStorage = "minio"
 
@@ -40,6 +41,7 @@ type queueConfig struct {
 	Type         string             `yaml:"type"`
 	GooglePubsub googlePubsubConfig `yaml:"googlePubsub"`
 	NatsConfig   natsConfig         `yaml:"nats"`
+	Channels     channelsConfig     `yaml:"channels"`
 }
 
 type googlePubsubConfig struct {
@@ -51,6 +53,13 @@ type googlePubsubConfig struct {
 
 type natsConfig struct {
 	Endpoint          string `yaml:"endpoint"`
+	PDFToImageTopic   string `yaml:"pdfToImageTopic"`
+	ImageToVideoTopic string `yaml:"imageToVideoTopic"`
+	VideoConcatTopic  string `yaml:"videoConcatTopic"`
+}
+
+type channelsConfig struct {
+	BufferSize        int    `yaml:"bufferSize"`
 	PDFToImageTopic   string `yaml:"pdfToImageTopic"`
 	ImageToVideoTopic string `yaml:"imageToVideoTopic"`
 	VideoConcatTopic  string `yaml:"videoConcatTopic"`
@@ -78,26 +87,48 @@ type blobConfig struct {
 }
 
 type gcsConfig struct {
-	ProjectID string `yaml:"projectID"`
-	Bucket    string `yaml:"bucket"`
-	PDFFolder string `yaml:"pdfFolder"`
+	ProjectID          string `yaml:"projectID"`
+	Bucket             string `yaml:"bucket"`
+	PDFFolder          string `yaml:"pdfFolder"`
+	ImagesFolder       string `yaml:"imagesFolder"`
+	VideoSnippetsFolder string `yaml:"videoSnippetsFolder"`
+	VideoFolder        string `yaml:"videoFolder"`
 }
 
 type minioConfig struct {
-	Bucket          string `yaml:"bucket"`
-	Endpoint        string `yaml:"endpoint"`
-	AccessKeyID     string `yaml:"accessKeyId"`
-	SecretAccessKey string `yaml:"secretAccessKey"`
-	PDFFolder       string `yaml:"pdfFolder"`
+	Bucket              string `yaml:"bucket"`
+	Endpoint            string `yaml:"endpoint"`
+	AccessKeyID         string `yaml:"accessKeyId"`
+	SecretAccessKey     string `yaml:"secretAccessKey"`
+	PDFFolder           string `yaml:"pdfFolder"`
+	ImagesFolder        string `yaml:"imagesFolder"`
+	VideoSnippetsFolder string `yaml:"videoSnippetsFolder"`
+	VideoFolder         string `yaml:"videoFolder"`
 }
 
 type localBlobConfig struct {
-	Folder    string `yaml:"folder"`
-	PDFFolder string `yaml:"pdfFolder"`
+	Folder              string `yaml:"folder"`
+	PDFFolder           string `yaml:"pdfFolder"`
+	ImagesFolder        string `yaml:"imagesFolder"`
+	VideoSnippetsFolder string `yaml:"videoSnippetsFolder"`
+	VideoFolder         string `yaml:"videoFolder"`
+}
+
+type workersConfig struct {
+	Enabled          bool                 `yaml:"enabled"`
+	PDFSplitter      workerInstanceConfig `yaml:"pdfSplitter"`
+	ImageToVideo     workerInstanceConfig `yaml:"imageToVideo"`
+	ConcatenateVideo workerInstanceConfig `yaml:"concatenateVideo"`
+}
+
+type workerInstanceConfig struct {
+	Enabled     bool `yaml:"enabled"`
+	Concurrency int  `yaml:"concurrency"`
 }
 
 type config struct {
 	Server      serverConfig    `yaml:"server"`
+	Workers     workersConfig   `yaml:"workers"`
 	Datastore   datastoreConfig `yaml:"datastore"`
 	Queue       queueConfig     `yaml:"queue"`
 	BlobStorage blobConfig      `yaml:"blobStorage"`
