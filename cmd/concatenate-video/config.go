@@ -10,6 +10,7 @@ var googlePubsubQueue = "google_pubsub"
 var gcsBlobStorage = "gcs"
 var minioBlobStorage = "minio"
 var localBlobStorage = "local"
+var s3BlobStorage = "s3"
 
 type config struct {
 	Server      serverConfig `yaml:"server"`
@@ -33,6 +34,7 @@ type blobConfig struct {
 	GCS                 gcsConfig       `yaml:"gcs"`
 	Minio               minioConfig     `yaml:"minio"`
 	Local               localBlobConfig `yaml:"local"`
+	S3                  s3Config        `yaml:"s3"`
 	VideoSnippetsFolder string          `yaml:"videoSnippetsFolder"`
 	VideoFolder         string          `yaml:"videoFolder"`
 }
@@ -51,6 +53,16 @@ type minioConfig struct {
 	Endpoint        string `yaml:"endpoint"`
 	AccessKeyID     string `yaml:"accessKeyId"`
 	SecretAccessKey string `yaml:"secretAccessKey"`
+}
+
+type s3Config struct {
+	Region            string `yaml:"region"`
+	Bucket            string `yaml:"bucket"`
+	CredentialMode    string `yaml:"credentialMode"`
+	AccessKeyID       string `yaml:"accessKeyId"`
+	SecretAccessKey   string `yaml:"secretAccessKey"`
+	SharedCredFile    string `yaml:"sharedCredFile"`
+	SharedCredProfile string `yaml:"sharedCredProfile"`
 }
 
 type queueConfig struct {
