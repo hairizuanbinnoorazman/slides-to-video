@@ -4,7 +4,9 @@
 
 For quickly getting started with this on local environment. Current minimum requirements is 4 core and 4.5 GB of memory
 
-### Option 1: Using Minio (S3-compatible storage)
+### Default: Using Local File Storage (Recommended)
+
+The default configuration uses local file storage for simplicity:
 
 ```bash
 make build-bin
@@ -12,25 +14,25 @@ make build-images
 make stack-up
 ```
 
-This starts the application in **all-in-one mode** (default):
+This starts the application in **all-in-one mode** with:
 - Single manager service with embedded workers
 - MySQL database for storage
-- Minio for blob storage
+- Local file storage at `/data/storage`
 - Workers communicate via in-memory channels queue
 
-For distributed mode (separate worker services), see the distributed configuration examples in `cmd/slides-to-video-manager/configuration/`.
+This stores all files directly on the filesystem in a Docker volume at `/data/storage`, eliminating the need to run Minio containers.
 
-### Option 2: Using Local File Storage (Simplified)
+### Alternative: Using Minio (S3-compatible storage)
 
-For faster local development without needing Minio:
+If you need to test S3-compatible storage:
 
 ```bash
 make build-bin
 make build-images
-make stack-up-local
+make stack-up-minio
 ```
 
-The local storage option stores all files directly on the filesystem in a Docker volume at `/data/storage`, eliminating the need to run Minio containers.
+This starts additional Minio containers for S3-compatible object storage.
 
 To test that all endpoints is working:
 

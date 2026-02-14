@@ -75,6 +75,14 @@ stack-up-local:
 stack-down-local:
 	cd deployment/docker-compose && docker compose -f docker-compose-local.yaml down
 
+stack-up-minio:
+	cd deployment/docker-compose && docker compose -f docker-compose-minio.yaml up
+
+stack-down-minio:
+	cd deployment/docker-compose && docker compose -f docker-compose-minio.yaml down
+
 reup: stack-down build-all stack-up
 
 reup-local: stack-down-local build-all stack-up-local
+
+reup-minio: stack-down-minio build-all stack-up-minio

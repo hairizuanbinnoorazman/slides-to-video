@@ -13,12 +13,9 @@ queue:
     endpoint: "nats://queue:4222"
   concatenateVideoTopic: "concatenate-video"
 blobStorage:
-  type: minio
-  minio:
-    bucket: videos
-    endpoint: s3:9000
-    accessKeyId: s3_user
-    secretAccessKey: s3_password
+  type: local
+  local:
+    basePath: "/data/storage"
   videoSnippetsFolder: video-snippets
   videoFolder: videos
 
