@@ -4,6 +4,8 @@
 
 For quickly getting started with this on local environment. Current minimum requirements is 4 core and 4.5 GB of memory
 
+### Option 1: Using Minio (S3-compatible storage)
+
 ```bash
 make build-bin
 make build-images
@@ -17,6 +19,18 @@ This starts the application in **all-in-one mode** (default):
 - Workers communicate via in-memory channels queue
 
 For distributed mode (separate worker services), see the distributed configuration examples in `cmd/slides-to-video-manager/configuration/`.
+
+### Option 2: Using Local File Storage (Simplified)
+
+For faster local development without needing Minio:
+
+```bash
+make build-bin
+make build-images
+make stack-up-local
+```
+
+The local storage option stores all files directly on the filesystem in a Docker volume at `/data/storage`, eliminating the need to run Minio containers.
 
 To test that all endpoints is working:
 
@@ -83,7 +97,7 @@ make format
 - List operations for VideoSegments/PDFSlideImages are broken
 - Delete operations for Project/VideoSegments/PDFSlideImages are broken
 - Support of cassandra as alternative data storage
-- Support of local storage as alternative "blob storage"
+- ~~Support of local storage as alternative "blob storage"~~ (Completed - see config-local.yaml files)
 - Support of kafka as queue system
 - Support of rabbitmq as queue system
 - Support deployment mode into GKE (API server - utilizes Google Datastore + Workers - utilizes Google Pubsub Pull mode)

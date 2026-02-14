@@ -75,6 +75,12 @@ var (
 						logger.Errorf("Unable to create storage client %v", err)
 						os.Exit(1)
 					}
+				} else if cfg.BlobStorage.Type == "local" {
+					slideToVideoStorage, err = blobstorage.NewLocalStorage(logger, cfg.BlobStorage.Local.BasePath)
+					if err != nil {
+						logger.Errorf("Unable to create local storage client %v", err)
+						os.Exit(1)
+					}
 				}
 
 				if slideToVideoStorage == nil {

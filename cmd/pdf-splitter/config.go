@@ -28,11 +28,16 @@ type serverConfig struct {
 }
 
 type blobConfig struct {
-	Type         string      `yaml:"type"`
-	GCS          gcsConfig   `yaml:"gcs"`
-	Minio        minioConfig `yaml:"minio"`
-	PDFFolder    string      `yaml:"pdfFolder"`
-	ImagesFolder string      `yaml:"imagesFolder"`
+	Type         string          `yaml:"type"`
+	GCS          gcsConfig       `yaml:"gcs"`
+	Minio        minioConfig     `yaml:"minio"`
+	Local        localBlobConfig `yaml:"local"`
+	PDFFolder    string          `yaml:"pdfFolder"`
+	ImagesFolder string          `yaml:"imagesFolder"`
+}
+
+type localBlobConfig struct {
+	BasePath string `yaml:"basePath"`
 }
 
 type gcsConfig struct {
