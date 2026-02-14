@@ -86,7 +86,7 @@ var (
 						cfg.BlobStorage.S3.Bucket,
 					)
 					if err != nil {
-						logger.Errorf("Unable to create S3 storage client %v", err)
+						logger.WithError(err).Error("Unable to create S3 storage client")
 						os.Exit(1)
 					}
 				}
