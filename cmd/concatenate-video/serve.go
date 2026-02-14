@@ -79,6 +79,16 @@ var (
 						logger.Errorf("Unable to create local storage client %v", err)
 						os.Exit(1)
 					}
+				} else if cfg.BlobStorage.Type == s3BlobStorage {
+					slideToVideoStorage, err = blobstorage.NewS3Storage(
+						logger,
+						cfg.BlobStorage.S3.Region,
+						cfg.BlobStorage.S3.Bucket,
+					)
+					if err != nil {
+						logger.WithError(err).Error("Unable to create S3 storage client")
+						os.Exit(1)
+					}
 				}
 
 				if slideToVideoStorage == nil {

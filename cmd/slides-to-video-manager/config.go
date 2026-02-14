@@ -15,6 +15,7 @@ var channelsQueue = "channels"
 var gcsBlobStorage = "gcs"
 var minioBlobStorage = "minio"
 var localBlobStorage = "local"
+var s3BlobStorage = "s3"
 
 type datastoreConfig struct {
 	Type                  string                 `yaml:"type"`
@@ -86,6 +87,7 @@ type blobConfig struct {
 	GCS   gcsConfig       `yaml:"gcs"`
 	Minio minioConfig     `yaml:"minio"`
 	Local localBlobConfig `yaml:"local"`
+	S3    s3Config        `yaml:"s3"`
 }
 
 type gcsConfig struct {
@@ -110,6 +112,15 @@ type minioConfig struct {
 
 type localBlobConfig struct {
 	BasePath            string `yaml:"basePath"`
+	PDFFolder           string `yaml:"pdfFolder"`
+	ImagesFolder        string `yaml:"imagesFolder"`
+	VideoSnippetsFolder string `yaml:"videoSnippetsFolder"`
+	VideoFolder         string `yaml:"videoFolder"`
+}
+
+type s3Config struct {
+	Region              string `yaml:"region"`
+	Bucket              string `yaml:"bucket"`
 	PDFFolder           string `yaml:"pdfFolder"`
 	ImagesFolder        string `yaml:"imagesFolder"`
 	VideoSnippetsFolder string `yaml:"videoSnippetsFolder"`
@@ -253,6 +264,25 @@ func ConfigStructLevelValidation(sl validator.StructLevel) {
 		}
 		if cfg.BlobStorage.Local.VideoFolder == "" {
 			sl.ReportError(cfg.BlobStorage.Local, "local.VideoFolder", "VideoFolder", "required", "Local VideoFolder is required when using local blob storage")
+		}
+	} else if cfg.BlobStorage.Type == s3BlobStorage {
+		if cfg.BlobStorage.S3.Region == "" {
+			sl.ReportError(cfg.BlobStorage.S3, "s3.Region", "Region", "required", "S3 Region is required when using S3 blob storage")
+		}
+		if cfg.BlobStorage.S3.Bucket == "" {
+			sl.ReportError(cfg.BlobStorage.S3, "s3.Bucket", "Bucket", "required", "S3 Bucket is required when using S3 blob storage")
+		}
+		if cfg.BlobStorage.S3.PDFFolder == "" {
+			sl.ReportError(cfg.BlobStorage.S3, "s3.PDFFolder", "PDFFolder", "required", "S3 PDFFolder is required when using S3 blob storage")
+		}
+		if cfg.BlobStorage.S3.ImagesFolder == "" {
+			sl.ReportError(cfg.BlobStorage.S3, "s3.ImagesFolder", "ImagesFolder", "required", "S3 ImagesFolder is required when using S3 blob storage")
+		}
+		if cfg.BlobStorage.S3.VideoSnippetsFolder == "" {
+			sl.ReportError(cfg.BlobStorage.S3, "s3.VideoSnippetsFolder", "VideoSnippetsFolder", "required", "S3 VideoSnippetsFolder is required when using S3 blob storage")
+		}
+		if cfg.BlobStorage.S3.VideoFolder == "" {
+			sl.ReportError(cfg.BlobStorage.S3, "s3.VideoFolder", "VideoFolder", "required", "S3 VideoFolder is required when using S3 blob storage")
 		}
 	}
 }

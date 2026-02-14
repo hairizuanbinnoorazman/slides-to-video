@@ -98,6 +98,16 @@ var (
 						logger.Errorf("Unable to create local storage client %v", err)
 						os.Exit(1)
 					}
+				} else if cfg.BlobStorage.Type == s3BlobStorage {
+					slideToVideoStorage, err = blobstorage.NewS3Storage(
+						logger,
+						cfg.BlobStorage.S3.Region,
+						cfg.BlobStorage.S3.Bucket,
+					)
+					if err != nil {
+						logger.WithError(err).Error("Unable to create S3 storage client")
+						os.Exit(1)
+					}
 				}
 
 				if slideToVideoStorage == nil {
@@ -239,6 +249,9 @@ var (
 						} else if cfg.BlobStorage.Type == localBlobStorage {
 							pdfFolder = cfg.BlobStorage.Local.PDFFolder
 							imagesFolder = cfg.BlobStorage.Local.ImagesFolder
+						} else if cfg.BlobStorage.Type == s3BlobStorage {
+							pdfFolder = cfg.BlobStorage.S3.PDFFolder
+							imagesFolder = cfg.BlobStorage.S3.ImagesFolder
 						}
 
 						pdfProcessor := pdfsplitter.NewBasic(logger, slideToVideoStorage, pdfMgrClient, pdfFolder, imagesFolder)
@@ -277,6 +290,9 @@ var (
 						} else if cfg.BlobStorage.Type == localBlobStorage {
 							imagesFolder = cfg.BlobStorage.Local.ImagesFolder
 							videoSnippetsFolder = cfg.BlobStorage.Local.VideoSnippetsFolder
+						} else if cfg.BlobStorage.Type == s3BlobStorage {
+							imagesFolder = cfg.BlobStorage.S3.ImagesFolder
+							videoSnippetsFolder = cfg.BlobStorage.S3.VideoSnippetsFolder
 						}
 
 						textToSpeechEngine := img2vidconverter.NewGoogleTextToSpeech(logger, text2speechClient)
@@ -308,6 +324,9 @@ var (
 						} else if cfg.BlobStorage.Type == localBlobStorage {
 							videoSnippetsFolder = cfg.BlobStorage.Local.VideoSnippetsFolder
 							videoFolder = cfg.BlobStorage.Local.VideoFolder
+						} else if cfg.BlobStorage.Type == s3BlobStorage {
+							videoSnippetsFolder = cfg.BlobStorage.S3.VideoSnippetsFolder
+							videoFolder = cfg.BlobStorage.S3.VideoFolder
 						}
 
 						concatProcessor := concatworker.NewBasic(logger, slideToVideoStorage, concatMgrClient, videoSnippetsFolder, videoFolder)
