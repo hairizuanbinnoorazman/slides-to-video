@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
@@ -21,6 +22,20 @@ type QueueWorker struct {
 }
 
 func (w *QueueWorker) Start(ctx context.Context) error {
+	// Validate required dependencies before starting
+	if w.Queue == nil {
+		return fmt.Errorf("QueueWorker.Queue is nil, cannot start worker")
+	}
+	if w.ProcessorFunc == nil {
+		return fmt.Errorf("QueueWorker.ProcessorFunc is nil, cannot start worker")
+	}
+	if w.Logger == nil {
+		return fmt.Errorf("QueueWorker.Logger is nil, cannot start worker")
+	}
+	if w.WorkerName == "" {
+		return fmt.Errorf("QueueWorker.WorkerName is empty, cannot start worker")
+	}
+
 	w.Logger.Infof("Starting worker: %s", w.WorkerName)
 	for {
 		select {
