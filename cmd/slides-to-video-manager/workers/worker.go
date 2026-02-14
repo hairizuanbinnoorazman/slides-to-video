@@ -45,12 +45,12 @@ func (w *QueueWorker) Start(ctx context.Context) error {
 		default:
 			msg, err := w.Queue.Pop(ctx)
 			if err != nil {
-				w.Logger.Errorf("[%s] Error popping from queue: %v", w.WorkerName, err)
 				// Check if error is due to context cancellation
 				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || ctx.Err() != nil {
 					// Don't sleep on cancellation, allow loop to observe ctx.Done()
 					continue
 				}
+				w.Logger.Errorf("[%s] Error popping from queue: %v", w.WorkerName, err)
 				time.Sleep(10 * time.Second)
 				continue
 			}
