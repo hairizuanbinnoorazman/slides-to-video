@@ -55,15 +55,15 @@ push-all-versioned:
 	make image_version=$(image_version) image_repo=$(image_repo) push-images
 
 stack-up:
-	cd deployment/docker-compose && docker-compose up
+	cd deployment/docker-compose && docker compose up
 
 stack-down:
-	cd deployment/docker-compose && docker-compose down
+	cd deployment/docker-compose && docker compose down
 
 stack-up-monitoring:
-	cd deployment/docker-compose && docker-compose -f docker-compose.yaml -f with-monitoring.yaml up
+	cd deployment/docker-compose && docker compose -f docker-compose.yaml -f with-monitoring.yaml up
 
 stack-down-monitoring:
-	cd deployment/docker-compose && docker-compose -f docker-compose.yaml -f with-monitoring.yaml down
+	cd deployment/docker-compose && docker compose -f docker-compose.yaml -f with-monitoring.yaml down
 
 reup: stack-down build-all stack-up
