@@ -37,6 +37,14 @@ func TestNewLocalStorage(t *testing.T) {
 			t.Fatalf("Failed to create read-only dir: %v", err)
 		}
 
+		// Check if directory is actually writable (e.g., running as privileged user)
+		testFile := filepath.Join(readOnlyDir, ".writetest")
+		if err := os.WriteFile(testFile, []byte("test"), 0644); err == nil {
+			// Directory is writable despite permissions, skip test
+			os.Remove(testFile)
+			t.Skipf("Directory is writable despite 0555 permissions (likely privileged user), skipping test")
+		}
+
 		_, err := NewLocalStorage(testLogger, readOnlyDir)
 		if err == nil {
 			t.Error("Expected error for read-only directory, got nil")

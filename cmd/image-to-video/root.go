@@ -41,6 +41,9 @@ var (
 				AccessKeyID:     envVarOrDefault("BLOBSTORAGE_MINIO_ACCESSKEY", "s3_user"),
 				SecretAccessKey: envVarOrDefault("BLOBSTORAGE_MINIO_SECRETKEY", "s3_password"),
 			},
+			Local: localBlobConfig{
+				BasePath: envVarOrDefault("BLOBSTORAGE_LOCAL_BASEPATH", ""),
+			},
 		},
 		Queue: queueConfig{
 			Type:              natsQueue,

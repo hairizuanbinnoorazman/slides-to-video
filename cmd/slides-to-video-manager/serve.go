@@ -92,8 +92,8 @@ var (
 						logger.Errorf("Unable to create storage client %v", err)
 						os.Exit(1)
 					}
-				} else if cfg.BlobStorage.Type == "local" {
-					slideToVideoStorage, err = blobstorage.NewLocalStorage(logger, cfg.BlobStorage.Local.Folder)
+				} else if cfg.BlobStorage.Type == localBlobStorage {
+					slideToVideoStorage, err = blobstorage.NewLocalStorage(logger, cfg.BlobStorage.Local.BasePath)
 					if err != nil {
 						logger.Errorf("Unable to create local storage client %v", err)
 						os.Exit(1)
@@ -236,7 +236,7 @@ var (
 						} else if cfg.BlobStorage.Type == minioBlobStorage {
 							pdfFolder = cfg.BlobStorage.Minio.PDFFolder
 							imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
-						} else if cfg.BlobStorage.Type == "local" {
+						} else if cfg.BlobStorage.Type == localBlobStorage {
 							pdfFolder = cfg.BlobStorage.Local.PDFFolder
 							imagesFolder = cfg.BlobStorage.Local.ImagesFolder
 						}
@@ -274,7 +274,7 @@ var (
 						} else if cfg.BlobStorage.Type == minioBlobStorage {
 							imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
 							videoSnippetsFolder = cfg.BlobStorage.Minio.VideoSnippetsFolder
-						} else if cfg.BlobStorage.Type == "local" {
+						} else if cfg.BlobStorage.Type == localBlobStorage {
 							imagesFolder = cfg.BlobStorage.Local.ImagesFolder
 							videoSnippetsFolder = cfg.BlobStorage.Local.VideoSnippetsFolder
 						}
@@ -305,7 +305,7 @@ var (
 						} else if cfg.BlobStorage.Type == minioBlobStorage {
 							videoSnippetsFolder = cfg.BlobStorage.Minio.VideoSnippetsFolder
 							videoFolder = cfg.BlobStorage.Minio.VideoFolder
-						} else if cfg.BlobStorage.Type == "local" {
+						} else if cfg.BlobStorage.Type == localBlobStorage {
 							videoSnippetsFolder = cfg.BlobStorage.Local.VideoSnippetsFolder
 							videoFolder = cfg.BlobStorage.Local.VideoFolder
 						}
