@@ -56,13 +56,8 @@ type minioConfig struct {
 }
 
 type s3Config struct {
-	Region            string `yaml:"region"`
-	Bucket            string `yaml:"bucket"`
-	CredentialMode    string `yaml:"credentialMode"`
-	AccessKeyID       string `yaml:"accessKeyId"`
-	SecretAccessKey   string `yaml:"secretAccessKey"`
-	SharedCredFile    string `yaml:"sharedCredFile"`
-	SharedCredProfile string `yaml:"sharedCredProfile"`
+	Region string `yaml:"region"`
+	Bucket string `yaml:"bucket"`
 }
 
 type queueConfig struct {

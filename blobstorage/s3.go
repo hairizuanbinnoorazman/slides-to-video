@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/logger"
 )
@@ -19,13 +18,11 @@ type S3Storage struct {
 	BucketName string
 }
 
-// NewS3Storage creates a new S3 storage client with the specified credentials mode.
-// Supported credential modes:
-// - "iam" (default): Use IAM role attached to instance
-// - "static": Use provided accessKeyID and secretAccessKey
-// - "shared": Use shared credentials file (~/.aws/credentials) with profile
-// - "env": Use AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
-func NewS3Storage(logger logger.Logger, region, bucket, credentialMode, accessKeyID, secretAccessKey, sharedCredFile, sharedCredProfile string) (S3Storage, error) {
+// NewS3Storage creates a new S3 storage client using IAM role credentials.
+// This implementation relies on the AWS SDK's default credential chain, which will
+// automatically use IAM roles from EC2 instance metadata, ECS task roles, or EKS pod roles.
+// No static credentials are supported to follow AWS security best practices.
+func NewS3Storage(logger logger.Logger, region, bucket string) (S3Storage, error) {
 	if region == "" {
 		return S3Storage{}, fmt.Errorf("AWS region is required")
 	}
@@ -33,72 +30,17 @@ func NewS3Storage(logger logger.Logger, region, bucket, credentialMode, accessKe
 		return S3Storage{}, fmt.Errorf("AWS S3 bucket name is required")
 	}
 
-	// Default to IAM role if no credential mode specified
-	if credentialMode == "" {
-		credentialMode = "iam"
-	}
-
-	var cfg aws.Config
-	var err error
-
-	switch credentialMode {
-	case "iam":
-		// Use default AWS config (IAM role from instance)
-		cfg, err = config.LoadDefaultConfig(context.Background(),
-			config.WithRegion(region),
-		)
-		if err != nil {
-			return S3Storage{}, fmt.Errorf("unable to load AWS config with IAM role: %v", err)
-		}
-
-	case "static":
-		if accessKeyID == "" || secretAccessKey == "" {
-			return S3Storage{}, fmt.Errorf("accessKeyID and secretAccessKey are required for static credential mode")
-		}
-		cfg, err = config.LoadDefaultConfig(context.Background(),
-			config.WithRegion(region),
-			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-				accessKeyID,
-				secretAccessKey,
-				"",
-			)),
-		)
-		if err != nil {
-			return S3Storage{}, fmt.Errorf("unable to load AWS config with static credentials: %v", err)
-		}
-
-	case "shared":
-		// Use shared credentials file with optional profile
-		configOpts := []func(*config.LoadOptions) error{
-			config.WithRegion(region),
-		}
-		if sharedCredFile != "" {
-			configOpts = append(configOpts, config.WithSharedCredentialsFiles([]string{sharedCredFile}))
-		}
-		if sharedCredProfile != "" {
-			configOpts = append(configOpts, config.WithSharedConfigProfile(sharedCredProfile))
-		}
-		cfg, err = config.LoadDefaultConfig(context.Background(), configOpts...)
-		if err != nil {
-			return S3Storage{}, fmt.Errorf("unable to load AWS config with shared credentials: %v", err)
-		}
-
-	case "env":
-		// Use environment variables (AWS SDK will automatically pick up AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)
-		cfg, err = config.LoadDefaultConfig(context.Background(),
-			config.WithRegion(region),
-		)
-		if err != nil {
-			return S3Storage{}, fmt.Errorf("unable to load AWS config from environment variables: %v", err)
-		}
-
-	default:
-		return S3Storage{}, fmt.Errorf("unsupported credential mode: %s (supported: iam, static, shared, env)", credentialMode)
+	// Load AWS config using default credential chain (IAM roles)
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion(region),
+	)
+	if err != nil {
+		return S3Storage{}, fmt.Errorf("unable to load AWS config with IAM role: %v", err)
 	}
 
 	client := s3.NewFromConfig(cfg)
 
-	logger.Infof("S3 storage initialized successfully. Region: %s, Bucket: %s, Credential Mode: %s", region, bucket, credentialMode)
+	logger.Infof("S3 storage initialized successfully. Region: %s, Bucket: %s (using IAM role credentials)", region, bucket)
 
 	return S3Storage{
 		Logger:     logger,

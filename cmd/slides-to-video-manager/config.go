@@ -121,11 +121,6 @@ type localBlobConfig struct {
 type s3Config struct {
 	Region              string `yaml:"region"`
 	Bucket              string `yaml:"bucket"`
-	CredentialMode      string `yaml:"credentialMode"`
-	AccessKeyID         string `yaml:"accessKeyId"`
-	SecretAccessKey     string `yaml:"secretAccessKey"`
-	SharedCredFile      string `yaml:"sharedCredFile"`
-	SharedCredProfile   string `yaml:"sharedCredProfile"`
 	PDFFolder           string `yaml:"pdfFolder"`
 	ImagesFolder        string `yaml:"imagesFolder"`
 	VideoSnippetsFolder string `yaml:"videoSnippetsFolder"`
@@ -276,14 +271,6 @@ func ConfigStructLevelValidation(sl validator.StructLevel) {
 		}
 		if cfg.BlobStorage.S3.Bucket == "" {
 			sl.ReportError(cfg.BlobStorage.S3, "s3.Bucket", "Bucket", "required", "S3 Bucket is required when using S3 blob storage")
-		}
-		if cfg.BlobStorage.S3.CredentialMode == "static" {
-			if cfg.BlobStorage.S3.AccessKeyID == "" {
-				sl.ReportError(cfg.BlobStorage.S3, "s3.AccessKeyID", "AccessKeyID", "required", "S3 AccessKeyID is required when using static credential mode")
-			}
-			if cfg.BlobStorage.S3.SecretAccessKey == "" {
-				sl.ReportError(cfg.BlobStorage.S3, "s3.SecretAccessKey", "SecretAccessKey", "required", "S3 SecretAccessKey is required when using static credential mode")
-			}
 		}
 		if cfg.BlobStorage.S3.PDFFolder == "" {
 			sl.ReportError(cfg.BlobStorage.S3, "s3.PDFFolder", "PDFFolder", "required", "S3 PDFFolder is required when using S3 blob storage")
