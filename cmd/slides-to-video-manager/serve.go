@@ -275,11 +275,11 @@ var (
 						// Initialize text-to-speech client
 						text2speechClient, err := texttospeech.NewClient(context.Background(), svcAcctOptions...)
 						if err != nil {
-							logger.Errorf("Unable to create text to speech client: %v", err)
-							os.Exit(1)
-						}
-						defer text2speechClient.Close()
+							logger.Warnf("Unable to create text to speech client, skipping image-to-video worker: %v", err)
+						} else {
+							defer text2speechClient.Close()
 
+<<<<<<< Updated upstream
 						var imagesFolder, videoSnippetsFolder string
 						if cfg.BlobStorage.Type == gcsBlobStorage {
 							imagesFolder = cfg.BlobStorage.GCS.ImagesFolder
@@ -294,19 +294,33 @@ var (
 							imagesFolder = cfg.BlobStorage.S3.ImagesFolder
 							videoSnippetsFolder = cfg.BlobStorage.S3.VideoSnippetsFolder
 						}
+=======
+							var imagesFolder, videoSnippetsFolder string
+							if cfg.BlobStorage.Type == gcsBlobStorage {
+								imagesFolder = cfg.BlobStorage.GCS.ImagesFolder
+								videoSnippetsFolder = cfg.BlobStorage.GCS.VideoSnippetsFolder
+							} else if cfg.BlobStorage.Type == minioBlobStorage {
+								imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
+								videoSnippetsFolder = cfg.BlobStorage.Minio.VideoSnippetsFolder
+							} else if cfg.BlobStorage.Type == localBlobStorage {
+								imagesFolder = cfg.BlobStorage.Local.ImagesFolder
+								videoSnippetsFolder = cfg.BlobStorage.Local.VideoSnippetsFolder
+							}
+>>>>>>> Stashed changes
 
-						textToSpeechEngine := img2vidconverter.NewGoogleTextToSpeech(logger, text2speechClient)
-						img2vidProcessor := img2vidconverter.NewBasic(logger, slideToVideoStorage, img2vidMgrClient, imagesFolder, videoSnippetsFolder, &textToSpeechEngine)
+							textToSpeechEngine := img2vidconverter.NewGoogleTextToSpeech(logger, text2speechClient)
+							img2vidProcessor := img2vidconverter.NewBasic(logger, slideToVideoStorage, img2vidMgrClient, imagesFolder, videoSnippetsFolder, &textToSpeechEngine)
 
-						concurrency := cfg.Workers.ImageToVideo.Concurrency
-						if concurrency == 0 {
-							concurrency = 1
+							concurrency := cfg.Workers.ImageToVideo.Concurrency
+							if concurrency == 0 {
+								concurrency = 1
+							}
+							for i := 0; i < concurrency; i++ {
+								worker := workers.NewImage2VideoWorker(logger, imageToVideoQueue, &img2vidProcessor)
+								workerList = append(workerList, worker)
+							}
+							logger.Infof("Created %d image-to-video worker(s)", concurrency)
 						}
-						for i := 0; i < concurrency; i++ {
-							worker := workers.NewImage2VideoWorker(logger, imageToVideoQueue, &img2vidProcessor)
-							workerList = append(workerList, worker)
-						}
-						logger.Infof("Created %d image-to-video worker(s)", concurrency)
 					}
 
 					// Concatenate Video Worker
