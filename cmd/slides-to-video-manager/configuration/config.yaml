@@ -50,7 +50,7 @@ queue:
 blobStorage:
   type: "local"
   local:
-    folder: "/data/storage"
+    basePath: "/data/storage"
     pdfFolder: "pdf"
     imagesFolder: "images"
     videoSnippetsFolder: "video-snippets"
