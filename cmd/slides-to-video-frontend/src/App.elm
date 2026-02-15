@@ -223,7 +223,19 @@ update msg model =
             ( model, Cmd.batch [ downloadProjectVideo mgrURL projectID videoOutputID ] )
 
         UploadPDFSlidesResponse result ->
-            ( model, Cmd.none )
+            case result of
+                Ok pdfSlideImage ->
+                    let
+                        copiedProject =
+                            model.singleProject
+
+                        updatedProject =
+                            { copiedProject | pdfSlideImages = [ pdfSlideImage ] }
+                    in
+                    ( { model | singleProject = updatedProject, files = [] }, Cmd.none )
+
+                Err error ->
+                    ( { model | alertVisibility = Alert.shown }, Cmd.none )
 
         SubmitGenerateVideo ->
             ( model, Cmd.batch [ apiProjectGenerateVideo model.serverSettings.serverEndpoint model.singleProject.id ] )
@@ -307,7 +319,19 @@ update msg model =
         Tick time ->
             case model.page of
                 Project projectID ->
-                    if List.length model.singleProject.videoSegments == 0 then
+                    let
+                        pdfProcessing =
+                            case getPDFSlideImages model.singleProject.pdfSlideImages of
+                                Nothing ->
+                                    False
+
+                                Just pdf ->
+                                    pdf.status == "created" || pdf.status == "running"
+
+                        noVideoSegments =
+                            List.length model.singleProject.videoSegments == 0
+                    in
+                    if pdfProcessing || noVideoSegments then
                         ( model, Cmd.batch [ apiGetProject model.serverSettings.serverEndpoint projectID ] )
 
                     else
@@ -838,39 +862,358 @@ projectsPage model =
         ]
 
 
-singleProjectPage : Model -> Html Msg
-singleProjectPage model =
+getPDFSlideImages : List PDFSlideImages -> Maybe PDFSlideImages
+getPDFSlideImages pdfSlideImagesList =
+    List.head pdfSlideImagesList
+
+
+sortSlideAssets : List SlideAsset -> List SlideAsset
+sortSlideAssets slides =
+    List.sortBy .order slides
+
+
+type alias SlideWithSegment =
+    { slideAsset : SlideAsset
+    , videoSegment : Maybe VideoSegment
+    }
+
+
+mergeSlideWithSegment : List SlideAsset -> List VideoSegment -> List SlideWithSegment
+mergeSlideWithSegment slideAssets videoSegments =
+    let
+        findSegmentForImage imageID =
+            List.head (List.filter (\vs -> vs.imageID == imageID) videoSegments)
+
+        sortedSlides =
+            List.sortBy .order slideAssets
+    in
+    List.map
+        (\slide ->
+            { slideAsset = slide
+            , videoSegment = findSegmentForImage slide.imageID
+            }
+        )
+        sortedSlides
+
+
+pdfStatusBanner : PDFSlideImages -> Html Msg
+pdfStatusBanner pdfSlideImages =
+    case pdfSlideImages.status of
+        "created" ->
+            div
+                [ style "background-color" "#d1ecf1"
+                , style "border" "3px solid #bee5eb"
+                , style "border-radius" "8px"
+                , style "padding" "30px"
+                , style "margin" "20px 0"
+                , style "text-align" "center"
+                ]
+                [ h2 [ style "color" "#0c5460", style "font-size" "28px", style "font-weight" "bold", style "margin-bottom" "10px" ]
+                    [ text "PDF Uploaded - Waiting to Process" ]
+                , p [ style "font-size" "18px", style "color" "#0c5460" ]
+                    [ text "Your PDF is in the queue and will be processed shortly..." ]
+                , div [ style "font-size" "24px", style "margin-top" "15px" ]
+                    [ text "⏳" ]
+                ]
+
+        "running" ->
+            div
+                [ style "background-color" "#fff3cd"
+                , style "border" "3px solid #ffc107"
+                , style "border-radius" "8px"
+                , style "padding" "30px"
+                , style "margin" "20px 0"
+                , style "text-align" "center"
+                ]
+                [ h2 [ style "color" "#856404", style "font-size" "28px", style "font-weight" "bold", style "margin-bottom" "10px" ]
+                    [ text "PROCESSING PDF..." ]
+                , p [ style "font-size" "18px", style "color" "#856404" ]
+                    [ text "Extracting slides from your PDF. This may take a moment..." ]
+                , div [ style "font-size" "24px", style "margin-top" "15px" ]
+                    [ text "⚙️ Processing..." ]
+                ]
+
+        "completed" ->
+            let
+                slideCount =
+                    List.length pdfSlideImages.slideAssets
+            in
+            div
+                [ style "background-color" "#d4edda"
+                , style "border" "3px solid #28a745"
+                , style "border-radius" "8px"
+                , style "padding" "30px"
+                , style "margin" "20px 0"
+                , style "text-align" "center"
+                ]
+                [ h2 [ style "color" "#155724", style "font-size" "28px", style "font-weight" "bold", style "margin-bottom" "10px" ]
+                    [ text "✓ PDF PROCESSED SUCCESSFULLY!" ]
+                , p [ style "font-size" "18px", style "color" "#155724", style "font-weight" "bold" ]
+                    [ text (String.fromInt slideCount ++ " slides extracted and ready for narration") ]
+                ]
+
+        "error" ->
+            div
+                [ style "background-color" "#f8d7da"
+                , style "border" "3px solid #dc3545"
+                , style "border-radius" "8px"
+                , style "padding" "30px"
+                , style "margin" "20px 0"
+                , style "text-align" "center"
+                ]
+                [ h2 [ style "color" "#721c24", style "font-size" "28px", style "font-weight" "bold", style "margin-bottom" "10px" ]
+                    [ text "❌ PDF PROCESSING FAILED" ]
+                , p [ style "font-size" "18px", style "color" "#721c24", style "margin-bottom" "20px" ]
+                    [ text "There was an error processing your PDF. Please check the file and try uploading a different PDF." ]
+                ]
+
+        _ ->
+            div
+                [ style "background-color" "#e2e3e5"
+                , style "border" "3px solid #6c757d"
+                , style "border-radius" "8px"
+                , style "padding" "30px"
+                , style "margin" "20px 0"
+                , style "text-align" "center"
+                ]
+                [ h2 [ style "color" "#383d41", style "font-size" "28px", style "font-weight" "bold" ]
+                    [ text ("Unknown Status: " ++ pdfSlideImages.status) ]
+                ]
+
+
+slideNarrationRow : String -> SlideWithSegment -> Html Msg
+slideNarrationRow imageServeURL slideWithSegment =
+    let
+        slide =
+            slideWithSegment.slideAsset
+
+        maybeSegment =
+            slideWithSegment.videoSegment
+
+        hasSegment =
+            case maybeSegment of
+                Just _ ->
+                    True
+
+                Nothing ->
+                    False
+
+        videoSegmentID =
+            case maybeSegment of
+                Just vs ->
+                    vs.id
+
+                Nothing ->
+                    ""
+
+        scriptValue =
+            case maybeSegment of
+                Just vs ->
+                    vs.script
+
+                Nothing ->
+                    ""
+
+        segmentStatus =
+            case maybeSegment of
+                Just vs ->
+                    vs.status
+
+                Nothing ->
+                    "pending"
+    in
+    div
+        [ style "display" "flex"
+        , style "flex-direction" "row"
+        , style "flex-wrap" "wrap"
+        , style "border" "2px solid #dee2e6"
+        , style "border-radius" "8px"
+        , style "margin-bottom" "20px"
+        , style "padding" "15px"
+        , style "background-color" "#ffffff"
+        , style "box-shadow" "0 2px 4px rgba(0,0,0,0.1)"
+        ]
+        [ div
+            [ style "flex" "1 1 300px"
+            , style "min-width" "300px"
+            , style "padding-right" "20px"
+            , style "display" "flex"
+            , style "flex-direction" "column"
+            , style "align-items" "center"
+            ]
+            [ div [ style "position" "relative", style "width" "100%" ]
+                [ img
+                    [ src (imageServeURL ++ slide.imageID)
+                    , style "width" "100%"
+                    , style "height" "auto"
+                    , style "border-radius" "4px"
+                    , style "border" "1px solid #ced4da"
+                    , alt ("Slide " ++ String.fromInt slide.order)
+                    ]
+                    []
+                , div
+                    [ style "position" "absolute"
+                    , style "top" "10px"
+                    , style "right" "10px"
+                    , style "background-color" "rgba(0, 0, 0, 0.8)"
+                    , style "color" "white"
+                    , style "padding" "8px 15px"
+                    , style "border-radius" "8px"
+                    , style "font-weight" "bold"
+                    , style "font-size" "20px"
+                    ]
+                    [ text ("Slide " ++ String.fromInt slide.order) ]
+                ]
+            ]
+        , div
+            [ style "flex" "2 1 400px"
+            , style "min-width" "300px"
+            , style "display" "flex"
+            , style "flex-direction" "column"
+            ]
+            [ h4 [ style "margin-top" "0", style "margin-bottom" "15px", style "color" "#495057" ]
+                [ text ("Narration for Slide " ++ String.fromInt slide.order) ]
+            , if hasSegment then
+                div []
+                    [ Form.group []
+                        [ Form.label [ for ("script-" ++ videoSegmentID) ]
+                            [ text "Enter narration script:" ]
+                        , Textarea.textarea
+                            [ Textarea.id ("script-" ++ videoSegmentID)
+                            , Textarea.rows 5
+                            , Textarea.value scriptValue
+                            , Textarea.onInput (ScriptInput videoSegmentID)
+                            , Textarea.attrs [ style "font-size" "16px", style "resize" "vertical" ]
+                            ]
+                        , Form.help []
+                            [ text "This text will be converted to speech for the video narration" ]
+                        ]
+                    , div [ style "display" "flex", style "justify-content" "space-between", style "align-items" "center" ]
+                        [ Button.button [ Button.primary, Button.onClick (SubmitScriptInput videoSegmentID) ]
+                            [ text "Save Script" ]
+                        , case segmentStatus of
+                            "created" ->
+                                span [ style "color" "#6c757d" ] [ text "Not started" ]
+
+                            "running" ->
+                                span [ style "color" "#ffc107", style "font-weight" "bold" ] [ text "⚙️ Processing..." ]
+
+                            "completed" ->
+                                span [ style "color" "#28a745", style "font-weight" "bold" ] [ text "✓ Complete" ]
+
+                            "error" ->
+                                span [ style "color" "#dc3545", style "font-weight" "bold" ] [ text "❌ Error" ]
+
+                            _ ->
+                                span [ style "color" "#6c757d" ] [ text segmentStatus ]
+                        ]
+                    ]
+
+              else
+                div
+                    [ style "display" "flex"
+                    , style "align-items" "center"
+                    , style "justify-content" "center"
+                    , style "height" "100%"
+                    , style "color" "#6c757d"
+                    , style "font-style" "italic"
+                    ]
+                    [ text "Waiting for video segment to be created..." ]
+            ]
+        ]
+
+
+slideNarrationList : Model -> Html Msg
+slideNarrationList model =
     let
         imageServeURL =
             model.serverSettings.serverEndpoint ++ "/api/v1/project/" ++ model.singleProject.id ++ "/image/"
+
+        pdfSlideImages =
+            getPDFSlideImages model.singleProject.pdfSlideImages
     in
-    div []
-        (List.concat
-            [ [ h1 [] [ text "Project" ]
-              , Button.button [ Button.primary, Button.onClick SubmitGenerateVideo ] [ text "Generate Video" ]
-              , if model.singleProject.videoOutputID /= "" then
-                    Button.button [ Button.primary, Button.onClick (DownloadGeneratedVideo model.serverSettings.serverEndpoint model.singleProject.id model.singleProject.videoOutputID) ] [ text "Download Generated Video" ]
+    case pdfSlideImages of
+        Nothing ->
+            div [] []
 
-                else
-                    Button.button [ Button.primary, Button.disabled True ] [ text "Generated Video Unavailable" ]
-              , Form.group []
-                    [ Form.label [ for "projectname" ] [ text "Project Name" ]
-                    , Input.text [ Input.id "projectname", Input.value model.singleProject.name, Input.onInput ProjectNameInput ]
-                    , Button.button [ Button.primary, Button.onClick SubmitRenameProject ] [ text "Rename project" ]
+        Just pdfImages ->
+            if pdfImages.status == "completed" then
+                let
+                    mergedData =
+                        mergeSlideWithSegment pdfImages.slideAssets model.singleProject.videoSegments
+                in
+                div []
+                    [ h2 [ style "margin-top" "30px", style "margin-bottom" "20px", style "color" "#212529" ]
+                        [ text "Add Narration to Your Slides" ]
+                    , p [ style "color" "#6c757d", style "margin-bottom" "25px" ]
+                        [ text "Enter the narration text for each slide below. The text will be converted to speech when you generate the video." ]
+                    , div [] (List.map (slideNarrationRow imageServeURL) mergedData)
                     ]
-              , if List.length model.singleProject.pdfSlideImages == 0 then
-                    div []
-                        [ p [] [ text "Please upload a PDF File containing the slides" ]
-                        , input [ type_ "file", multiple False, on "change" (Decode.map GotFiles filesDecoder) ] []
-                        , Button.button [ Button.primary, Button.onClick SubmitUploadPDFSlides ] [ text "Upload PDF Slides" ]
-                        ]
 
-                else
-                    p [] [ text "File already uploaded" ]
-              ]
-            , List.map (videoSegmentRow imageServeURL) model.singleProject.videoSegments
+            else
+                div [] []
+
+
+pdfProcessingSection : Model -> Html Msg
+pdfProcessingSection model =
+    case getPDFSlideImages model.singleProject.pdfSlideImages of
+        Nothing ->
+            div []
+                [ h2 [ style "margin-top" "20px", style "margin-bottom" "15px" ]
+                    [ text "Step 1: Upload PDF" ]
+                , p [ style "color" "#6c757d", style "margin-bottom" "20px" ]
+                    [ text "Upload a PDF file containing your slides. Each page will be extracted as a separate slide." ]
+                , input
+                    [ type_ "file"
+                    , multiple False
+                    , on "change" (Decode.map GotFiles filesDecoder)
+                    , style "margin-bottom" "15px"
+                    ]
+                    []
+                , Button.button [ Button.primary, Button.large, Button.onClick SubmitUploadPDFSlides ]
+                    [ text "Upload PDF Slides" ]
+                ]
+
+        Just pdfSlideImages ->
+            div []
+                [ h2 [ style "margin-top" "20px", style "margin-bottom" "15px" ]
+                    [ text "Step 1: PDF Processing" ]
+                , pdfStatusBanner pdfSlideImages
+                , slideNarrationList model
+                ]
+
+
+singleProjectPage : Model -> Html Msg
+singleProjectPage model =
+    div []
+        [ h1 [] [ text "Project" ]
+        , Form.group []
+            [ Form.label [ for "projectname" ] [ text "Project Name" ]
+            , Input.text [ Input.id "projectname", Input.value model.singleProject.name, Input.onInput ProjectNameInput ]
+            , Button.button [ Button.primary, Button.onClick SubmitRenameProject ] [ text "Rename project" ]
             ]
-        )
+        , hr [ style "margin" "30px 0" ] []
+        , pdfProcessingSection model
+        , hr [ style "margin" "30px 0" ] []
+        , h2 [ style "margin-top" "20px", style "margin-bottom" "15px" ]
+            [ text "Step 2: Generate Video" ]
+        , p [ style "color" "#6c757d", style "margin-bottom" "20px" ]
+            [ text "Once you've added narration to all slides, click the button below to generate your video." ]
+        , Button.button [ Button.success, Button.large, Button.onClick SubmitGenerateVideo ]
+            [ text "Generate Video" ]
+        , if model.singleProject.videoOutputID /= "" then
+            div [ style "margin-top" "20px" ]
+                [ Button.button
+                    [ Button.primary
+                    , Button.large
+                    , Button.onClick (DownloadGeneratedVideo model.serverSettings.serverEndpoint model.singleProject.id model.singleProject.videoOutputID)
+                    ]
+                    [ text "⬇ Download Generated Video" ]
+                ]
+
+          else
+            div [] []
+        ]
 
 
 downloadProjectVideo : String -> String -> String -> Cmd Msg
@@ -880,35 +1223,6 @@ downloadProjectVideo mgrURL projectID videoOutputID =
             mgrURL ++ "/api/v1/project/" ++ projectID ++ "/video/" ++ videoOutputID
     in
     Download.url videoServeURL
-
-
-videoSegmentRow : String -> VideoSegment -> Html Msg
-videoSegmentRow serveImageURL videoSegment =
-    Card.config []
-        |> Card.block []
-            [ Block.custom <|
-                Form.form []
-                    [ Form.group []
-                        [ div []
-                            [ img [ src (serveImageURL ++ videoSegment.imageID), height 200 ] []
-                            ]
-                        , Form.label [] [ text "Enter script for segment" ]
-                        , Textarea.textarea
-                            [ Textarea.id "script"
-                            , Textarea.rows 3
-                            , Textarea.value videoSegment.script
-                            , Textarea.onInput (ScriptInput videoSegment.id)
-                            ]
-                        ]
-                    , Form.group []
-                        [ Button.button [ Button.primary, Button.onClick (SubmitScriptInput videoSegment.id) ] [ text "Save script" ]
-                        , Button.button [ Button.primary ] [ text "Generate Audio" ]
-                        , Button.button [ Button.primary ] [ text "Move up" ]
-                        , Button.button [ Button.primary ] [ text "Move down" ]
-                        ]
-                    ]
-            ]
-        |> Card.view
 
 
 filesDecoder : Decoder (List File)
