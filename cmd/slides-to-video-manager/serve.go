@@ -279,7 +279,6 @@ var (
 						} else {
 							defer text2speechClient.Close()
 
-<<<<<<< Updated upstream
 						var imagesFolder, videoSnippetsFolder string
 						if cfg.BlobStorage.Type == gcsBlobStorage {
 							imagesFolder = cfg.BlobStorage.GCS.ImagesFolder
@@ -294,19 +293,6 @@ var (
 							imagesFolder = cfg.BlobStorage.S3.ImagesFolder
 							videoSnippetsFolder = cfg.BlobStorage.S3.VideoSnippetsFolder
 						}
-=======
-							var imagesFolder, videoSnippetsFolder string
-							if cfg.BlobStorage.Type == gcsBlobStorage {
-								imagesFolder = cfg.BlobStorage.GCS.ImagesFolder
-								videoSnippetsFolder = cfg.BlobStorage.GCS.VideoSnippetsFolder
-							} else if cfg.BlobStorage.Type == minioBlobStorage {
-								imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
-								videoSnippetsFolder = cfg.BlobStorage.Minio.VideoSnippetsFolder
-							} else if cfg.BlobStorage.Type == localBlobStorage {
-								imagesFolder = cfg.BlobStorage.Local.ImagesFolder
-								videoSnippetsFolder = cfg.BlobStorage.Local.VideoSnippetsFolder
-							}
->>>>>>> Stashed changes
 
 							textToSpeechEngine := img2vidconverter.NewGoogleTextToSpeech(logger, text2speechClient)
 							img2vidProcessor := img2vidconverter.NewBasic(logger, slideToVideoStorage, img2vidMgrClient, imagesFolder, videoSnippetsFolder, &textToSpeechEngine)

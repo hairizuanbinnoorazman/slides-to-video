@@ -5,6 +5,8 @@ services:
     image: frontend
     ports:
       - 8081:8080
+    volumes:
+      - ../../cmd/slides-to-video-frontend/main.min.js:/usr/share/nginx/html/assets/main.min.js
   manager:
     image: slides-to-video-manager
     ports:
@@ -46,7 +48,7 @@ services:
       MYSQL_USER: user
       MYSQL_PASSWORD: password
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 10s
       timeout: 5s
       retries: 5
