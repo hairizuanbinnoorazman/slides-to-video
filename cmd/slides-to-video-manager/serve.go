@@ -31,6 +31,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"gopkg.in/go-playground/validator.v9"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/polly"
+
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
@@ -272,13 +275,6 @@ var (
 						logger.Info("Initializing image-to-video workers")
 						img2vidMgrClient := img2vidmgrclient.NewBasic(logger, mgrURL, http.DefaultClient)
 
-						// Initialize text-to-speech client
-						text2speechClient, err := texttospeech.NewClient(context.Background(), svcAcctOptions...)
-						if err != nil {
-							logger.Warnf("Unable to create text to speech client, skipping image-to-video worker: %v", err)
-						} else {
-							defer text2speechClient.Close()
-
 						var imagesFolder, videoSnippetsFolder string
 						if cfg.BlobStorage.Type == gcsBlobStorage {
 							imagesFolder = cfg.BlobStorage.GCS.ImagesFolder
@@ -294,8 +290,32 @@ var (
 							videoSnippetsFolder = cfg.BlobStorage.S3.VideoSnippetsFolder
 						}
 
-							textToSpeechEngine := img2vidconverter.NewGoogleTextToSpeech(logger, text2speechClient)
-							img2vidProcessor := img2vidconverter.NewBasic(logger, slideToVideoStorage, img2vidMgrClient, imagesFolder, videoSnippetsFolder, &textToSpeechEngine)
+						// Initialize text-to-speech engine
+						var textToSpeechEngine img2vidconverter.TextToSpeechEngine
+						if cfg.TTS.Type == amazonPollyTTS {
+							awsCfg, awsErr := awsconfig.LoadDefaultConfig(context.Background(),
+								awsconfig.WithRegion(cfg.TTS.AmazonPolly.Region),
+							)
+							if awsErr != nil {
+								logger.Errorf("Unable to load AWS config for Polly: %v", awsErr)
+								os.Exit(1)
+							}
+							pollyClient := polly.NewFromConfig(awsCfg)
+							pollyEngine := img2vidconverter.NewAmazonPollyTextToSpeech(logger, pollyClient, cfg.TTS.AmazonPolly.VoiceID, cfg.TTS.AmazonPolly.Engine)
+							textToSpeechEngine = &pollyEngine
+						} else {
+							text2speechClient, err := texttospeech.NewClient(context.Background(), svcAcctOptions...)
+							if err != nil {
+								logger.Warnf("Unable to create text to speech client, skipping image-to-video worker: %v", err)
+							} else {
+								defer text2speechClient.Close()
+								googleEngine := img2vidconverter.NewGoogleTextToSpeech(logger, text2speechClient)
+								textToSpeechEngine = &googleEngine
+							}
+						}
+
+						if textToSpeechEngine != nil {
+							img2vidProcessor := img2vidconverter.NewBasic(logger, slideToVideoStorage, img2vidMgrClient, imagesFolder, videoSnippetsFolder, textToSpeechEngine)
 
 							concurrency := cfg.Workers.ImageToVideo.Concurrency
 							if concurrency == 0 {
@@ -306,6 +326,8 @@ var (
 								workerList = append(workerList, worker)
 							}
 							logger.Infof("Created %d image-to-video worker(s)", concurrency)
+						} else {
+							logger.Warn("Text-to-speech engine not initialized, skipping image-to-video worker")
 						}
 					}
 

@@ -49,6 +49,9 @@ var (
 			Type:              natsQueue,
 			ImageToVideoTopic: envVarOrDefault("QUEUE_IMAGETOVIDEOTOPIC", "image-to-video"),
 		},
+		TTS: ttsConfig{
+			Type: envVarOrDefault("TTS_TYPE", "google"),
+		},
 	}
 
 	rootCmd = func() *cobra.Command {

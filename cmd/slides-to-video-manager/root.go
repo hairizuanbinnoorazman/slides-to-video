@@ -78,6 +78,9 @@ var (
 				VideoConcatTopic:  envVarOrDefault("QUEUE_CHANNELS_VIDEOCONCATTOPIC", "concatenate-video"),
 			},
 		},
+		TTS: ttsConfig{
+			Type: envVarOrDefault("TTS_TYPE", "google"),
+		},
 		BlobStorage: blobConfig{
 			Type: envVarOrDefault("BLOBSTORAGE_TYPE", "minio"),
 			GCS: gcsConfig{
