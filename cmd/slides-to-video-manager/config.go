@@ -300,4 +300,11 @@ func ConfigStructLevelValidation(sl validator.StructLevel) {
 			sl.ReportError(cfg.BlobStorage.S3, "s3.VideoFolder", "VideoFolder", "required", "S3 VideoFolder is required when using S3 blob storage")
 		}
 	}
+
+	// Validate TTS configuration
+	if cfg.TTS.Type == amazonPollyTTS {
+		if cfg.TTS.AmazonPolly.Region == "" {
+			sl.ReportError(cfg.TTS.AmazonPolly, "amazonPolly.Region", "Region", "required", "Amazon Polly Region is required when using Amazon Polly TTS")
+		}
+	}
 }

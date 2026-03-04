@@ -80,6 +80,11 @@ var (
 		},
 		TTS: ttsConfig{
 			Type: envVarOrDefault("TTS_TYPE", "google"),
+			AmazonPolly: amazonPollyConfig{
+				Region:  envVarOrDefault("POLLY_REGION", "us-east-1"),
+				VoiceID: envVarOrDefault("POLLY_VOICE_ID", "Joanna"),
+				Engine:  envVarOrDefault("POLLY_ENGINE", "standard"),
+			},
 		},
 		BlobStorage: blobConfig{
 			Type: envVarOrDefault("BLOBSTORAGE_TYPE", "minio"),
