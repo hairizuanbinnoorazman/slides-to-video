@@ -9,6 +9,8 @@ verify_ssl = true
 pytest = "*"
 requests = "*"
 google-cloud-datastore = "*"
+playwright = "*"
+pytest-playwright = "*"
 
 [requires]
 python_version = "3.9"
