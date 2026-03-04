@@ -31,6 +31,7 @@ type Project struct {
 	Status             status                          `json:"status" gorm:"type:varchar(40)"`
 	VideoSegments      []videosegment.VideoSegment     `json:"video_segments,omitempty" datastore:"-"`
 	PDFSlideImages     []pdfslideimages.PDFSlideImages `json:"pdf_slide_images,omitempty" datastore:"-"`
+	Description        string                          `json:"description,omitempty" gorm:"type:text"`
 	VideoOutputID      string                          `json:"video_output_id,omitempty" gorm:"type:varchar(40)"`
 	ACLs               []acl.ACL                       `json:"acls" datastore:"-" gorm:"-"`
 	SetRunningIdemKey  string                          `json:"-" gorm:"varchar(40)"`

@@ -17,7 +17,7 @@ type Store interface {
 	Delete(ctx context.Context, ID string) error
 }
 
-func GetUpdaters(name, runningIdemKey, completeRecIdemKey, state, videoOutputID string) ([]func(*Project) error, error) {
+func GetUpdaters(name, description, runningIdemKey, completeRecIdemKey, state, videoOutputID string) ([]func(*Project) error, error) {
 	var s status
 	switch state {
 	case "running":
@@ -30,6 +30,9 @@ func GetUpdaters(name, runningIdemKey, completeRecIdemKey, state, videoOutputID 
 	var setters []func(*Project) error
 	if name != "" {
 		setters = append(setters, setName(name))
+	}
+	if description != "" {
+		setters = append(setters, setDescription(description))
 	}
 	if s == running && runningIdemKey == "" {
 		return setters, fmt.Errorf("no IdemKey passed to change the status to running state")
@@ -58,6 +61,19 @@ func GetUpdaters(name, runningIdemKey, completeRecIdemKey, state, videoOutputID 
 		return setters, nil
 	}
 	return setters, fmt.Errorf("unexpected issue found")
+}
+
+func SetDescription(description string) ([]func(*Project) error, error) {
+	var setters []func(*Project) error
+	setters = append(setters, setDescription(description))
+	return setters, nil
+}
+
+func setDescription(description string) func(*Project) error {
+	return func(a *Project) error {
+		a.Description = description
+		return nil
+	}
 }
 
 func setName(name string) func(*Project) error {

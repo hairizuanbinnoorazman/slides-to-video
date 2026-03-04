@@ -23,6 +23,7 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/pdfslideimages"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/project"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
+	"github.com/hairizuanbinnoorazman/slides-to-video-manager/scriptgenerator"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/services"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/user"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/videoconcater"
@@ -113,6 +114,29 @@ var (
 				if slideToVideoStorage == nil {
 					logger.Errorf("Some of the storage instantiation is nil")
 					os.Exit(1)
+				}
+
+				// Resolve imagesFolder from blob storage config
+				var imagesFolder string
+				if cfg.BlobStorage.Type == gcsBlobStorage {
+					imagesFolder = cfg.BlobStorage.GCS.ImagesFolder
+				} else if cfg.BlobStorage.Type == minioBlobStorage {
+					imagesFolder = cfg.BlobStorage.Minio.ImagesFolder
+				} else if cfg.BlobStorage.Type == localBlobStorage {
+					imagesFolder = cfg.BlobStorage.Local.ImagesFolder
+				} else if cfg.BlobStorage.Type == s3BlobStorage {
+					imagesFolder = cfg.BlobStorage.S3.ImagesFolder
+				}
+
+				// Initialize script generator if configured
+				var scriptGen scriptgenerator.ScriptGenerator
+				if cfg.ScriptGenerator.Type == bedrockScriptGen {
+					bg, bgErr := scriptgenerator.NewBedrockClaude(logger, cfg.ScriptGenerator.Bedrock.Region, cfg.ScriptGenerator.Bedrock.ModelID)
+					if bgErr != nil {
+						logger.Errorf("Unable to create Bedrock script generator: %v", bgErr)
+					} else {
+						scriptGen = bg
+					}
 				}
 
 				var projectStore project.Store
@@ -422,6 +446,32 @@ var (
 						ACLStore:           aclStore,
 						VideoSegmentsStore: videoSegmentsStore,
 						VideoGenerator:     videoGenerator,
+					},
+				}).Methods("POST")
+				s.Handle("/project/{project_id}:generate-scripts", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.GenerateProjectScripts{
+						Logger:            logger,
+						ProjectStore:      projectStore,
+						VideoSegmentStore: videoSegmentsStore,
+						ACLStore:          aclStore,
+						BlobStorage:       slideToVideoStorage,
+						ScriptGenerator:   scriptGen,
+						ImagesFolder:      imagesFolder,
+					},
+				}).Methods("POST")
+				s.Handle("/project/{project_id}/videosegment/{videosegment_id}:generate-script", h.RequireJWTAuth{
+					Auth:   auth,
+					Logger: logger,
+					NextHandler: h.GenerateVideoSegmentScript{
+						Logger:            logger,
+						ProjectStore:      projectStore,
+						VideoSegmentStore: videoSegmentsStore,
+						ACLStore:          aclStore,
+						BlobStorage:       slideToVideoStorage,
+						ScriptGenerator:   scriptGen,
+						ImagesFolder:      imagesFolder,
 					},
 				}).Methods("POST")
 				s.Handle("/project/{project_id}/pdfslideimages", h.CreatePDFSlideImages{

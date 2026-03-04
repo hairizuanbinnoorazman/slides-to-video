@@ -96,6 +96,13 @@ var (
 				VideoFolder:         envVarOrDefault("BLOBSTORAGE_MINIO_VIDEOFOLDER", "videos"),
 			},
 		},
+		ScriptGenerator: scriptGeneratorConfig{
+			Type: envVarOrDefault("SCRIPTGENERATOR_TYPE", ""),
+			Bedrock: bedrockConfig{
+				Region:  envVarOrDefault("SCRIPTGENERATOR_BEDROCK_REGION", ""),
+				ModelID: envVarOrDefault("SCRIPTGENERATOR_BEDROCK_MODELID", ""),
+			},
+		},
 	}
 	serviceName = "slides-to-video-manager"
 	version     = "v0.1.0"

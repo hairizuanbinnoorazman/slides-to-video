@@ -104,6 +104,12 @@ func setVideoFile(videoFile string) func(*VideoSegment) error {
 	}
 }
 
+func SetScript(script string) ([]func(*VideoSegment) error, error) {
+	var setters []func(*VideoSegment) error
+	setters = append(setters, setScript(script))
+	return setters, nil
+}
+
 func setScript(script string) func(*VideoSegment) error {
 	return func(a *VideoSegment) error {
 		a.Script = script

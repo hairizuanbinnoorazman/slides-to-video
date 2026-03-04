@@ -16,6 +16,7 @@ var gcsBlobStorage = "gcs"
 var minioBlobStorage = "minio"
 var localBlobStorage = "local"
 var s3BlobStorage = "s3"
+var bedrockScriptGen = "bedrock"
 
 type datastoreConfig struct {
 	Type                  string                 `yaml:"type"`
@@ -139,12 +140,23 @@ type workerInstanceConfig struct {
 	Concurrency int  `yaml:"concurrency"`
 }
 
+type scriptGeneratorConfig struct {
+	Type    string        `yaml:"type"` // "bedrock" or "" (empty = disabled)
+	Bedrock bedrockConfig `yaml:"bedrock"`
+}
+
+type bedrockConfig struct {
+	Region  string `yaml:"region"`
+	ModelID string `yaml:"modelID"`
+}
+
 type config struct {
-	Server      serverConfig    `yaml:"server"`
-	Workers     workersConfig   `yaml:"workers"`
-	Datastore   datastoreConfig `yaml:"datastore"`
-	Queue       queueConfig     `yaml:"queue"`
-	BlobStorage blobConfig      `yaml:"blobStorage"`
+	Server          serverConfig          `yaml:"server"`
+	Workers         workersConfig         `yaml:"workers"`
+	Datastore       datastoreConfig       `yaml:"datastore"`
+	Queue           queueConfig           `yaml:"queue"`
+	BlobStorage     blobConfig            `yaml:"blobStorage"`
+	ScriptGenerator scriptGeneratorConfig `yaml:"scriptGenerator"`
 }
 
 func envVarOrDefault(envVar, defaultVal string) string {
@@ -283,6 +295,16 @@ func ConfigStructLevelValidation(sl validator.StructLevel) {
 		}
 		if cfg.BlobStorage.S3.VideoFolder == "" {
 			sl.ReportError(cfg.BlobStorage.S3, "s3.VideoFolder", "VideoFolder", "required", "S3 VideoFolder is required when using S3 blob storage")
+		}
+	}
+
+	// Validate script generator configuration
+	if cfg.ScriptGenerator.Type == bedrockScriptGen {
+		if cfg.ScriptGenerator.Bedrock.Region == "" {
+			sl.ReportError(cfg.ScriptGenerator.Bedrock, "bedrock.Region", "Region", "required", "Bedrock Region is required when using Bedrock script generator")
+		}
+		if cfg.ScriptGenerator.Bedrock.ModelID == "" {
+			sl.ReportError(cfg.ScriptGenerator.Bedrock, "bedrock.ModelID", "ModelID", "required", "Bedrock ModelID is required when using Bedrock script generator")
 		}
 	}
 }
