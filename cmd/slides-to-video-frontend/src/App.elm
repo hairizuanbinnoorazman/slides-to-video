@@ -129,7 +129,7 @@ init flags url key =
             UserDetails "" "" ""
 
         emptySingleProject =
-            SingleProject "" "" "" "" "" [] [] ""
+            SingleProject "" "" "" "" "" [] [] "" ""
 
         initialAppState =
             { key = key
@@ -214,6 +214,10 @@ type Msg
     | SubmitUploadPDFSlides
     | UploadPDFSlidesResponse (Result Http.Error PDFSlideImages)
     | DownloadGeneratedVideo String String String
+    | SubmitGenerateScripts
+    | GenerateScriptsResponse (Result Http.Error GenerateScriptsResult)
+    | SubmitGenerateSegmentScript String
+    | GenerateSegmentScriptResponse (Result Http.Error VideoSegment)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -221,6 +225,43 @@ update msg model =
     case msg of
         DownloadGeneratedVideo mgrURL projectID videoOutputID ->
             ( model, Cmd.batch [ downloadProjectVideo mgrURL projectID videoOutputID ] )
+
+        SubmitGenerateScripts ->
+            ( model, Cmd.batch [ apiGenerateProjectScripts model.serverSettings.serverEndpoint model.singleProject.id ] )
+
+        GenerateScriptsResponse result ->
+            case result of
+                Ok _ ->
+                    ( model, Cmd.batch [ apiGetProject model.serverSettings.serverEndpoint model.singleProject.id ] )
+
+                Err _ ->
+                    ( { model | alertVisibility = Alert.shown }, Cmd.none )
+
+        SubmitGenerateSegmentScript videoSegmentID ->
+            ( model, Cmd.batch [ apiGenerateSegmentScript model.serverSettings.serverEndpoint model.singleProject.id videoSegmentID ] )
+
+        GenerateSegmentScriptResponse result ->
+            case result of
+                Ok updatedSegment ->
+                    let
+                        updatedVideoSegments =
+                            List.map
+                                (\vs ->
+                                    if vs.id == updatedSegment.id then
+                                        updatedSegment
+
+                                    else
+                                        vs
+                                )
+                                model.singleProject.videoSegments
+
+                        copiedProject =
+                            model.singleProject
+                    in
+                    ( { model | singleProject = { copiedProject | videoSegments = updatedVideoSegments } }, Cmd.none )
+
+                Err _ ->
+                    ( { model | alertVisibility = Alert.shown }, Cmd.none )
 
         UploadPDFSlidesResponse result ->
             case result of
@@ -615,6 +656,7 @@ type alias SingleProject =
     , pdfSlideImages : List PDFSlideImages
     , videoSegments : List VideoSegment
     , videoOutputID : String
+    , description : String
     }
 
 
@@ -647,6 +689,22 @@ singleProjectDecoder =
         |> Pipeline.optional "pdf_slide_images" (Decode.list pdfSlideImagesDecoder) []
         |> Pipeline.optional "video_segments" (Decode.list videoSegmentDecoder) []
         |> Pipeline.optional "video_output_id" string ""
+        |> Pipeline.optional "description" string ""
+
+
+type alias GenerateScriptsResult =
+    { slidesUpdated : Int
+    , slidesSkipped : Int
+    , description : String
+    }
+
+
+generateScriptsResultDecoder : Decoder GenerateScriptsResult
+generateScriptsResultDecoder =
+    Decode.succeed GenerateScriptsResult
+        |> Pipeline.required "slides_updated" int
+        |> Pipeline.required "slides_skipped" int
+        |> Pipeline.optional "description" string ""
 
 
 type alias ProjectList =
@@ -1089,8 +1147,12 @@ slideNarrationRow imageServeURL slideWithSegment =
                             [ text "This text will be converted to speech for the video narration" ]
                         ]
                     , div [ style "display" "flex", style "justify-content" "space-between", style "align-items" "center" ]
-                        [ Button.button [ Button.primary, Button.onClick (SubmitScriptInput videoSegmentID) ]
-                            [ text "Save Script" ]
+                        [ div [ style "display" "flex", style "gap" "10px" ]
+                            [ Button.button [ Button.primary, Button.onClick (SubmitScriptInput videoSegmentID) ]
+                                [ text "Save Script" ]
+                            , Button.button [ Button.outlineSecondary, Button.onClick (SubmitGenerateSegmentScript videoSegmentID) ]
+                                [ text "Generate Script" ]
+                            ]
                         , case segmentStatus of
                             "created" ->
                                 span [ style "color" "#6c757d" ] [ text "Not started" ]
@@ -1147,6 +1209,10 @@ slideNarrationList model =
                         [ text "Add Narration to Your Slides" ]
                     , p [ style "color" "#6c757d", style "margin-bottom" "25px" ]
                         [ text "Enter the narration text for each slide below. The text will be converted to speech when you generate the video." ]
+                    , div [ style "margin-bottom" "20px" ]
+                        [ Button.button [ Button.outlineInfo, Button.onClick SubmitGenerateScripts ]
+                            [ text "Generate All Scripts" ]
+                        ]
                     , div [] (List.map (slideNarrationRow imageServeURL) mergedData)
                     ]
 
@@ -1192,6 +1258,14 @@ singleProjectPage model =
             , Input.text [ Input.id "projectname", Input.value model.singleProject.name, Input.onInput ProjectNameInput ]
             , Button.button [ Button.primary, Button.onClick SubmitRenameProject ] [ text "Rename project" ]
             ]
+        , if model.singleProject.description /= "" then
+            div [ style "margin-top" "15px", style "padding" "15px", style "background-color" "#f8f9fa", style "border-radius" "5px", style "border" "1px solid #dee2e6" ]
+                [ h5 [ style "margin-bottom" "10px", style "color" "#495057" ] [ text "Project Description" ]
+                , p [ style "color" "#212529", style "margin-bottom" "0" ] [ text model.singleProject.description ]
+                ]
+
+          else
+            div [] []
         , hr [ style "margin" "30px 0" ] []
         , pdfProcessingSection model
         , hr [ style "margin" "30px 0" ] []
@@ -1391,6 +1465,40 @@ apiProjectGenerateVideo mgrURL projectID =
         , timeout = Nothing
         , tracker = Nothing
         , expect = Http.expectWhatever EmptyResponse
+        }
+
+
+apiGenerateProjectScripts : String -> String -> Cmd Msg
+apiGenerateProjectScripts mgrURL projectID =
+    let
+        url =
+            mgrURL ++ "/api/v1/project/" ++ projectID ++ ":generate-scripts"
+    in
+    Http.request
+        { body = Http.emptyBody
+        , method = "POST"
+        , url = url
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectJson GenerateScriptsResponse generateScriptsResultDecoder
+        }
+
+
+apiGenerateSegmentScript : String -> String -> String -> Cmd Msg
+apiGenerateSegmentScript mgrURL projectID videoSegmentID =
+    let
+        url =
+            mgrURL ++ "/api/v1/project/" ++ projectID ++ "/videosegment/" ++ videoSegmentID ++ ":generate-script"
+    in
+    Http.request
+        { body = Http.emptyBody
+        , method = "POST"
+        , url = url
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        , expect = Http.expectJson GenerateSegmentScriptResponse videoSegmentDecoder
         }
 
 
