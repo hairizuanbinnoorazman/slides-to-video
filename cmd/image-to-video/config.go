@@ -12,10 +12,25 @@ var minioBlobStorage = "minio"
 var localBlobStorage = "local"
 var s3BlobStorage = "s3"
 
+var googleTTS = "google"
+var amazonPollyTTS = "amazon_polly"
+
+type ttsConfig struct {
+	Type        string            `yaml:"type"`
+	AmazonPolly amazonPollyConfig `yaml:"amazonPolly"`
+}
+
+type amazonPollyConfig struct {
+	Region  string `yaml:"region"`
+	VoiceID string `yaml:"voiceId"`
+	Engine  string `yaml:"engine"`
+}
+
 type config struct {
 	Server      serverConfig `yaml:"server"`
 	Queue       queueConfig  `yaml:"queue"`
 	BlobStorage blobConfig   `yaml:"blobStorage"`
+	TTS         ttsConfig    `yaml:"tts"`
 }
 
 type serverConfig struct {

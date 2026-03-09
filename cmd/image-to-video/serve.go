@@ -11,6 +11,9 @@ import (
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/cmd/image-to-video/queuehandler"
 	"github.com/hairizuanbinnoorazman/slides-to-video-manager/queue"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/polly"
+
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
 	texttospeech "cloud.google.com/go/texttospeech/apiv1"
@@ -98,9 +101,25 @@ var (
 					os.Exit(1)
 				}
 
-				text2speechClient, err := texttospeech.NewClient(context.Background(), svcAcctOptions...)
-				if err != nil {
-					logger.Error("Unable to create text to speech client")
+				var textToSpeechEngine image2videoconverter.TextToSpeechEngine
+				if cfg.TTS.Type == amazonPollyTTS {
+					awsCfg, awsErr := awsconfig.LoadDefaultConfig(context.Background(),
+						awsconfig.WithRegion(cfg.TTS.AmazonPolly.Region),
+					)
+					if awsErr != nil {
+						logger.Errorf("Unable to load AWS config for Polly: %v", awsErr)
+						os.Exit(1)
+					}
+					pollyClient := polly.NewFromConfig(awsCfg)
+					pollyEngine := image2videoconverter.NewAmazonPollyTextToSpeech(logger, pollyClient, cfg.TTS.AmazonPolly.VoiceID, cfg.TTS.AmazonPolly.Engine)
+					textToSpeechEngine = &pollyEngine
+				} else {
+					text2speechClient, err := texttospeech.NewClient(context.Background(), svcAcctOptions...)
+					if err != nil {
+						logger.Error("Unable to create text to speech client")
+					}
+					googleEngine := image2videoconverter.NewGoogleTextToSpeech(logger, text2speechClient)
+					textToSpeechEngine = &googleEngine
 				}
 
 				mgrURL := fmt.Sprintf("http://%v:%v/api/v1", cfg.Server.ManagerHost, cfg.Server.ManagerPort)
@@ -109,8 +128,7 @@ var (
 				}
 
 				mgrclient := mgrclient.NewBasic(logger, mgrURL, http.DefaultClient)
-				textToSpeechEngine := image2videoconverter.NewGoogleTextToSpeech(logger, text2speechClient)
-				image2videoConverter := image2videoconverter.NewBasic(logger, slideToVideoStorage, mgrclient, cfg.BlobStorage.ImagesFolder, cfg.BlobStorage.VideoSnippetsFolder, &textToSpeechEngine)
+				image2videoConverter := image2videoconverter.NewBasic(logger, slideToVideoStorage, mgrclient, cfg.BlobStorage.ImagesFolder, cfg.BlobStorage.VideoSnippetsFolder, textToSpeechEngine)
 
 				r := mux.NewRouter()
 				r.Handle("/status", h.Status{

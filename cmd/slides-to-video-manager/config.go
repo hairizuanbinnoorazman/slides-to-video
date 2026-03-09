@@ -17,6 +17,9 @@ var minioBlobStorage = "minio"
 var localBlobStorage = "local"
 var s3BlobStorage = "s3"
 
+var googleTTS = "google"
+var amazonPollyTTS = "amazon_polly"
+
 type datastoreConfig struct {
 	Type                  string                 `yaml:"type"`
 	GoogleDatastoreConfig *googleDatastoreConfig `yaml:"googleDataStore"`
@@ -127,6 +130,17 @@ type s3Config struct {
 	VideoFolder         string `yaml:"videoFolder"`
 }
 
+type ttsConfig struct {
+	Type        string            `yaml:"type"`
+	AmazonPolly amazonPollyConfig `yaml:"amazonPolly"`
+}
+
+type amazonPollyConfig struct {
+	Region  string `yaml:"region"`
+	VoiceID string `yaml:"voiceId"`
+	Engine  string `yaml:"engine"`
+}
+
 type workersConfig struct {
 	Enabled          bool                 `yaml:"enabled"`
 	PDFSplitter      workerInstanceConfig `yaml:"pdfSplitter"`
@@ -145,6 +159,7 @@ type config struct {
 	Datastore   datastoreConfig `yaml:"datastore"`
 	Queue       queueConfig     `yaml:"queue"`
 	BlobStorage blobConfig      `yaml:"blobStorage"`
+	TTS         ttsConfig       `yaml:"tts"`
 }
 
 func envVarOrDefault(envVar, defaultVal string) string {
@@ -283,6 +298,13 @@ func ConfigStructLevelValidation(sl validator.StructLevel) {
 		}
 		if cfg.BlobStorage.S3.VideoFolder == "" {
 			sl.ReportError(cfg.BlobStorage.S3, "s3.VideoFolder", "VideoFolder", "required", "S3 VideoFolder is required when using S3 blob storage")
+		}
+	}
+
+	// Validate TTS configuration
+	if cfg.TTS.Type == amazonPollyTTS {
+		if cfg.TTS.AmazonPolly.Region == "" {
+			sl.ReportError(cfg.TTS.AmazonPolly, "amazonPolly.Region", "Region", "required", "Amazon Polly Region is required when using Amazon Polly TTS")
 		}
 	}
 }
