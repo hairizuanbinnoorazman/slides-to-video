@@ -12,7 +12,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/TV4/logrus-stackdriver-formatter v0.1.0
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
-	github.com/containerd/containerd v1.7.29 // indirect
+	github.com/containerd/containerd v1.7.32 // indirect
 	github.com/docker/docker v25.0.13+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
